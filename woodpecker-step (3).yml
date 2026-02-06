@@ -1,0 +1,22 @@
+---
+# Woodpecker CI pipeline step for Tier 4 Nightly Exhaustive Verification
+#
+# This step runs nightly exhaustive verification tasks, including fuzzing,
+# mutation testing, vulnerability scanning and license auditing. It runs
+# on a nightly schedule via cron. The verify script aggregates all
+# results into a JSON summary and fails the build when any task fails.
+
+kind: pipeline
+name: verify_nightly
+
+steps:
+  verify:
+    image: omni-verify-nightly
+    pull: true
+    commands:
+      - /usr/local/bin/verify.sh
+    when:
+      event:
+        - cron
+    # Set a generous timeout for the nightly run
+    timeout: 7200

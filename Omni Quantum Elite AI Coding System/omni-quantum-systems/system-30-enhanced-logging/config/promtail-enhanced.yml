@@ -1,0 +1,210 @@
+###############################################################################
+# Enhanced Promtail Configuration — Structured logging for ALL 28 services
+# Adds trace ID extraction, error classification, service-tier labeling
+###############################################################################
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://omni-loki:3100/loki/api/v1/push
+    batchwait: 1s
+    batchsize: 1048576
+    timeout: 10s
+
+scrape_configs:
+  # ---------------------------------------------------------------------------
+  # Docker container logs — all omni-* containers
+  # ---------------------------------------------------------------------------
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+        filters:
+          - name: label
+            values: ["omni.quantum.component"]
+    relabel_configs:
+      # Extract component name from Docker label
+      - source_labels: ['__meta_docker_container_label_omni_quantum_component']
+        target_label: component
+      # Extract tier from Docker label
+      - source_labels: ['__meta_docker_container_label_omni_quantum_tier']
+        target_label: tier
+      # Extract critical flag
+      - source_labels: ['__meta_docker_container_label_omni_quantum_critical']
+        target_label: critical
+      # Container name
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: container
+      # Container ID
+      - source_labels: ['__meta_docker_container_id']
+        target_label: container_id
+
+    pipeline_stages:
+      # -----------------------------------------------------------------------
+      # Structured JSON log parsing
+      # -----------------------------------------------------------------------
+      - json:
+          expressions:
+            level: level
+            msg: msg
+            message: message
+            timestamp: timestamp
+            trace_id: trace_id
+            span_id: span_id
+            request_id: request_id
+            user_id: user_id
+            service: service
+            error: error
+            duration: duration
+            status_code: status_code
+
+      # Fallback: extract level from non-JSON logs
+      - regex:
+          expression: '(?P<level>(DEBUG|INFO|WARN|WARNING|ERROR|FATAL|CRITICAL))'
+
+      # -----------------------------------------------------------------------
+      # Label extraction
+      # -----------------------------------------------------------------------
+      - labels:
+          level:
+          trace_id:
+          span_id:
+          request_id:
+
+      # -----------------------------------------------------------------------
+      # Normalize log levels
+      # -----------------------------------------------------------------------
+      - replace:
+          expression: '(WARNING)'
+          source: level
+          replace: 'WARN'
+
+      - replace:
+          expression: '(FATAL)'
+          source: level
+          replace: 'CRITICAL'
+
+      # -----------------------------------------------------------------------
+      # Error classification pipeline
+      # -----------------------------------------------------------------------
+      - match:
+          selector: '{level=~"ERROR|CRITICAL"}'
+          stages:
+            - regex:
+                expression: '(?P<error_type>(ConnectionError|TimeoutError|PermissionError|ValueError|KeyError|DatabaseError|AuthenticationError|RateLimitError|OutOfMemory))'
+            - labels:
+                error_type:
+
+      # -----------------------------------------------------------------------
+      # HTTP request parsing (for web services)
+      # -----------------------------------------------------------------------
+      - match:
+          selector: '{component=~"caddy|gitea|mattermost|plane-web|grafana"}'
+          stages:
+            - regex:
+                expression: '"(?P<method>GET|POST|PUT|DELETE|PATCH) (?P<path>[^ ]*) HTTP/[0-9.]+" (?P<status>\d{3})'
+            - labels:
+                method:
+                status:
+
+      # -----------------------------------------------------------------------
+      # PostgreSQL log parsing
+      # -----------------------------------------------------------------------
+      - match:
+          selector: '{component="postgresql"}'
+          stages:
+            - regex:
+                expression: '(?P<pg_level>LOG|ERROR|FATAL|WARNING|DETAIL|HINT|STATEMENT):  (?P<pg_message>.*)'
+            - labels:
+                pg_level:
+
+      # -----------------------------------------------------------------------
+      # Redis log parsing
+      # -----------------------------------------------------------------------
+      - match:
+          selector: '{component="redis"}'
+          stages:
+            - regex:
+                expression: '(?P<redis_level>\*|#|-)  (?P<redis_message>.*)'
+
+      # -----------------------------------------------------------------------
+      # AI service log parsing (LiteLLM, Ollama)
+      # -----------------------------------------------------------------------
+      - match:
+          selector: '{component=~"litellm|ollama"}'
+          stages:
+            - json:
+                expressions:
+                  model: model
+                  provider: provider
+                  tokens_used: tokens_used
+                  latency_ms: latency_ms
+            - labels:
+                model:
+                provider:
+
+      # -----------------------------------------------------------------------
+      # Security event tagging
+      # -----------------------------------------------------------------------
+      - match:
+          selector: '{component=~"crowdsec|modsecurity|fail2ban|authentik"}'
+          stages:
+            - labels:
+                __tenant__: security
+            - static_labels:
+                log_category: security
+
+      # -----------------------------------------------------------------------
+      # Timestamp extraction
+      # -----------------------------------------------------------------------
+      - timestamp:
+          source: timestamp
+          format: RFC3339Nano
+          fallback_formats:
+            - "2006-01-02T15:04:05.000Z"
+            - "2006-01-02 15:04:05"
+          action_on_failure: fudge
+
+      # -----------------------------------------------------------------------
+      # Drop debug logs in production (configurable)
+      # -----------------------------------------------------------------------
+      - match:
+          selector: '{level="DEBUG", tier="critical"}'
+          action: drop
+          drop_counter_reason: "debug_critical_service"
+
+  # ---------------------------------------------------------------------------
+  # System logs (syslog, journal)
+  # ---------------------------------------------------------------------------
+  - job_name: system
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: system
+          component: host
+          __path__: /var/log/syslog
+    pipeline_stages:
+      - regex:
+          expression: '(?P<level>(emerg|alert|crit|err|warning|notice|info|debug))'
+      - labels:
+          level:
+
+  # ---------------------------------------------------------------------------
+  # Audit logs (special retention)
+  # ---------------------------------------------------------------------------
+  - job_name: audit
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: audit
+          component: audit
+          __path__: /var/log/audit/*.log
+    pipeline_stages:
+      - static_labels:
+          __tenant__: security

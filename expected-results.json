@@ -1,0 +1,24 @@
+{
+  "violations": [
+    {
+      "name": "sql_injection",
+      "message": "Use parameterized queries instead of string formatting"
+    },
+    {
+      "name": "missing_tests",
+      "message": "Add unit tests to achieve coverage threshold"
+    },
+    {
+      "name": "missing_dependency",
+      "message": "Remove import of non‑existent package or install it"
+    },
+    {
+      "name": "layer_violation",
+      "message": "Remove handler import from service layer"
+    },
+    {
+      "name": "hardcoded_secret",
+      "message": "Move secrets to environment variables or Vault"
+    }
+  ]
+}

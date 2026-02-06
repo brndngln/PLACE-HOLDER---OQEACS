@@ -1,0 +1,158 @@
+###############################################################################
+# System 35: CI/CD Pipelines — "Build Forge"
+# Purpose: Build, test, deploy automation for all generated applications
+# Tools: Woodpecker CI (100% open source) + Gitea Actions runners
+###############################################################################
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+    tag: "{{.Name}}"
+
+services:
+  #---------------------------------------------------------------------------
+  # Woodpecker CI Server — pipeline orchestration
+  #---------------------------------------------------------------------------
+  woodpecker-server:
+    image: woodpeckerci/woodpecker-server:v2.8.3
+    container_name: omni-woodpecker-server
+    environment:
+      TZ: UTC
+      WOODPECKER_HOST: https://ci.${DOMAIN}
+      WOODPECKER_OPEN: "false"
+      WOODPECKER_ADMIN: ${CI_ADMIN_USER:-admin}
+      WOODPECKER_GITEA: "true"
+      WOODPECKER_GITEA_URL: http://omni-gitea:3000
+      WOODPECKER_GITEA_CLIENT: ${GITEA_OAUTH_CLIENT_ID}
+      WOODPECKER_GITEA_SECRET: ${GITEA_OAUTH_CLIENT_SECRET}
+      WOODPECKER_AGENT_SECRET: ${WOODPECKER_AGENT_SECRET}
+      WOODPECKER_DATABASE_DRIVER: postgres
+      WOODPECKER_DATABASE_DATASOURCE: "postgres://woodpecker:${WOODPECKER_DB_PASS}@omni-postgres:5432/woodpecker?sslmode=disable"
+      WOODPECKER_LOG_LEVEL: info
+      WOODPECKER_PROMETHEUS_AUTH_TOKEN: ${PROMETHEUS_TOKEN}
+    volumes:
+      - woodpecker-data:/var/lib/woodpecker
+    ports:
+      - "8000:8000"   # Web UI
+      - "9000:9000"   # gRPC (agents)
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8000/healthz"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - omni-quantum-network
+    labels:
+      - "omni.quantum.component=woodpecker-server"
+      - "omni.quantum.tier=standard"
+      - "omni.quantum.critical=true"
+      - "prometheus.scrape=true"
+      - "prometheus.port=8000"
+
+  #---------------------------------------------------------------------------
+  # Woodpecker Agent #1 — executes pipelines
+  #---------------------------------------------------------------------------
+  woodpecker-agent-1:
+    image: woodpeckerci/woodpecker-agent:v2.8.3
+    container_name: omni-woodpecker-agent-1
+    environment:
+      TZ: UTC
+      WOODPECKER_SERVER: omni-woodpecker-server:9000
+      WOODPECKER_AGENT_SECRET: ${WOODPECKER_AGENT_SECRET}
+      WOODPECKER_MAX_WORKFLOWS: "4"
+      WOODPECKER_BACKEND: docker
+      DOCKER_HOST: unix:///var/run/docker.sock
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - woodpecker-agent-1-data:/workspace
+    healthcheck:
+      test: ["CMD-SHELL", "test -S /var/run/docker.sock"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - omni-quantum-network
+    labels:
+      - "omni.quantum.component=woodpecker-agent-1"
+      - "omni.quantum.tier=standard"
+      - "omni.quantum.critical=false"
+
+  #---------------------------------------------------------------------------
+  # Woodpecker Agent #2 — parallel execution capacity
+  #---------------------------------------------------------------------------
+  woodpecker-agent-2:
+    image: woodpeckerci/woodpecker-agent:v2.8.3
+    container_name: omni-woodpecker-agent-2
+    environment:
+      TZ: UTC
+      WOODPECKER_SERVER: omni-woodpecker-server:9000
+      WOODPECKER_AGENT_SECRET: ${WOODPECKER_AGENT_SECRET}
+      WOODPECKER_MAX_WORKFLOWS: "4"
+      WOODPECKER_BACKEND: docker
+      DOCKER_HOST: unix:///var/run/docker.sock
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - woodpecker-agent-2-data:/workspace
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - omni-quantum-network
+    labels:
+      - "omni.quantum.component=woodpecker-agent-2"
+      - "omni.quantum.tier=standard"
+      - "omni.quantum.critical=false"
+
+  #---------------------------------------------------------------------------
+  # Pipeline Webhook Bridge — notifies Mattermost + Omi on build events
+  #---------------------------------------------------------------------------
+  pipeline-notifier:
+    build:
+      context: ./config/pipeline-notifier
+      dockerfile: Dockerfile
+    container_name: omni-pipeline-notifier
+    environment:
+      TZ: UTC
+      WOODPECKER_URL: http://omni-woodpecker-server:8000
+      MATTERMOST_WEBHOOK: ${MATTERMOST_CICD_WEBHOOK}
+      OMI_WEBHOOK: ${OMI_WEBHOOK_URL}
+      COOLIFY_URL: http://omni-coolify:8000
+      COOLIFY_TOKEN: ${COOLIFY_API_TOKEN}
+      REGISTRY_URL: ${DOCKER_REGISTRY_URL:-omni-registry:5000}
+    ports:
+      - "8193:8193"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8193/health')"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - omni-quantum-network
+    labels:
+      - "omni.quantum.component=pipeline-notifier"
+      - "omni.quantum.tier=standard"
+      - "omni.quantum.critical=false"
+      - "prometheus.scrape=true"
+      - "prometheus.port=8193"
+
+volumes:
+  woodpecker-data:
+    driver: local
+  woodpecker-agent-1-data:
+    driver: local
+  woodpecker-agent-2-data:
+    driver: local
+
+networks:
+  omni-quantum-network:
+    external: true

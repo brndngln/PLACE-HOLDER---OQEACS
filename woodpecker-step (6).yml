@@ -1,0 +1,15 @@
+---
+kind: pipeline
+name: arch_enforcer
+
+steps:
+  enforce:
+    image: python:3.11-slim
+    pull: true
+    commands:
+      - pip install --no-cache-dir PyYAML==6.0
+      - python enforce.py --rules rules.yml .
+    when:
+      event:
+        - push
+        - pull_request

@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  cross-learning:
+    build: .
+    image: omni-cross-learning:latest
+    container_name: cross-learning
+    environment:
+      # Qdrant connection details; override at runtime if needed
+      - QDRANT_HOST=${QDRANT_HOST:-omni-qdrant}
+      - QDRANT_PORT=${QDRANT_PORT:-6333}
+      # Collections used for storing patterns
+      - PROVEN_COLLECTION=${PROVEN_COLLECTION:-proven_patterns}
+      - ANTI_COLLECTION=${ANTI_COLLECTION:-anti_patterns}
+      # Score thresholds for classification
+      - HIGH_SCORE_THRESHOLD=${HIGH_SCORE_THRESHOLD:-9.0}
+      - LOW_SCORE_THRESHOLD=${LOW_SCORE_THRESHOLD:-6.0}
+    ports:
+      - "8334:8334"
+    networks:
+      - omni-quantum
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8334/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: on-failure
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  omni-quantum:
+    external: true

@@ -1,0 +1,575 @@
+###############################################################################
+# Enhanced Prometheus Alert Rules — ALL 28+ Services
+# Covers: Infrastructure, AI Services, Business Metrics, SLA Violations
+###############################################################################
+
+groups:
+  #---------------------------------------------------------------------------
+  # Infrastructure Health Alerts
+  #---------------------------------------------------------------------------
+  - name: infrastructure_health
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "Service {{ $labels.job }} is DOWN"
+          description: "{{ $labels.instance }} has been unreachable for >2 minutes."
+          runbook: "https://wiki.omni.local/runbooks/service-down"
+
+      - alert: HighCPUUsage
+        expr: |
+          100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+        for: 10m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is {{ $value | humanize }}% for >10 minutes."
+
+      - alert: CriticalCPUUsage
+        expr: |
+          100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 95
+        for: 5m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "CRITICAL CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is {{ $value | humanize }}% for >5 minutes."
+
+      - alert: HighMemoryUsage
+        expr: |
+          (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 10m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is {{ $value | humanize }}%."
+
+      - alert: DiskSpaceLow
+        expr: |
+          (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 15
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Only {{ $value | humanize }}% disk space remaining."
+
+      - alert: DiskSpaceCritical
+        expr: |
+          (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 5
+        for: 2m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "CRITICAL disk space on {{ $labels.instance }}"
+          description: "Only {{ $value | humanize }}% disk space remaining!"
+
+  #---------------------------------------------------------------------------
+  # Docker Container Alerts
+  #---------------------------------------------------------------------------
+  - name: docker_containers
+    rules:
+      - alert: ContainerHighCPU
+        expr: |
+          rate(container_cpu_usage_seconds_total{name=~"omni-.*"}[5m]) * 100 > 80
+        for: 10m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "Container {{ $labels.name }} high CPU"
+          description: "Container CPU usage is {{ $value | humanize }}%."
+
+      - alert: ContainerHighMemory
+        expr: |
+          container_memory_usage_bytes{name=~"omni-.*"} / container_spec_memory_limit_bytes{name=~"omni-.*"} * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "Container {{ $labels.name }} high memory"
+          description: "Memory usage at {{ $value | humanize }}% of limit."
+
+      - alert: ContainerRestarting
+        expr: |
+          increase(container_restart_count{name=~"omni-.*"}[1h]) > 3
+        for: 0m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "Container {{ $labels.name }} restarting frequently"
+          description: "{{ $value }} restarts in the last hour."
+
+      - alert: ContainerOOMKilled
+        expr: |
+          container_oom_events_total{name=~"omni-.*"} > 0
+        for: 0m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "Container {{ $labels.name }} OOM killed"
+          description: "Container was killed due to out-of-memory."
+
+  #---------------------------------------------------------------------------
+  # PostgreSQL Alerts
+  #---------------------------------------------------------------------------
+  - name: postgresql
+    rules:
+      - alert: PostgresDown
+        expr: pg_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: database
+        annotations:
+          summary: "PostgreSQL is DOWN"
+          description: "PostgreSQL instance {{ $labels.instance }} is unreachable."
+
+      - alert: PostgresHighConnections
+        expr: |
+          pg_stat_activity_count / pg_settings_max_connections * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          team: database
+        annotations:
+          summary: "PostgreSQL high connection count"
+          description: "{{ $value | humanize }}% of max connections used."
+
+      - alert: PostgresReplicationLag
+        expr: pg_replication_lag > 30
+        for: 5m
+        labels:
+          severity: warning
+          team: database
+        annotations:
+          summary: "PostgreSQL replication lag"
+          description: "Replication lag is {{ $value }}s."
+
+      - alert: PostgresDeadlocks
+        expr: increase(pg_stat_database_deadlocks[5m]) > 0
+        for: 0m
+        labels:
+          severity: warning
+          team: database
+        annotations:
+          summary: "PostgreSQL deadlocks detected"
+          description: "{{ $value }} deadlocks in the last 5 minutes."
+
+      - alert: PostgresSlowQueries
+        expr: |
+          pg_stat_activity_max_tx_duration{datname!~"template.*"} > 300
+        for: 2m
+        labels:
+          severity: warning
+          team: database
+        annotations:
+          summary: "PostgreSQL slow queries"
+          description: "Longest transaction running for {{ $value }}s."
+
+  #---------------------------------------------------------------------------
+  # Redis Alerts
+  #---------------------------------------------------------------------------
+  - name: redis
+    rules:
+      - alert: RedisDown
+        expr: redis_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: database
+        annotations:
+          summary: "Redis is DOWN"
+
+      - alert: RedisHighMemory
+        expr: |
+          redis_memory_used_bytes / redis_memory_max_bytes * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          team: database
+        annotations:
+          summary: "Redis high memory usage"
+          description: "{{ $value | humanize }}% of max memory used."
+
+      - alert: RedisHighLatency
+        expr: redis_commands_duration_seconds_total / redis_commands_processed_total > 0.01
+        for: 5m
+        labels:
+          severity: warning
+          team: database
+        annotations:
+          summary: "Redis high latency"
+
+  #---------------------------------------------------------------------------
+  # AI Service Alerts (Ollama, LiteLLM, OpenHands, SWE-Agent)
+  #---------------------------------------------------------------------------
+  - name: ai_services
+    rules:
+      - alert: OllamaDown
+        expr: up{job="ollama"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: ai
+        annotations:
+          summary: "Ollama is DOWN — local AI inference unavailable"
+
+      - alert: LiteLLMDown
+        expr: up{job="litellm"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: ai
+        annotations:
+          summary: "LiteLLM is DOWN — AI gateway unavailable"
+
+      - alert: LiteLLMHighErrorRate
+        expr: |
+          rate(litellm_request_errors_total[5m]) / rate(litellm_requests_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          team: ai
+        annotations:
+          summary: "LiteLLM error rate >10%"
+          description: "{{ $value | humanize }}% of requests failing."
+
+      - alert: LiteLLMHighLatency
+        expr: |
+          histogram_quantile(0.95, rate(litellm_request_duration_seconds_bucket[5m])) > 30
+        for: 5m
+        labels:
+          severity: warning
+          team: ai
+        annotations:
+          summary: "LiteLLM P95 latency >30s"
+
+      - alert: AllAIProvidersDown
+        expr: |
+          litellm_provider_healthy_total == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: ai
+        annotations:
+          summary: "ALL AI providers are down — Token Infinity System failure"
+
+      - alert: TokenBudgetExhausted
+        expr: |
+          litellm_tokens_used_total / litellm_token_budget_total > 0.9
+        for: 0m
+        labels:
+          severity: warning
+          team: ai
+        annotations:
+          summary: "Token budget >90% consumed"
+
+      - alert: OpenHandsDown
+        expr: up{job="openhands"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          team: ai
+        annotations:
+          summary: "OpenHands AI coding agent is DOWN"
+
+      - alert: SWEAgentDown
+        expr: up{job="swe-agent"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          team: ai
+        annotations:
+          summary: "SWE-Agent is DOWN"
+
+  #---------------------------------------------------------------------------
+  # Langfuse AI Observability Alerts
+  #---------------------------------------------------------------------------
+  - name: langfuse
+    rules:
+      - alert: LangfuseDown
+        expr: up{job="langfuse"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          team: ai
+        annotations:
+          summary: "Langfuse AI observability is DOWN"
+
+      - alert: HighLLMCost
+        expr: |
+          increase(langfuse_total_cost_usd[1h]) > 10
+        for: 0m
+        labels:
+          severity: warning
+          team: ai
+        annotations:
+          summary: "LLM costs >$10/hour"
+
+  #---------------------------------------------------------------------------
+  # Qdrant Vector DB Alerts
+  #---------------------------------------------------------------------------
+  - name: qdrant
+    rules:
+      - alert: QdrantDown
+        expr: up{job="qdrant"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: ai
+        annotations:
+          summary: "Qdrant vector database is DOWN"
+
+      - alert: QdrantHighMemory
+        expr: |
+          qdrant_memory_usage_bytes / qdrant_memory_limit_bytes > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          team: ai
+        annotations:
+          summary: "Qdrant memory usage >85%"
+
+  #---------------------------------------------------------------------------
+  # Gitea / Code Citadel Alerts
+  #---------------------------------------------------------------------------
+  - name: gitea
+    rules:
+      - alert: GiteaDown
+        expr: up{job="gitea"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "Gitea is DOWN — code hosting unavailable"
+
+      - alert: GiteaHighResponseTime
+        expr: |
+          histogram_quantile(0.95, rate(gitea_http_request_duration_seconds_bucket[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "Gitea P95 response time >5s"
+
+  #---------------------------------------------------------------------------
+  # n8n Workflow Alerts
+  #---------------------------------------------------------------------------
+  - name: n8n
+    rules:
+      - alert: N8nDown
+        expr: up{job="n8n"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: automation
+        annotations:
+          summary: "n8n workflow engine is DOWN"
+
+      - alert: N8nWorkflowErrors
+        expr: |
+          increase(n8n_workflow_errors_total[1h]) > 10
+        for: 0m
+        labels:
+          severity: warning
+          team: automation
+        annotations:
+          summary: "n8n >10 workflow errors in the last hour"
+
+  #---------------------------------------------------------------------------
+  # Mattermost Communication Alerts
+  #---------------------------------------------------------------------------
+  - name: mattermost
+    rules:
+      - alert: MattermostDown
+        expr: up{job="mattermost"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: communication
+        annotations:
+          summary: "Mattermost is DOWN — team communication unavailable"
+
+      - alert: MattermostHighWSConnections
+        expr: mattermost_websocket_connections > 1000
+        for: 5m
+        labels:
+          severity: warning
+          team: communication
+        annotations:
+          summary: "Mattermost >1000 WebSocket connections"
+
+  #---------------------------------------------------------------------------
+  # Caddy / Gateway Alerts
+  #---------------------------------------------------------------------------
+  - name: caddy
+    rules:
+      - alert: CaddyDown
+        expr: up{job="caddy"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "Caddy reverse proxy is DOWN — all services unreachable"
+
+      - alert: CaddyHighErrorRate
+        expr: |
+          rate(caddy_http_responses_total{code=~"5.."}[5m]) / rate(caddy_http_responses_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "Caddy >5% 5xx error rate"
+
+      - alert: SSLCertExpiringSoon
+        expr: |
+          caddy_tls_certificate_expiry_timestamp_seconds - time() < 604800
+        for: 0m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "SSL certificate expiring within 7 days"
+
+  #---------------------------------------------------------------------------
+  # MinIO Storage Alerts
+  #---------------------------------------------------------------------------
+  - name: minio
+    rules:
+      - alert: MinIODown
+        expr: up{job="minio"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "MinIO object storage is DOWN"
+
+      - alert: MinIODiskUsageHigh
+        expr: |
+          minio_disk_storage_used_bytes / minio_disk_storage_total_bytes > 0.85
+        for: 10m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "MinIO disk usage >85%"
+
+  #---------------------------------------------------------------------------
+  # Plane Project Management Alerts
+  #---------------------------------------------------------------------------
+  - name: plane
+    rules:
+      - alert: PlaneDown
+        expr: up{job="plane"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          team: project-management
+        annotations:
+          summary: "Plane project management is DOWN"
+
+  #---------------------------------------------------------------------------
+  # Nango Integration Alerts
+  #---------------------------------------------------------------------------
+  - name: nango
+    rules:
+      - alert: NangoDown
+        expr: up{job="nango"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          team: integrations
+        annotations:
+          summary: "Nango API integration platform is DOWN"
+
+      - alert: NangoSyncErrors
+        expr: |
+          increase(nango_sync_errors_total[1h]) > 5
+        for: 0m
+        labels:
+          severity: warning
+          team: integrations
+        annotations:
+          summary: "Nango >5 sync errors in the last hour"
+
+  #---------------------------------------------------------------------------
+  # SLA Compliance Alerts
+  #---------------------------------------------------------------------------
+  - name: sla_compliance
+    rules:
+      - alert: SLAViolationRisk
+        expr: |
+          sla_error_budget_remaining_percent < 20
+        for: 0m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "SLA error budget <20% for {{ $labels.service }}"
+          description: "Only {{ $value | humanize }}% error budget remaining."
+
+      - alert: SLAViolation
+        expr: |
+          sla_error_budget_remaining_percent < 0
+        for: 0m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "SLA VIOLATED for {{ $labels.service }}"
+          description: "Error budget exhausted. Immediate action required."
+
+  #---------------------------------------------------------------------------
+  # Business Metrics Alerts
+  #---------------------------------------------------------------------------
+  - name: business_metrics
+    rules:
+      - alert: NoBuildActivityIn24h
+        expr: |
+          increase(omni_builds_total[24h]) == 0
+        for: 0m
+        labels:
+          severity: info
+          team: platform
+        annotations:
+          summary: "No builds in the last 24 hours"
+
+      - alert: HighBuildFailureRate
+        expr: |
+          rate(omni_builds_failed_total[1h]) / rate(omni_builds_total[1h]) > 0.3
+        for: 30m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Build failure rate >30%"
+
+      - alert: DeploymentFailed
+        expr: |
+          increase(omni_deployments_failed_total[5m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "Deployment FAILED"

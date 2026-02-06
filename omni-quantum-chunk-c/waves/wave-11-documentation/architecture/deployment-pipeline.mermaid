@@ -1,0 +1,74 @@
+%%{init: {'theme': 'base'}}%%
+
+flowchart LR
+    subgraph STAGE1["Stage 1: Intent"]
+        S1A[Parse Request]
+        S1B[Feasibility Check]
+        S1C[Generate Spec]
+    end
+
+    subgraph STAGE2["Stage 2: Build"]
+        S2A[Select Model]
+        S2B[Generate Code]
+        S2C[Create Files]
+    end
+
+    subgraph STAGE3["Stage 3: Review"]
+        S3A[Multi-Model Review]
+        S3B[Score 10 Dimensions]
+        S3C[AST Refactoring]
+    end
+
+    subgraph STAGE4["Stage 4: Test"]
+        S4A[Unit Tests]
+        S4B[Integration Tests]
+        S4C[Security Scan]
+    end
+
+    subgraph STAGE5["Stage 5: Preview"]
+        S5A[User Review]
+        S5B[Accept/Reject]
+    end
+
+    subgraph STAGE6["Stage 6: Build"]
+        S6A[Docker Build]
+        S6B[Trivy Scan]
+        S6C[Sign Image]
+    end
+
+    subgraph STAGE7["Stage 7: Staging"]
+        S7A[Deploy Staging]
+        S7B[Smoke Tests]
+        S7C[Load Tests]
+    end
+
+    subgraph STAGE8["Stage 8: Production"]
+        S8A[Blue-Green Deploy]
+        S8B[Health Check]
+        S8C[Monitor 5min]
+    end
+
+    S1A --> S1B --> S1C
+    S1C -->|Gate| S2A
+    S2A --> S2B --> S2C
+    S2C -->|Gate| S3A
+    S3A --> S3B --> S3C
+    S3C -->|Gate| S4A
+    S4A --> S4B --> S4C
+    S4C -->|Gate| S5A
+    S5A --> S5B
+    S5B -->|Approved| S6A
+    S6A --> S6B --> S6C
+    S6C -->|Gate| S7A
+    S7A --> S7B --> S7C
+    S7C -->|Gate| S8A
+    S8A --> S8B --> S8C
+
+    style STAGE1 fill:#1e3a5f
+    style STAGE2 fill:#1e5f3a
+    style STAGE3 fill:#5f3a1e
+    style STAGE4 fill:#3a1e5f
+    style STAGE5 fill:#5f1e3a
+    style STAGE6 fill:#1e5f5f
+    style STAGE7 fill:#5f5f1e
+    style STAGE8 fill:#3a5f1e

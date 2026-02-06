@@ -1,0 +1,119 @@
+###############################################################################
+# System 32: Enhanced Backup System — "Backup Fortress Pro"
+# Purpose: Automated backup schedules for ALL 28+ services' data
+# Enhances: System 1 (Backup Fortress) — adds comprehensive service coverage,
+#           MinIO snapshots, Gitea repos, Mattermost data, n8n workflows,
+#           automated verification, cross-region replication
+###############################################################################
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+    tag: "{{.Name}}"
+
+services:
+  #---------------------------------------------------------------------------
+  # Backup Orchestrator — manages all backup schedules
+  #---------------------------------------------------------------------------
+  backup-orchestrator:
+    build:
+      context: ./config/backup-orchestrator
+      dockerfile: Dockerfile
+    container_name: omni-backup-orchestrator
+    environment:
+      TZ: UTC
+      POSTGRES_HOST: omni-postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      REDIS_URL: redis://omni-redis:6379
+      MINIO_ENDPOINT: omni-minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      RESTIC_REPOSITORY: s3:http://omni-minio:9000/omni-backups
+      RESTIC_PASSWORD: ${RESTIC_PASSWORD}
+      AWS_ACCESS_KEY_ID: ${MINIO_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_SECRET_KEY}
+      GITEA_URL: http://omni-gitea:3000
+      GITEA_TOKEN: ${GITEA_ADMIN_TOKEN}
+      MATTERMOST_URL: http://omni-mattermost:8065
+      MATTERMOST_WEBHOOK: ${MATTERMOST_ALERTS_WEBHOOK}
+      OMI_WEBHOOK: ${OMI_WEBHOOK_URL}
+      VAULT_ADDR: http://omni-vault:8200
+      VAULT_TOKEN: ${VAULT_TOKEN}
+      QDRANT_URL: http://omni-qdrant:6333
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - backup-staging:/backup/staging
+      - backup-restic-cache:/root/.cache/restic
+      - ./config/backup-schedules.yml:/app/schedules.yml:ro
+    ports:
+      - "8187:8187"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8187/health')"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - omni-quantum-network
+    labels:
+      - "omni.quantum.component=backup-orchestrator"
+      - "omni.quantum.tier=standard"
+      - "omni.quantum.critical=true"
+      - "prometheus.scrape=true"
+      - "prometheus.port=8187"
+
+  #---------------------------------------------------------------------------
+  # Backup Verifier — automatically tests restore capability
+  #---------------------------------------------------------------------------
+  backup-verifier:
+    build:
+      context: ./config/backup-verifier
+      dockerfile: Dockerfile
+    container_name: omni-backup-verifier
+    environment:
+      TZ: UTC
+      RESTIC_REPOSITORY: s3:http://omni-minio:9000/omni-backups
+      RESTIC_PASSWORD: ${RESTIC_PASSWORD}
+      AWS_ACCESS_KEY_ID: ${MINIO_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_SECRET_KEY}
+      MATTERMOST_WEBHOOK: ${MATTERMOST_ALERTS_WEBHOOK}
+      VERIFY_INTERVAL_HOURS: "24"
+    volumes:
+      - backup-verify-staging:/verify/staging
+      - backup-restic-cache:/root/.cache/restic:ro
+    ports:
+      - "8188:8188"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8188/health')"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - omni-quantum-network
+    labels:
+      - "omni.quantum.component=backup-verifier"
+      - "omni.quantum.tier=standard"
+      - "omni.quantum.critical=false"
+      - "prometheus.scrape=true"
+      - "prometheus.port=8188"
+
+volumes:
+  backup-staging:
+    driver: local
+  backup-restic-cache:
+    driver: local
+  backup-verify-staging:
+    driver: local
+
+networks:
+  omni-quantum-network:
+    external: true

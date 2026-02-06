@@ -1,0 +1,34 @@
+version: "3.9"
+
+services:
+  anti-patterns:
+    build:
+      context: .
+    image: omni/anti-patterns:1.0.0
+    container_name: omni-anti-patterns
+    environment:
+      - QDRANT_HOST=${QDRANT_HOST:-omni-qdrant}
+      - QDRANT_PORT=${QDRANT_PORT:-6333}
+      - ANTI_COLLECTION=${ANTI_COLLECTION:-anti_patterns}
+    networks:
+      - omni-quantum-network
+    ports:
+      - "8331:8331"
+    depends_on:
+      - qdrant
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8331/ready"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+
+networks:
+  omni-quantum-network:
+    external: true

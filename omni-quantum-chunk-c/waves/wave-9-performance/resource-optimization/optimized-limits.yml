@@ -1,0 +1,254 @@
+# ╔══════════════════════════════════════════════════════════════════════════════════════╗
+# ║  OPTIMIZED RESOURCE LIMITS — All 37+ Services                                      ║
+# ║  OMNI QUANTUM ELITE v3.0                                                           ║
+# ╚══════════════════════════════════════════════════════════════════════════════════════╝
+
+# Usage: Include in docker-compose via YAML anchors or deploy.resources
+
+services:
+  # ═══════════════════════════════════════════════════════════════
+  # CRITICAL TIER — Generous limits, high priority
+  # ═══════════════════════════════════════════════════════════════
+  
+  omni-postgres:
+    deploy:
+      resources:
+        limits: { cpus: '2.0', memory: '2G' }
+        reservations: { cpus: '0.5', memory: '512M' }
+  
+  omni-ollama:
+    deploy:
+      resources:
+        limits: { cpus: '4.0', memory: '16G' }  # GPU service, needs headroom
+        reservations: { cpus: '1.0', memory: '4G' }
+  
+  omni-litellm:
+    deploy:
+      resources:
+        limits: { cpus: '1.0', memory: '1G' }
+        reservations: { cpus: '0.25', memory: '256M' }
+  
+  omni-vault:
+    deploy:
+      resources:
+        limits: { cpus: '0.5', memory: '512M' }
+        reservations: { cpus: '0.1', memory: '128M' }
+  
+  omni-authentik:
+    deploy:
+      resources:
+        limits: { cpus: '1.0', memory: '1G' }
+        reservations: { cpus: '0.25', memory: '256M' }
+  
+  omni-traefik:
+    deploy:
+      resources:
+        limits: { cpus: '0.5', memory: '256M' }
+        reservations: { cpus: '0.1', memory: '64M' }
+
+  # ═══════════════════════════════════════════════════════════════
+  # HIGH TIER — Moderate limits
+  # ═══════════════════════════════════════════════════════════════
+  
+  omni-qdrant:
+    deploy:
+      resources:
+        limits: { cpus: '1.0', memory: '2G' }
+        reservations: { cpus: '0.25', memory: '512M' }
+  
+  omni-redis:
+    deploy:
+      resources:
+        limits: { cpus: '0.5', memory: '512M' }
+        reservations: { cpus: '0.1', memory: '128M' }
+  
+  omni-mattermost:
+    deploy:
+      resources:
+        limits: { cpus: '1.0', memory: '1G' }
+        reservations: { cpus: '0.25', memory: '256M' }
+  
+  omni-gitea:
+    deploy:
+      resources:
+        limits: { cpus: '0.5', memory: '512M' }
+        reservations: { cpus: '0.1', memory: '128M' }
+  
+  omni-minio:
+    deploy:
+      resources:
+        limits: { cpus: '1.0', memory: '1G' }
+        reservations: { cpus: '0.25', memory: '256M' }
+  
+  omni-prometheus:
+    deploy:
+      resources:
+        limits: { cpus: '1.0', memory: '1G' }
+        reservations: { cpus: '0.25', memory: '256M' }
+  
+  omni-grafana:
+    deploy:
+      resources:
+        limits: { cpus: '0.5', memory: '512M' }
+        reservations: { cpus: '0.1', memory: '128M' }
+  
+  omni-loki:
+    deploy:
+      resources:
+        limits: { cpus: '0.5', memory: '512M' }
+        reservations: { cpus: '0.1', memory: '128M' }
+  
+  omni-langfuse:
+    deploy:
+      resources:
+        limits: { cpus: '0.5', memory: '512M' }
+        reservations: { cpus: '0.1', memory: '128M' }
+  
+  omni-n8n:
+    deploy:
+      resources:
+        limits: { cpus: '0.5', memory: '512M' }
+        reservations: { cpus: '0.1', memory: '128M' }
+  
+  omni-openhands:
+    deploy:
+      resources:
+        limits: { cpus: '2.0', memory: '4G' }  # AI coding agent
+        reservations: { cpus: '0.5', memory: '1G' }
+  
+  omni-swe-agent:
+    deploy:
+      resources:
+        limits: { cpus: '2.0', memory: '4G' }  # AI coding agent
+        reservations: { cpus: '0.5', memory: '1G' }
+
+  # ═══════════════════════════════════════════════════════════════
+  # STANDARD TIER — Minimal limits
+  # ═══════════════════════════════════════════════════════════════
+  
+  omni-collaboration:
+    deploy:
+      resources:
+        limits: { cpus: '0.25', memory: '256M' }
+        reservations: { cpus: '0.05', memory: '64M' }
+  
+  omni-design-reviewer:
+    deploy:
+      resources:
+        limits: { cpus: '0.25', memory: '256M' }
+        reservations: { cpus: '0.05', memory: '64M' }
+  
+  omni-code-reviewer:
+    deploy:
+      resources:
+        limits: { cpus: '0.25', memory: '256M' }
+        reservations: { cpus: '0.05', memory: '64M' }
+  
+  omni-security-reviewer:
+    deploy:
+      resources:
+        limits: { cpus: '0.25', memory: '256M' }
+        reservations: { cpus: '0.05', memory: '64M' }
+  
+  omni-prompt-optimizer:
+    deploy:
+      resources:
+        limits: { cpus: '0.25', memory: '256M' }
+        reservations: { cpus: '0.05', memory: '64M' }
+  
+  omni-retrospective:
+    deploy:
+      resources:
+        limits: { cpus: '0.25', memory: '256M' }
+        reservations: { cpus: '0.05', memory: '64M' }
+  
+  omni-sera-pipeline:
+    deploy:
+      resources:
+        limits: { cpus: '0.5', memory: '512M' }
+        reservations: { cpus: '0.1', memory: '128M' }
+  
+  omni-ab-testing:
+    deploy:
+      resources:
+        limits: { cpus: '0.25', memory: '256M' }
+        reservations: { cpus: '0.05', memory: '64M' }
+  
+  omni-audit-logger:
+    deploy:
+      resources:
+        limits: { cpus: '0.25', memory: '256M' }
+        reservations: { cpus: '0.05', memory: '64M' }
+  
+  omni-scheduler:
+    deploy:
+      resources:
+        limits: { cpus: '0.25', memory: '256M' }
+        reservations: { cpus: '0.05', memory: '64M' }
+  
+  omni-semantic-cache:
+    deploy:
+      resources:
+        limits: { cpus: '0.5', memory: '512M' }
+        reservations: { cpus: '0.1', memory: '128M' }
+  
+  omni-pgbouncer:
+    deploy:
+      resources:
+        limits: { cpus: '0.25', memory: '128M' }
+        reservations: { cpus: '0.05', memory: '32M' }
+  
+  omni-uptime-kuma:
+    deploy:
+      resources:
+        limits: { cpus: '0.25', memory: '256M' }
+        reservations: { cpus: '0.05', memory: '64M' }
+  
+  omni-crowdsec:
+    deploy:
+      resources:
+        limits: { cpus: '0.5', memory: '512M' }
+        reservations: { cpus: '0.1', memory: '128M' }
+  
+  omni-portainer:
+    deploy:
+      resources:
+        limits: { cpus: '0.25', memory: '256M' }
+        reservations: { cpus: '0.05', memory: '64M' }
+
+  # Wave 8+ services
+  omni-listmonk:
+    deploy:
+      resources:
+        limits: { cpus: '0.25', memory: '256M' }
+        reservations: { cpus: '0.05', memory: '64M' }
+  
+  omni-ntfy:
+    deploy:
+      resources:
+        limits: { cpus: '0.1', memory: '128M' }
+        reservations: { cpus: '0.02', memory: '32M' }
+  
+  omni-nats:
+    deploy:
+      resources:
+        limits: { cpus: '0.5', memory: '512M' }
+        reservations: { cpus: '0.1', memory: '128M' }
+  
+  omni-meilisearch:
+    deploy:
+      resources:
+        limits: { cpus: '0.5', memory: '512M' }
+        reservations: { cpus: '0.1', memory: '128M' }
+  
+  omni-kong:
+    deploy:
+      resources:
+        limits: { cpus: '0.5', memory: '512M' }
+        reservations: { cpus: '0.1', memory: '128M' }
+  
+  omni-centrifugo:
+    deploy:
+      resources:
+        limits: { cpus: '0.25', memory: '256M' }
+        reservations: { cpus: '0.05', memory: '64M' }

@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  spec-generator:
+    build: .
+    image: omni-spec-generator:latest
+    container_name: spec-generator
+    environment:
+      - QDRANT_HOST=${QDRANT_HOST:-omni-qdrant}
+      - QDRANT_PORT=${QDRANT_PORT:-6333}
+      - SPEC_COLLECTION=${SPEC_COLLECTION:-specs}
+      - MODEL_ENDPOINT=${MODEL_ENDPOINT:-http://omni-litellm:4000/v1/chat/completions}
+      - CODE_SCORER_URL=${CODE_SCORER_URL:-http://code-scorer:8350/api/v1/score}
+      - SPEC_SCORE_THRESHOLD=${SPEC_SCORE_THRESHOLD:-8.0}
+    ports:
+      - "8332:8332"
+    networks:
+      - omni-quantum
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8332/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: on-failure
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  omni-quantum:
+    external: true

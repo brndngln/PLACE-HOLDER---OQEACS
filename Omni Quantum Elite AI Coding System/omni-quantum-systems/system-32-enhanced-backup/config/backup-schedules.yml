@@ -1,0 +1,271 @@
+###############################################################################
+# Backup Schedules — ALL 28+ Omni Quantum Services
+# Format: cron-like schedules with retention policies
+###############################################################################
+
+global:
+  restic_repository: "s3:http://omni-minio:9000/omni-backups"
+  staging_dir: "/backup/staging"
+  retention:
+    keep_hourly: 24
+    keep_daily: 30
+    keep_weekly: 12
+    keep_monthly: 12
+    keep_yearly: 3
+
+schedules:
+  # ===========================================================================
+  # CRITICAL — Hourly backups
+  # ===========================================================================
+  postgresql:
+    schedule: "0 * * * *"  # Every hour
+    type: postgresql
+    description: "All PostgreSQL databases"
+    databases: ["all"]  # pg_dumpall
+    host: omni-postgres
+    port: 5432
+    retention:
+      keep_hourly: 48
+      keep_daily: 30
+      keep_weekly: 12
+    priority: critical
+
+  redis:
+    schedule: "15 * * * *"  # Every hour at :15
+    type: redis
+    description: "Redis RDB + AOF snapshot"
+    host: omni-redis
+    port: 6379
+    method: bgsave
+    priority: critical
+
+  vault_secrets:
+    schedule: "30 * * * *"  # Every hour at :30
+    type: vault
+    description: "HashiCorp Vault seal keys + data"
+    vault_addr: "http://omni-vault:8200"
+    include:
+      - "sys/seal-status"
+      - "secret/*"
+      - "database/*"
+      - "pki/*"
+    priority: critical
+
+  # ===========================================================================
+  # HIGH PRIORITY — Every 6 hours
+  # ===========================================================================
+  gitea_repositories:
+    schedule: "0 */6 * * *"  # Every 6 hours
+    type: gitea
+    description: "All Gitea repositories + LFS"
+    gitea_url: "http://omni-gitea:3000"
+    method: dump  # gitea dump
+    include:
+      - repositories
+      - lfs
+      - database
+      - config
+    priority: high
+
+  qdrant_vectors:
+    schedule: "15 */6 * * *"
+    type: qdrant
+    description: "Qdrant vector database snapshots"
+    qdrant_url: "http://omni-qdrant:6333"
+    method: snapshot
+    collections: ["all"]
+    priority: high
+
+  mattermost_data:
+    schedule: "30 */6 * * *"
+    type: mattermost
+    description: "Mattermost messages, files, config"
+    mattermost_url: "http://omni-mattermost:8065"
+    include:
+      - database  # via PostgreSQL
+      - file_storage
+      - config
+    priority: high
+
+  n8n_workflows:
+    schedule: "45 */6 * * *"
+    type: n8n
+    description: "n8n workflow definitions + credentials"
+    method: export
+    include:
+      - workflows
+      - credentials
+      - database
+    priority: high
+
+  # ===========================================================================
+  # MEDIUM PRIORITY — Daily
+  # ===========================================================================
+  minio_buckets:
+    schedule: "0 2 * * *"  # 2 AM daily
+    type: minio
+    description: "MinIO bucket data + policies"
+    endpoint: "omni-minio:9000"
+    buckets:
+      - omni-artifacts
+      - omni-assets
+      - omni-thanos-metrics
+      - omni-loki-chunks
+    priority: medium
+
+  langfuse_data:
+    schedule: "15 2 * * *"
+    type: postgresql_db
+    description: "Langfuse traces + evaluations"
+    database: langfuse
+    host: omni-postgres
+    priority: medium
+
+  plane_data:
+    schedule: "30 2 * * *"
+    type: postgresql_db
+    description: "Plane project management data"
+    database: plane
+    host: omni-postgres
+    priority: medium
+
+  authentik_data:
+    schedule: "45 2 * * *"
+    type: postgresql_db
+    description: "Authentik identity + user data"
+    database: authentik
+    host: omni-postgres
+    priority: medium
+
+  wikijs_data:
+    schedule: "0 3 * * *"
+    type: postgresql_db
+    description: "Wiki.js knowledge base"
+    database: wikijs
+    host: omni-postgres
+    priority: medium
+
+  superset_data:
+    schedule: "15 3 * * *"
+    type: postgresql_db
+    description: "Superset dashboards + queries"
+    database: superset
+    host: omni-postgres
+    priority: medium
+
+  twenty_crm_data:
+    schedule: "30 3 * * *"
+    type: postgresql_db
+    description: "Twenty CRM data"
+    database: twenty
+    host: omni-postgres
+    priority: medium
+
+  crater_invoices:
+    schedule: "45 3 * * *"
+    type: postgresql_db
+    description: "Crater invoicing data"
+    database: crater
+    host: omni-postgres
+    priority: medium
+
+  calcom_data:
+    schedule: "0 4 * * *"
+    type: postgresql_db
+    description: "Cal.com scheduling data"
+    database: calcom
+    host: omni-postgres
+    priority: medium
+
+  nango_integrations:
+    schedule: "15 4 * * *"
+    type: postgresql_db
+    description: "Nango integration configs + tokens"
+    database: nango
+    host: omni-postgres
+    priority: medium
+
+  flowise_flows:
+    schedule: "30 4 * * *"
+    type: volume
+    description: "Flowise workflow definitions"
+    volumes:
+      - flowise-data:/data
+    priority: medium
+
+  grafana_config:
+    schedule: "45 4 * * *"
+    type: volume
+    description: "Grafana dashboards + datasources"
+    volumes:
+      - grafana-data:/data
+    priority: medium
+
+  prometheus_config:
+    schedule: "0 5 * * *"
+    type: volume
+    description: "Prometheus rules + config"
+    volumes:
+      - prometheus-config:/etc/prometheus
+    priority: medium
+
+  loki_config:
+    schedule: "15 5 * * *"
+    type: volume
+    description: "Loki rules + config"
+    volumes:
+      - loki-config:/etc/loki
+    priority: medium
+
+  caddy_config:
+    schedule: "30 5 * * *"
+    type: volume
+    description: "Caddy certificates + config"
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+    priority: medium
+
+  # ===========================================================================
+  # LOW PRIORITY — Weekly
+  # ===========================================================================
+  docker_volumes_full:
+    schedule: "0 1 * * 0"  # Sunday 1 AM
+    type: volume_snapshot
+    description: "Full Docker volume snapshot (all services)"
+    method: full_snapshot
+    priority: low
+
+  config_files:
+    schedule: "0 1 * * 0"
+    type: directory
+    description: "All service configuration files"
+    paths:
+      - "/opt/omni-quantum/configs"
+    priority: low
+
+# ===========================================================================
+# Lifecycle Management
+# ===========================================================================
+lifecycle:
+  hot_storage:
+    duration: 7d
+    location: "s3:http://omni-minio:9000/omni-backups/hot"
+  warm_storage:
+    duration: 30d
+    location: "s3:http://omni-minio:9000/omni-backups/warm"
+  cold_storage:
+    duration: 365d
+    location: "s3:http://omni-minio:9000/omni-backups/cold"
+
+# ===========================================================================
+# Verification
+# ===========================================================================
+verification:
+  auto_verify: true
+  verify_schedule: "0 6 * * *"  # Daily at 6 AM
+  verify_method: restore_check
+  notify_on_failure: true
+  notify_channels:
+    - mattermost
+    - omi

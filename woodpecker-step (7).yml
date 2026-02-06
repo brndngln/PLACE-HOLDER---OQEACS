@@ -1,0 +1,22 @@
+steps:
+  secret-scanning:
+    image: python:3.11-slim
+    commands:
+      # Install scanning tools
+      - pip install --no-cache-dir detect-secrets trufflehog==3.57.1
+      - wget -qO gitleaks.tar.gz https://github.com/gitleaks/gitleaks/releases/download/v8.17.0/gitleaks_8.17.0_linux_x64.tar.gz
+      - tar -xzf gitleaks.tar.gz gitleaks
+      - chmod +x gitleaks
+      # Run gitleaks scan on repository (fail on findings)
+      - ./gitleaks detect --no-git --redact --source .
+      # Run detect-secrets on all files
+      - detect-secrets scan --all-files
+      # Run trufflehog on the test secrets file
+      - trufflehog file --no-update -o /dev/null waves/wave-3-security/secret-scanning/test-secrets.txt
+    when:
+      branch:
+        include:
+          - main
+          - develop
+    environment:
+      PYTHONUNBUFFERED: "1"

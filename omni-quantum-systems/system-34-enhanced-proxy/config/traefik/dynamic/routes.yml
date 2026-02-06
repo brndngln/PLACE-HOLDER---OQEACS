@@ -1,0 +1,367 @@
+###############################################################################
+# Traefik Dynamic Configuration
+# Routes, middleware, rate limiting, mTLS for all Omni Quantum services
+###############################################################################
+
+http:
+  # =========================================================================
+  # Middlewares
+  # =========================================================================
+  middlewares:
+    # Rate limiting — global default
+    rate-limit-default:
+      rateLimit:
+        average: 100
+        burst: 200
+        period: 1m
+
+    # Rate limiting — strict (auth endpoints)
+    rate-limit-strict:
+      rateLimit:
+        average: 10
+        burst: 20
+        period: 1m
+
+    # Rate limiting — API endpoints
+    rate-limit-api:
+      rateLimit:
+        average: 60
+        burst: 120
+        period: 1m
+
+    # Security headers
+    security-headers:
+      headers:
+        browserXssFilter: true
+        contentTypeNosniff: true
+        frameDeny: true
+        sslRedirect: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 31536000
+        customFrameOptionsValue: "SAMEORIGIN"
+        referrerPolicy: "strict-origin-when-cross-origin"
+        contentSecurityPolicy: "default-src 'self'"
+
+    # Compress responses
+    compress:
+      compress:
+        excludedContentTypes:
+          - text/event-stream
+
+    # IP whitelist for admin services
+    admin-whitelist:
+      ipAllowList:
+        sourceRange:
+          - "10.0.0.0/8"
+          - "172.16.0.0/12"
+          - "192.168.0.0/16"
+          - "127.0.0.1/32"
+
+    # Auth forwarding to Authentik
+    authentik-auth:
+      forwardAuth:
+        address: "http://omni-authentik:9000/outpost.goauthentik.io/auth/traefik"
+        trustForwardHeader: true
+        authResponseHeaders:
+          - X-authentik-username
+          - X-authentik-groups
+          - X-authentik-email
+          - X-authentik-uid
+
+    # Middleware chain: security → rate-limit → compress
+    default-chain:
+      chain:
+        middlewares:
+          - security-headers
+          - rate-limit-default
+          - compress
+
+    # Admin chain: whitelist → auth → security → compress
+    admin-chain:
+      chain:
+        middlewares:
+          - admin-whitelist
+          - authentik-auth
+          - security-headers
+          - compress
+
+  # =========================================================================
+  # Routers — all services
+  # =========================================================================
+  routers:
+    # --- Core Services ---
+    grafana:
+      rule: "Host(`grafana.{{env `DOMAIN`}}`)"
+      service: grafana
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - default-chain
+
+    prometheus:
+      rule: "Host(`prometheus.{{env `DOMAIN`}}`)"
+      service: prometheus
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - admin-chain
+
+    gitea:
+      rule: "Host(`git.{{env `DOMAIN`}}`)"
+      service: gitea
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - default-chain
+
+    mattermost:
+      rule: "Host(`chat.{{env `DOMAIN`}}`)"
+      service: mattermost
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - security-headers
+        - compress
+
+    n8n:
+      rule: "Host(`n8n.{{env `DOMAIN`}}`)"
+      service: n8n
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - admin-chain
+
+    plane:
+      rule: "Host(`projects.{{env `DOMAIN`}}`)"
+      service: plane
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - default-chain
+
+    vault:
+      rule: "Host(`vault.{{env `DOMAIN`}}`)"
+      service: vault
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - admin-chain
+
+    authentik:
+      rule: "Host(`auth.{{env `DOMAIN`}}`)"
+      service: authentik
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - security-headers
+        - rate-limit-strict
+        - compress
+
+    portainer:
+      rule: "Host(`containers.{{env `DOMAIN`}}`)"
+      service: portainer
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - admin-chain
+
+    langfuse:
+      rule: "Host(`langfuse.{{env `DOMAIN`}}`)"
+      service: langfuse
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - default-chain
+
+    flowise:
+      rule: "Host(`flowise.{{env `DOMAIN`}}`)"
+      service: flowise
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - admin-chain
+
+    wikijs:
+      rule: "Host(`wiki.{{env `DOMAIN`}}`)"
+      service: wikijs
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - default-chain
+
+    superset:
+      rule: "Host(`analytics.{{env `DOMAIN`}}`)"
+      service: superset
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - admin-chain
+
+    calcom:
+      rule: "Host(`schedule.{{env `DOMAIN`}}`)"
+      service: calcom
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - default-chain
+
+    twenty-crm:
+      rule: "Host(`crm.{{env `DOMAIN`}}`)"
+      service: twenty-crm
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - default-chain
+
+    crater:
+      rule: "Host(`invoices.{{env `DOMAIN`}}`)"
+      service: crater
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - admin-chain
+
+    minio-console:
+      rule: "Host(`storage.{{env `DOMAIN`}}`)"
+      service: minio-console
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - admin-chain
+
+    uptime-kuma:
+      rule: "Host(`status.{{env `DOMAIN`}}`)"
+      service: uptime-kuma
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - security-headers
+        - compress
+
+    coolify:
+      rule: "Host(`deploy.{{env `DOMAIN`}}`)"
+      service: coolify
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - admin-chain
+
+    # --- AI Services (stricter rate limits) ---
+    litellm:
+      rule: "Host(`ai.{{env `DOMAIN`}}`)"
+      service: litellm
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - admin-chain
+        - rate-limit-api
+
+    # --- Traefik Dashboard ---
+    traefik-dashboard:
+      rule: "Host(`proxy.{{env `DOMAIN`}}`)"
+      service: api@internal
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - admin-chain
+
+  # =========================================================================
+  # Services (backend targets)
+  # =========================================================================
+  services:
+    grafana:
+      loadBalancer:
+        servers:
+          - url: "http://omni-grafana:3000"
+    prometheus:
+      loadBalancer:
+        servers:
+          - url: "http://omni-prometheus:9090"
+    gitea:
+      loadBalancer:
+        servers:
+          - url: "http://omni-gitea:3000"
+    mattermost:
+      loadBalancer:
+        servers:
+          - url: "http://omni-mattermost:8065"
+    n8n:
+      loadBalancer:
+        servers:
+          - url: "http://omni-n8n:5678"
+    plane:
+      loadBalancer:
+        servers:
+          - url: "http://omni-plane-web:3000"
+    vault:
+      loadBalancer:
+        servers:
+          - url: "http://omni-vault:8200"
+    authentik:
+      loadBalancer:
+        servers:
+          - url: "http://omni-authentik:9000"
+    portainer:
+      loadBalancer:
+        servers:
+          - url: "http://omni-portainer:9000"
+    langfuse:
+      loadBalancer:
+        servers:
+          - url: "http://omni-langfuse:3000"
+    flowise:
+      loadBalancer:
+        servers:
+          - url: "http://omni-flowise:3000"
+    wikijs:
+      loadBalancer:
+        servers:
+          - url: "http://omni-wikijs:3000"
+    superset:
+      loadBalancer:
+        servers:
+          - url: "http://omni-superset:8088"
+    calcom:
+      loadBalancer:
+        servers:
+          - url: "http://omni-calcom:3000"
+    twenty-crm:
+      loadBalancer:
+        servers:
+          - url: "http://omni-twenty:3000"
+    crater:
+      loadBalancer:
+        servers:
+          - url: "http://omni-crater:80"
+    minio-console:
+      loadBalancer:
+        servers:
+          - url: "http://omni-minio:9001"
+    uptime-kuma:
+      loadBalancer:
+        servers:
+          - url: "http://omni-uptime-kuma:3001"
+    coolify:
+      loadBalancer:
+        servers:
+          - url: "http://omni-coolify:8000"
+    litellm:
+      loadBalancer:
+        servers:
+          - url: "http://omni-litellm:4000"
+
+# =========================================================================
+# mTLS Configuration for internal service-to-service communication
+# =========================================================================
+tls:
+  options:
+    mtls:
+      clientAuth:
+        caFiles:
+          - /certs/ca.pem
+        clientAuthType: RequireAndVerifyClientCert
+      minVersion: VersionTLS12
+      cipherSuites:
+        - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256

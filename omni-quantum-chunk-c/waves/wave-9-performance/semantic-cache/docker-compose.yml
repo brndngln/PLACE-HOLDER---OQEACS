@@ -1,0 +1,38 @@
+version: '3.9'
+# OMNI QUANTUM ELITE v3.0 — semantic-cache
+
+services:
+  semantic-cache:
+    build: .
+    container_name: omni-semantic-cache
+    restart: unless-stopped
+    ports:
+      - "8380:8380"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://fortress:quantum_elite_2024@omni-postgres:5432/financial_fortress}
+      REDIS_URL: ${REDIS_URL:-redis://omni-redis:6379}
+      LITELLM_URL: ${LITELLM_URL:-http://omni-litellm:4000}
+      MATTERMOST_WEBHOOK_URL: ${MATTERMOST_WEBHOOK_URL:-http://omni-mattermost:8065/hooks/incoming}
+      QDRANT_URL: ${QDRANT_URL:-http://omni-qdrant:6333}
+      PORT: "8380"
+
+
+
+    labels:
+      omni.quantum.component: "semantic-cache"
+      omni.quantum.tier: "HIGH"
+      omni.quantum.network: "omni-quantum-network"
+      omni.quantum.port: "8380"
+      omni.quantum.critical: "false"
+      omni.quantum.monitoring: "true"
+    networks:
+      - omni-quantum-network
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  omni-quantum-network:
+    external: true

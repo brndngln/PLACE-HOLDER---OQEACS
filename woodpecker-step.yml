@@ -1,0 +1,26 @@
+---
+# Woodpecker CI pipeline step for Tier 1 Instant Verification
+#
+# This step uses the omni‑verify‑instant image to perform fast
+# static analysis and formatting checks across the repository. It runs the
+# bundled verify script which emits a structured JSON summary of all
+# tool results. Even if any tool fails, the script will return a
+# non‑zero exit code to ensure the pipeline marks the build as failed.
+
+kind: pipeline
+name: verify_instant
+
+steps:
+  verify:
+    image: omni-verify-instant
+    pull: true
+    commands:
+      # Run the verification script. The script handles parallel
+      # execution and JSON aggregation internally. Output is streamed
+      # to the console so that Woodpecker can display it. The exit
+      # code is propagated to fail the build when any tool fails.
+      - /usr/local/bin/verify.sh
+    when:
+      event:
+        - push
+        - pull_request

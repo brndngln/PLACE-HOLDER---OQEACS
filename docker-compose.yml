@@ -1,0 +1,74 @@
+version: '3.9'
+# OMNI QUANTUM ELITE v3.0 - Docker Compose
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: financial-db
+    environment:
+      POSTGRES_DB: financial_fortress
+      POSTGRES_USER: fortress
+      POSTGRES_PASSWORD: quantum_elite_2024
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fortress"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: financial-redis
+    ports:
+      - "6379:6379"
+
+  tax-fortress:
+    build: .
+    container_name: quantum-tax-fortress
+    environment:
+      DATABASE_URL: postgresql://fortress:quantum_elite_2024@postgres:5432/financial_fortress
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "4011:4011"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: python quantum_tax_fortress.py
+
+  dashboard:
+    build: .
+    container_name: omniscient-dashboard
+    environment:
+      DATABASE_URL: postgresql://fortress:quantum_elite_2024@postgres:5432/financial_fortress
+    ports:
+      - "4012:4012"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: python omniscient_dashboard.py
+
+  alert-engine:
+    build: .
+    container_name: neural-alert-engine
+    environment:
+      DATABASE_URL: postgresql://fortress:quantum_elite_2024@postgres:5432/financial_fortress
+      MATTERMOST_WEBHOOK_URL: ${MATTERMOST_WEBHOOK_URL:-}
+    ports:
+      - "4013:4013"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: python neural_alert_engine.py
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: financial-grafana
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres_data:

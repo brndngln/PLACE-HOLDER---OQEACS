@@ -1,0 +1,102 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#1a1a2e', 'primaryTextColor': '#eaeaea', 'primaryBorderColor': '#4a4a6a', 'lineColor': '#8b5cf6', 'secondaryColor': '#16213e', 'tertiaryColor': '#0f3460'}}}%%
+
+flowchart TB
+    subgraph CLIENT["👤 Client Layer"]
+        direction LR
+        WEB[Web UI]
+        CLI[CLI]
+        API[API Client]
+        OMI[Omi Wearable]
+    end
+
+    subgraph GATEWAY["🚪 Gateway Layer"]
+        TRAEFIK[Traefik<br/>:8080]
+        AUTH[Authentik<br/>:9000]
+    end
+
+    subgraph ORCHESTRATION["🎯 Orchestration Layer"]
+        ORCH[Master Orchestrator<br/>:9500]
+        N8N[n8n Workflows<br/>:5678]
+        SCHEDULER[Job Scheduler]
+    end
+
+    subgraph AI["🧠 AI Layer"]
+        LITELLM[LiteLLM Gateway<br/>:4000]
+        OLLAMA[Ollama<br/>:11434]
+        TOKENINF[Token Infinity<br/>:9600]
+        CACHE[Semantic Cache<br/>:8380]
+    end
+
+    subgraph AGENTS["🤖 Agent Layer"]
+        OPENHANDS[OpenHands<br/>:3000]
+        SWEAGENT[SWE-Agent<br/>:8000]
+        FLOWISE[Flowise<br/>:3000]
+    end
+
+    subgraph DATA["💾 Data Layer"]
+        PG[(PostgreSQL<br/>:5432)]
+        REDIS[(Redis<br/>:6379)]
+        QDRANT[(Qdrant<br/>:6333)]
+        MINIO[(MinIO<br/>:9000)]
+    end
+
+    subgraph OBSERVABILITY["📊 Observability"]
+        PROM[Prometheus<br/>:9090]
+        GRAF[Grafana<br/>:3000]
+        LOKI[Loki<br/>:3100]
+        LANGFUSE[Langfuse<br/>:3000]
+    end
+
+    subgraph DEPLOY["🚀 Deployment"]
+        BLUEGREEN[Blue-Green<br/>:9650]
+        CANARY[Canary<br/>:9651]
+        ROLLBACK[Rollback<br/>:9652]
+        HEALTH[Health Agg<br/>:9653]
+    end
+
+    subgraph SECURITY["🔒 Security"]
+        VAULT[Vault<br/>:8200]
+        CROWDSEC[CrowdSec<br/>:8080]
+    end
+
+    CLIENT --> TRAEFIK
+    TRAEFIK --> AUTH
+    AUTH --> ORCH
+
+    ORCH --> LITELLM
+    ORCH --> AGENTS
+    ORCH --> N8N
+    ORCH --> DEPLOY
+
+    LITELLM --> OLLAMA
+    LITELLM --> TOKENINF
+    LITELLM --> CACHE
+    CACHE --> QDRANT
+
+    AGENTS --> LITELLM
+    AGENTS --> DATA
+
+    ORCH --> DATA
+    ORCH --> OBSERVABILITY
+
+    DEPLOY --> TRAEFIK
+    DEPLOY --> HEALTH
+
+    VAULT --> ORCH
+    CROWDSEC --> TRAEFIK
+
+    OMI --> ORCH
+
+    classDef gateway fill:#4a4a6a,stroke:#8b5cf6,stroke-width:2px
+    classDef ai fill:#16213e,stroke:#22d3ee,stroke-width:2px
+    classDef data fill:#0f3460,stroke:#f472b6,stroke-width:2px
+    classDef obs fill:#1e1e3f,stroke:#a3e635,stroke-width:2px
+    classDef deploy fill:#1a1a2e,stroke:#fb923c,stroke-width:2px
+    classDef security fill:#2d1b4e,stroke:#ef4444,stroke-width:2px
+
+    class TRAEFIK,AUTH gateway
+    class LITELLM,OLLAMA,TOKENINF,CACHE,OPENHANDS,SWEAGENT,FLOWISE ai
+    class PG,REDIS,QDRANT,MINIO data
+    class PROM,GRAF,LOKI,LANGFUSE obs
+    class BLUEGREEN,CANARY,ROLLBACK,HEALTH deploy
+    class VAULT,CROWDSEC security

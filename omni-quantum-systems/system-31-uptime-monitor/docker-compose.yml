@@ -1,0 +1,81 @@
+###############################################################################
+# System 31: Uptime Monitor — "Guardian Eye"
+# Purpose: Health checks, public status page, incident management
+# Tool: Uptime Kuma (100% open source, self-hosted)
+###############################################################################
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+    tag: "{{.Name}}"
+
+services:
+  #---------------------------------------------------------------------------
+  # Uptime Kuma — primary uptime monitor + status page
+  #---------------------------------------------------------------------------
+  uptime-kuma:
+    image: louislam/uptime-kuma:1.23.16
+    container_name: omni-uptime-kuma
+    environment:
+      TZ: UTC
+      UPTIME_KUMA_PORT: "3001"
+    volumes:
+      - uptime-kuma-data:/app/data
+    ports:
+      - "3001:3001"
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"const http = require('http'); const req = http.request({hostname: 'localhost', port: 3001, path: '/api/health', method: 'GET'}, (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }); req.on('error', () => process.exit(1)); req.end();\""]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - omni-quantum-network
+    labels:
+      - "omni.quantum.component=uptime-kuma"
+      - "omni.quantum.tier=standard"
+      - "omni.quantum.critical=false"
+
+  #---------------------------------------------------------------------------
+  # Uptime Kuma Webhook Relay — bridges alerts to Mattermost + Omi
+  #---------------------------------------------------------------------------
+  uptime-webhook-relay:
+    build:
+      context: ./config/webhook-relay
+      dockerfile: Dockerfile
+    container_name: omni-uptime-webhook-relay
+    environment:
+      TZ: UTC
+      MATTERMOST_WEBHOOK: ${MATTERMOST_ALERTS_WEBHOOK}
+      OMI_WEBHOOK: ${OMI_WEBHOOK_URL}
+      LISTEN_PORT: "8186"
+    ports:
+      - "8186:8186"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8186/health')"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - omni-quantum-network
+    labels:
+      - "omni.quantum.component=uptime-webhook-relay"
+      - "omni.quantum.tier=standard"
+      - "omni.quantum.critical=false"
+      - "prometheus.scrape=true"
+      - "prometheus.port=8186"
+
+volumes:
+  uptime-kuma-data:
+    driver: local
+
+networks:
+  omni-quantum-network:
+    external: true

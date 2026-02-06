@@ -1,0 +1,57 @@
+%%{init: {'theme': 'base'}}%%
+
+sequenceDiagram
+    participant U as User
+    participant T as Traefik
+    participant O as Orchestrator
+    participant L as LiteLLM
+    participant C as Semantic Cache
+    participant Q as Qdrant
+    participant OL as Ollama
+    participant OH as OpenHands
+    participant G as Gitea
+    participant M as Mattermost
+
+    U->>T: POST /api/v1/projects
+    T->>O: Route to Orchestrator
+    O->>O: Parse Intent & Spec
+
+    Note over O: Stage 1: Intent & Spec
+
+    O->>L: Generate Technical Plan
+    L->>C: Check Semantic Cache
+    
+    alt Cache Hit
+        C-->>L: Return Cached Response
+    else Cache Miss
+        C->>Q: Embedding Search
+        Q-->>C: Similar Prompts
+        L->>OL: Forward to Ollama
+        OL-->>L: LLM Response
+        L->>C: Store in Cache
+    end
+    
+    L-->>O: Technical Plan
+
+    Note over O: Stage 2: Build
+
+    O->>OH: Generate Code
+    OH->>L: Code Generation Request
+    L->>OL: Devstral Model
+    OL-->>L: Generated Code
+    L-->>OH: Code Response
+    OH-->>O: Initial Code
+
+    Note over O: Stage 3-4: Review & Test
+
+    O->>O: Quality Gates
+    O->>G: Commit to Repository
+    G-->>O: Commit SHA
+
+    Note over O: Stage 5-8: Deploy
+
+    O->>M: Notification
+    M-->>U: "Build Complete"
+    
+    O-->>T: Response
+    T-->>U: Project Created

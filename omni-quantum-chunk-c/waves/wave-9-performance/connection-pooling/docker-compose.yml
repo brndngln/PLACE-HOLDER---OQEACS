@@ -1,0 +1,41 @@
+version: '3.9'
+# OMNI QUANTUM ELITE v3.0 — pgbouncer
+
+services:
+  pgbouncer:
+    image: edoburu/pgbouncer:1.22.0
+    container_name: omni-pgbouncer
+    restart: unless-stopped
+    ports:
+      - "6432:6432"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://fortress:quantum_elite_2024@omni-postgres:5432/financial_fortress}
+      REDIS_URL: ${REDIS_URL:-redis://omni-redis:6379}
+      LITELLM_URL: ${LITELLM_URL:-http://omni-litellm:4000}
+      MATTERMOST_WEBHOOK_URL: ${MATTERMOST_WEBHOOK_URL:-http://omni-mattermost:8065/hooks/incoming}
+      QDRANT_URL: ${QDRANT_URL:-http://omni-qdrant:6333}
+      PORT: "6432"
+      DATABASE_URL: postgresql://fortress:quantum_elite_2024@omni-postgres:5432/financial_fortress
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 200
+      DEFAULT_POOL_SIZE: 20
+
+
+    labels:
+      omni.quantum.component: "pgbouncer"
+      omni.quantum.tier: "HIGH"
+      omni.quantum.network: "omni-quantum-network"
+      omni.quantum.port: "6432"
+      omni.quantum.critical: "false"
+      omni.quantum.monitoring: "true"
+    networks:
+      - omni-quantum-network
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  omni-quantum-network:
+    external: true

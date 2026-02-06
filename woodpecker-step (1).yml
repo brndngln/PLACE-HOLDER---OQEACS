@@ -1,0 +1,21 @@
+---
+# Woodpecker CI pipeline step for Tier 2 Fast Verification
+#
+# This pipeline step uses the omni‑verify‑fast image to execute unit
+# tests, static analysis, API specification linting and secret scans in
+# parallel. The verify script generates a JSON summary and returns a
+# non‑zero exit code when any check fails.
+
+kind: pipeline
+name: verify_fast
+
+steps:
+  verify:
+    image: omni-verify-fast
+    pull: true
+    commands:
+      - /usr/local/bin/verify.sh
+    when:
+      event:
+        - push
+        - pull_request

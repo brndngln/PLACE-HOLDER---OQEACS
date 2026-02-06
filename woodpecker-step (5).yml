@@ -1,0 +1,18 @@
+---
+kind: pipeline
+name: clean_room_reproducibility
+
+steps:
+  clean-room:
+    image: docker:24.0.5-dind
+    services:
+      - docker:24.0.5-dind
+    privileged: true
+    commands:
+      - apk add --no-cache python3 py3-pip npm || true
+      - python3 --version
+      - bash verify-clean-build.sh
+    when:
+      event:
+        - push
+        - pull_request

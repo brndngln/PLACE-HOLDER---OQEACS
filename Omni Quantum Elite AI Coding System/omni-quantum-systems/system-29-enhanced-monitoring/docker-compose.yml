@@ -1,0 +1,311 @@
+###############################################################################
+# System 29: Enhanced Monitoring Stack — "Pulse Command Pro"
+# Purpose: Production-grade observability across ALL 28+ services
+# Enhances: System 8 (Pulse Command) — adds SLA tracking, anomaly detection,
+#           business metrics, capacity planning, per-service dashboards
+###############################################################################
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+    tag: "{{.Name}}"
+
+x-common-env: &common-env
+  TZ: UTC
+
+services:
+  #---------------------------------------------------------------------------
+  # Thanos Sidecar — long-term Prometheus storage + global query
+  #---------------------------------------------------------------------------
+  thanos-sidecar:
+    image: quay.io/thanos/thanos:v0.35.1
+    container_name: omni-thanos-sidecar
+    command:
+      - sidecar
+      - --tsdb.path=/prometheus
+      - --prometheus.url=http://omni-prometheus:9090
+      - --objstore.config-file=/etc/thanos/bucket.yml
+      - --grpc-address=0.0.0.0:10901
+      - --http-address=0.0.0.0:10902
+    volumes:
+      - prometheus-data:/prometheus:ro
+      - ./config/thanos-bucket.yml:/etc/thanos/bucket.yml:ro
+    environment:
+      <<: *common-env
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:10902/-/healthy"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - omni-quantum-network
+    labels:
+      - "omni.quantum.component=thanos-sidecar"
+      - "omni.quantum.tier=standard"
+      - "omni.quantum.critical=false"
+      - "prometheus.scrape=true"
+      - "prometheus.port=10902"
+
+  #---------------------------------------------------------------------------
+  # Thanos Store — serves historical data from object storage
+  #---------------------------------------------------------------------------
+  thanos-store:
+    image: quay.io/thanos/thanos:v0.35.1
+    container_name: omni-thanos-store
+    command:
+      - store
+      - --data-dir=/thanos/store
+      - --objstore.config-file=/etc/thanos/bucket.yml
+      - --grpc-address=0.0.0.0:10901
+      - --http-address=0.0.0.0:10902
+      - --index-cache-size=500MB
+      - --chunk-pool-size=2GB
+    volumes:
+      - thanos-store-data:/thanos/store
+      - ./config/thanos-bucket.yml:/etc/thanos/bucket.yml:ro
+    environment:
+      <<: *common-env
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:10902/-/healthy"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - omni-quantum-network
+    labels:
+      - "omni.quantum.component=thanos-store"
+      - "omni.quantum.tier=standard"
+      - "omni.quantum.critical=false"
+      - "prometheus.scrape=true"
+      - "prometheus.port=10902"
+
+  #---------------------------------------------------------------------------
+  # Thanos Query — unified query across all Prometheus + Store
+  #---------------------------------------------------------------------------
+  thanos-query:
+    image: quay.io/thanos/thanos:v0.35.1
+    container_name: omni-thanos-query
+    command:
+      - query
+      - --http-address=0.0.0.0:9091
+      - --grpc-address=0.0.0.0:10901
+      - --store=omni-thanos-sidecar:10901
+      - --store=omni-thanos-store:10901
+      - --query.auto-downsampling
+      - --query.partial-response
+    ports:
+      - "9091:9091"
+    environment:
+      <<: *common-env
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9091/-/healthy"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - omni-quantum-network
+    labels:
+      - "omni.quantum.component=thanos-query"
+      - "omni.quantum.tier=standard"
+      - "omni.quantum.critical=false"
+      - "prometheus.scrape=true"
+      - "prometheus.port=9091"
+
+  #---------------------------------------------------------------------------
+  # Thanos Compactor — downsamples + deduplicates long-term storage
+  #---------------------------------------------------------------------------
+  thanos-compactor:
+    image: quay.io/thanos/thanos:v0.35.1
+    container_name: omni-thanos-compactor
+    command:
+      - compact
+      - --data-dir=/thanos/compact
+      - --objstore.config-file=/etc/thanos/bucket.yml
+      - --http-address=0.0.0.0:10902
+      - --retention.resolution-raw=30d
+      - --retention.resolution-5m=180d
+      - --retention.resolution-1h=365d
+      - --compact.concurrency=2
+      - --wait
+    volumes:
+      - thanos-compact-data:/thanos/compact
+      - ./config/thanos-bucket.yml:/etc/thanos/bucket.yml:ro
+    environment:
+      <<: *common-env
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:10902/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - omni-quantum-network
+    labels:
+      - "omni.quantum.component=thanos-compactor"
+      - "omni.quantum.tier=standard"
+      - "omni.quantum.critical=false"
+      - "prometheus.scrape=true"
+      - "prometheus.port=10902"
+
+  #---------------------------------------------------------------------------
+  # Karma — Alertmanager UI + alert aggregation
+  #---------------------------------------------------------------------------
+  karma:
+    image: ghcr.io/prymitive/karma:v0.120
+    container_name: omni-karma
+    environment:
+      <<: *common-env
+      ALERTMANAGER_URI: http://omni-alertmanager:9093
+      ALERTMANAGER_NAME: omni-alertmanager
+      LISTEN_ADDRESS: 0.0.0.0
+      LISTEN_PORT: "8180"
+    ports:
+      - "8180:8180"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8180/"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - omni-quantum-network
+    labels:
+      - "omni.quantum.component=karma"
+      - "omni.quantum.tier=standard"
+      - "omni.quantum.critical=false"
+
+  #---------------------------------------------------------------------------
+  # Anomaly Detector — Python-based anomaly detection on Prometheus metrics
+  #---------------------------------------------------------------------------
+  anomaly-detector:
+    build:
+      context: ./config/anomaly-detector
+      dockerfile: Dockerfile
+    container_name: omni-anomaly-detector
+    environment:
+      <<: *common-env
+      PROMETHEUS_URL: http://omni-prometheus:9090
+      THANOS_URL: http://omni-thanos-query:9091
+      MATTERMOST_WEBHOOK: ${MATTERMOST_ALERTS_WEBHOOK}
+      OMI_WEBHOOK: ${OMI_WEBHOOK_URL}
+      CHECK_INTERVAL: "60"
+      ANOMALY_SENSITIVITY: "2.5"
+      REDIS_URL: redis://omni-redis:6379/5
+    volumes:
+      - anomaly-detector-data:/app/data
+    ports:
+      - "8181:8181"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8181/health')"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - omni-quantum-network
+    labels:
+      - "omni.quantum.component=anomaly-detector"
+      - "omni.quantum.tier=standard"
+      - "omni.quantum.critical=false"
+      - "prometheus.scrape=true"
+      - "prometheus.port=8181"
+
+  #---------------------------------------------------------------------------
+  # SLA Tracker — tracks SLA/SLO/SLI compliance for all services
+  #---------------------------------------------------------------------------
+  sla-tracker:
+    build:
+      context: ./config/sla-tracker
+      dockerfile: Dockerfile
+    container_name: omni-sla-tracker
+    environment:
+      <<: *common-env
+      PROMETHEUS_URL: http://omni-prometheus:9090
+      THANOS_URL: http://omni-thanos-query:9091
+      POSTGRES_URL: postgresql://sla_tracker:${SLA_TRACKER_DB_PASS}@omni-postgres:5432/sla_tracker
+      MATTERMOST_WEBHOOK: ${MATTERMOST_ALERTS_WEBHOOK}
+      OMI_WEBHOOK: ${OMI_WEBHOOK_URL}
+    volumes:
+      - ./config/sla-tracker/sla-definitions.yml:/app/sla-definitions.yml:ro
+    ports:
+      - "8182:8182"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8182/health')"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - omni-quantum-network
+    labels:
+      - "omni.quantum.component=sla-tracker"
+      - "omni.quantum.tier=standard"
+      - "omni.quantum.critical=false"
+      - "prometheus.scrape=true"
+      - "prometheus.port=8182"
+
+  #---------------------------------------------------------------------------
+  # Capacity Planner — forecasting + resource planning
+  #---------------------------------------------------------------------------
+  capacity-planner:
+    build:
+      context: ./config/capacity-planner
+      dockerfile: Dockerfile
+    container_name: omni-capacity-planner
+    environment:
+      <<: *common-env
+      PROMETHEUS_URL: http://omni-prometheus:9090
+      THANOS_URL: http://omni-thanos-query:9091
+      MATTERMOST_WEBHOOK: ${MATTERMOST_ALERTS_WEBHOOK}
+      FORECAST_HORIZON_DAYS: "30"
+    ports:
+      - "8183:8183"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8183/health')"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - omni-quantum-network
+    labels:
+      - "omni.quantum.component=capacity-planner"
+      - "omni.quantum.tier=standard"
+      - "omni.quantum.critical=false"
+      - "prometheus.scrape=true"
+      - "prometheus.port=8183"
+
+volumes:
+  prometheus-data:
+    external: true
+  thanos-store-data:
+    driver: local
+  thanos-compact-data:
+    driver: local
+  anomaly-detector-data:
+    driver: local
+
+networks:
+  omni-quantum-network:
+    external: true

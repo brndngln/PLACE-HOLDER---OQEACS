@@ -1,0 +1,89 @@
+# ╔══════════════════════════════════════════════════════════════════════════════════════╗
+# ║  BUILD CACHE CONFIGURATION — 2-10x Faster Rebuilds                                 ║
+# ║  OMNI QUANTUM ELITE v3.0                                                           ║
+# ╚══════════════════════════════════════════════════════════════════════════════════════╝
+
+docker:
+  buildkit: true
+  environment:
+    DOCKER_BUILDKIT: "1"
+    BUILDKIT_PROGRESS: "plain"
+  
+  # Layer cache mounts for common package managers
+  cache_mounts:
+    pip:
+      type: cache
+      target: /root/.cache/pip
+      id: pip-cache
+    npm:
+      type: cache
+      target: /root/.npm
+      id: npm-cache
+    yarn:
+      type: cache
+      target: /root/.cache/yarn
+      id: yarn-cache
+    go:
+      type: cache
+      target: /go/pkg/mod
+      id: go-mod-cache
+    cargo:
+      type: cache
+      target: /root/.cargo/registry
+      id: cargo-cache
+
+sccache:
+  scheduler_url: "http://omni-sccache:4226"
+  environment:
+    SCCACHE_SERVER: "omni-sccache:4226"
+    SCCACHE_CACHE_SIZE: "10G"
+    RUSTC_WRAPPER: "sccache"
+    CC: "sccache gcc"
+    CXX: "sccache g++"
+
+python:
+  pip_cache_dir: "/cache/pip"
+  pip_download_cache: true
+  compile_bytecode: true
+  no_compile: false
+
+node:
+  npm_cache: "/cache/npm"
+  yarn_cache: "/cache/yarn"
+  node_modules_cache: true
+
+go:
+  goproxy: "https://proxy.golang.org,direct"
+  gomodcache: "/cache/go/mod"
+
+rust:
+  cargo_home: "/cache/cargo"
+  incremental: true
+  target_dir_cache: true
+
+# Volume definitions for docker-compose
+volumes:
+  pip-cache:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/cache/omni/pip
+  npm-cache:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/cache/omni/npm
+  go-cache:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/cache/omni/go
+  cargo-cache:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/cache/omni/cargo

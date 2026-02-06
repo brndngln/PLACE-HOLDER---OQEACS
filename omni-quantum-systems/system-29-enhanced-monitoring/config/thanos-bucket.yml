@@ -1,0 +1,22 @@
+###############################################################################
+# Thanos Object Store Configuration — MinIO (S3-compatible)
+# Stores long-term Prometheus metrics in self-hosted MinIO
+###############################################################################
+type: S3
+config:
+  bucket: "omni-thanos-metrics"
+  endpoint: "omni-minio:9000"
+  access_key: "${MINIO_ACCESS_KEY}"
+  secret_key: "${MINIO_SECRET_KEY}"
+  insecure: true
+  signature_version2: false
+  http_config:
+    idle_conn_timeout: 90s
+    response_header_timeout: 2m
+    insecure_skip_verify: false
+    tls_handshake_timeout: 10s
+    expect_continue_timeout: 1s
+    max_idle_conns: 100
+    max_idle_conns_per_host: 100
+    max_conns_per_host: 0
+  part_size: 134217728  # 128MB multipart upload

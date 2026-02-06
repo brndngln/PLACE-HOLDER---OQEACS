@@ -1,0 +1,18 @@
+no_circular: true
+
+# Layer rules define which layers are permitted to import which.  Each
+# key is a layer name inferred from file paths (e.g. a file inside
+# "handler" directory is treated as layer "handler").  "forbidden_imports"
+# lists layers that must not be imported by this layer.  Unspecified
+# layers have no restrictions.
+layer_rules:
+  handler:
+    forbidden_imports:
+      - service
+      - repository
+  service:
+    forbidden_imports:
+      - handler
+  repository:
+    forbidden_imports:
+      - handler

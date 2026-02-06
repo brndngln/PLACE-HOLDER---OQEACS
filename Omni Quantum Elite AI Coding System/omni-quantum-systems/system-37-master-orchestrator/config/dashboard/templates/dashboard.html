@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Omni Command — Control Center</title>
+<style>
+  :root {
+    --bg: #0a0e1a; --surface: #111827; --surface-2: #1a2235;
+    --border: #1e293b; --text: #e2e8f0; --text-muted: #94a3b8;
+    --green: #22c55e; --yellow: #eab308; --orange: #f97316; --red: #ef4444;
+    --blue: #3b82f6; --purple: #8b5cf6; --cyan: #06b6d4;
+    --accent: #8b5cf6; --radius: 12px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* Header */
+  .header { background: linear-gradient(135deg, #1a1040 0%, #0a0e1a 100%); border-bottom: 1px solid var(--border); padding: 20px 32px; display: flex; align-items: center; justify-content: space-between; }
+  .header h1 { font-size: 1.5rem; background: linear-gradient(135deg, var(--purple), var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .header .subtitle { color: var(--text-muted); font-size: 0.85rem; }
+  .platform-badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 99px; font-weight: 600; font-size: 0.9rem; }
+  .badge-operational { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+  .badge-degraded { background: rgba(234,179,8,0.15); color: var(--yellow); border: 1px solid rgba(234,179,8,0.3); }
+  .badge-partial_outage { background: rgba(249,115,22,0.15); color: var(--orange); border: 1px solid rgba(249,115,22,0.3); }
+  .badge-major_outage { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+
+  /* Layout */
+  .container { max-width: 1440px; margin: 0 auto; padding: 24px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+
+  /* Stats cards */
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+  .stat-card .label { color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .stat-card .value { font-size: 2rem; font-weight: 700; }
+  .stat-card .value.green { color: var(--green); } .stat-card .value.yellow { color: var(--yellow); }
+  .stat-card .value.red { color: var(--red); } .stat-card .value.blue { color: var(--blue); }
+
+  /* Services grid */
+  .section-title { font-size: 1.1rem; font-weight: 600; margin: 24px 0 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px; }
+  .services-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .svc-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; display: flex; align-items: center; gap: 14px; transition: border-color 0.2s; }
+  .svc-card:hover { border-color: var(--accent); }
+  .svc-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .dot-healthy { background: var(--green); box-shadow: 0 0 8px rgba(34,197,94,0.4); }
+  .dot-degraded { background: var(--yellow); box-shadow: 0 0 8px rgba(234,179,8,0.4); }
+  .dot-down { background: var(--red); box-shadow: 0 0 8px rgba(239,68,68,0.4); animation: pulse 2s infinite; }
+  .dot-unknown { background: #475569; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .svc-info { flex: 1; min-width: 0; }
+  .svc-name { font-weight: 600; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .svc-meta { color: var(--text-muted); font-size: 0.78rem; margin-top: 2px; }
+  .svc-latency { font-size: 0.78rem; color: var(--text-muted); white-space: nowrap; }
+  .tier-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
+  .tier-critical { background: rgba(239,68,68,0.15); color: var(--red); }
+  .tier-high { background: rgba(249,115,22,0.15); color: var(--orange); }
+  .tier-standard { background: rgba(59,130,246,0.15); color: var(--blue); }
+
+  /* Events */
+  .events-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; max-height: 300px; overflow-y: auto; }
+  .event-item { padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; display: flex; gap: 12px; }
+  .event-item:last-child { border-bottom: none; }
+  .event-time { color: var(--text-muted); white-space: nowrap; font-size: 0.78rem; }
+
+  /* Docker */
+  .docker-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+  .docker-stat { background: var(--surface-2); border-radius: 8px; padding: 12px; text-align: center; }
+  .docker-stat .val { font-size: 1.4rem; font-weight: 700; color: var(--cyan); }
+  .docker-stat .lbl { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
+
+  /* Footer */
+  .footer { text-align: center; padding: 32px; color: var(--text-muted); font-size: 0.8rem; }
+
+  /* Auto-refresh indicator */
+  .refresh-bar { position: fixed; top: 0; left: 0; height: 2px; background: var(--accent); animation: refresh 30s linear infinite; z-index: 100; }
+  @keyframes refresh { from { width: 0; } to { width: 100%; } }
+</style>
+</head>
+<body>
+<div class="refresh-bar"></div>
+
+<div class="header">
+  <div>
+    <h1>⚛ Omni Command</h1>
+    <div class="subtitle">Master Orchestrator — 36 Systems Unified Control Plane</div>
+  </div>
+  <div class="platform-badge badge-{{ overview.get('platform_status', 'unknown') }}">
+    {{ overview.get('emoji', '⚪') }} {{ overview.get('platform_status', 'Unknown') | upper }}
+  </div>
+</div>
+
+<div class="container">
+  <!-- Stats Row -->
+  <div class="grid-4">
+    <div class="stat-card">
+      <div class="label">Services Healthy</div>
+      <div class="value green">{{ overview.get('healthy', 0) }} / {{ overview.get('total_services', 36) }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Uptime</div>
+      <div class="value blue">{{ overview.get('uptime_pct', 0) }}%</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Degraded</div>
+      <div class="value yellow">{{ overview.get('degraded', 0) }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Down</div>
+      <div class="value red">{{ overview.get('down', 0) }}</div>
+    </div>
+  </div>
+
+  <!-- Critical Services -->
+  <div class="section-title">🔴 Critical Services ({{ overview.get('critical_services', {}).get('healthy', 0) }}/{{ overview.get('critical_services', {}).get('total', 0) }})</div>
+  <div class="services-grid">
+    {% for svc in services if svc.tier == 'critical' %}
+    <div class="svc-card">
+      <div class="svc-dot dot-{{ svc.status }}"></div>
+      <div class="svc-info">
+        <div class="svc-name">#{{ svc.id }} {{ svc.name }}</div>
+        <div class="svc-meta"><span class="tier-badge tier-critical">CRITICAL</span> {{ svc.message }}</div>
+      </div>
+      <div class="svc-latency">{{ svc.latency_ms }}ms</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- High Priority Services -->
+  <div class="section-title">🟠 High Priority Services</div>
+  <div class="services-grid">
+    {% for svc in services if svc.tier == 'high' %}
+    <div class="svc-card">
+      <div class="svc-dot dot-{{ svc.status }}"></div>
+      <div class="svc-info">
+        <div class="svc-name">#{{ svc.id }} {{ svc.name }}</div>
+        <div class="svc-meta"><span class="tier-badge tier-high">HIGH</span> {{ svc.message }}</div>
+      </div>
+      <div class="svc-latency">{{ svc.latency_ms }}ms</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Standard Services -->
+  <div class="section-title">🔵 Standard Services</div>
+  <div class="services-grid">
+    {% for svc in services if svc.tier == 'standard' %}
+    <div class="svc-card">
+      <div class="svc-dot dot-{{ svc.status }}"></div>
+      <div class="svc-info">
+        <div class="svc-name">#{{ svc.id }} {{ svc.name }}</div>
+        <div class="svc-meta"><span class="tier-badge tier-standard">STANDARD</span> {{ svc.message }}</div>
+      </div>
+      <div class="svc-latency">{{ svc.latency_ms }}ms</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Docker Stats -->
+  <div class="section-title">🐳 Docker Host</div>
+  <div class="docker-stats">
+    <div class="docker-stat"><div class="val">{{ docker_stats.get('containers_running', '—') }}</div><div class="lbl">Running</div></div>
+    <div class="docker-stat"><div class="val">{{ docker_stats.get('containers_stopped', '—') }}</div><div class="lbl">Stopped</div></div>
+    <div class="docker-stat"><div class="val">{{ docker_stats.get('images', '—') }}</div><div class="lbl">Images</div></div>
+    <div class="docker-stat"><div class="val">{{ docker_stats.get('cpu_count', '—') }}</div><div class="lbl">CPUs</div></div>
+    <div class="docker-stat"><div class="val">{{ docker_stats.get('memory_gb', '—') }} GB</div><div class="lbl">Memory</div></div>
+    <div class="docker-stat"><div class="val">{{ docker_stats.get('docker_version', '—') }}</div><div class="lbl">Docker</div></div>
+  </div>
+
+  <!-- Events -->
+  <div class="section-title">📡 Recent Events</div>
+  <div class="events-panel">
+    {% for event in events | reverse %}
+    <div class="event-item">
+      <span class="event-time">{{ event.get('timestamp', '')[:19] }}</span>
+      <span>
+        {% if event.get('to') == 'down' %}🔴{% elif event.get('to') == 'healthy' %}🟢{% else %}🟡{% endif %}
+        <strong>{{ event.get('service', '') }}</strong>: {{ event.get('from', '?') }} → {{ event.get('to', '?') }}
+      </span>
+    </div>
+    {% else %}
+    <div class="event-item"><span style="color: var(--text-muted);">No events yet — all quiet.</span></div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="footer">
+  Omni Quantum Elite AI Coding System — 100% Open Source · Self-Hosted · Zero Dependencies<br>
+  Auto-refreshes every 30s · <a href="{{ orchestrator_url }}/docs" style="color: var(--accent);">API Docs</a>
+</div>
+
+<script>
+  // Auto-refresh every 30 seconds
+  setTimeout(() => location.reload(), 30000);
+</script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+# Custom Falco rules for the Omni Quantum platform
+rules:
+  - rule: Shell Spawn Detected
+    desc: Detect interactive shell execution inside containers via docker exec or unexpected entrypoints
+    condition: >
+      container and
+      (proc.name in (bash, sh, zsh, ksh) or proc.args contains "bash" or proc.args contains "sh") and
+      not user_known_shell_users
+    output: >
+      "CRITICAL: Interactive shell spawned in container (user=%user.name command=%proc.cmdline container=%container.id image=%container.image.repository:%container.image.tag)."
+    priority: CRITICAL
+
+  - rule: Unexpected Outbound Network Connection
+    desc: Detect outbound network connections from containers to unapproved IP ranges
+    condition: >
+      container and
+      evt.type in (connect,accept) and
+      fd.type = ipv4 and
+      not fd.sip in (127.0.0.0/8, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16)
+    output: >
+      "HIGH: Unexpected network connection from container to external IP (container=%container.id image=%container.image.repository:%container.image.tag dest=%fd.sip)"
+    priority: HIGH
+
+  - rule: File Write Outside Allowed Paths
+    desc: Detect file writes outside of application directories
+    condition: >
+      container and
+      evt.type in (open,openat,creat) and
+      evt.arg.flags contains "O_WRONLY" and
+      not fd.name startswith (/app/) and
+      not fd.name startswith (/tmp/) and
+      not fd.name startswith (/var/tmp/) and
+      not fd.name startswith (/dev/shm/)
+    output: >
+      "MEDIUM: File write outside allowed paths (file=%fd.name user=%user.name container=%container.id image=%container.image.repository:%container.image.tag)"
+    priority: MEDIUM
