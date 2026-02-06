@@ -1,0 +1,30 @@
+repos:
+  - repo: https://github.com/zricethezav/gitleaks
+    rev: v8.17.0
+    hooks:
+      - id: gitleaks
+        name: gitleaks secrets scan
+        entry: gitleaks detect --no-git --redact --exclude-paths waves/wave-3-security/secret-scanning/test-secrets.txt
+        language: golang
+        types: [text]
+        require_serial: true
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.3.0
+    hooks:
+      - id: detect-secrets
+        name: detect-secrets baseline scan
+        entry: detect-secrets scan --all-files
+        language: python
+        types: [text]
+        require_serial: true
+
+  - repo: https://github.com/trufflesecurity/trufflehog
+    rev: v3.57.1
+    hooks:
+      - id: trufflehog
+        name: trufflehog filesystem scan
+        entry: trufflehog filesystem --no-update --only-verified
+        language: python
+        types: [text]
+        require_serial: true

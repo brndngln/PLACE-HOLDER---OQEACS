@@ -1,0 +1,32 @@
+###############################################################################
+# System 24 — Invoice Manager (Crater)
+# Invoicing, expenses, and financial tracking.
+###############################################################################
+services:
+  omni-crater:
+    image: craterapp/crater:latest
+    container_name: omni-crater
+    restart: unless-stopped
+    ports:
+      - "3094:80"
+    environment:
+      DB_CONNECTION: pgsql
+      DB_HOST: omni-postgres
+      DB_PORT: "5432"
+      DB_DATABASE: crater
+      DB_USERNAME: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      APP_URL: https://invoice.${DOMAIN:-omni.local}
+    depends_on:
+      omni-postgres:
+        condition: service_healthy
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.system: "24"
+      omni.name: "Invoice Manager"
+      omni.tier: "standard"
+
+networks:
+  omni-quantum-network:
+    external: true

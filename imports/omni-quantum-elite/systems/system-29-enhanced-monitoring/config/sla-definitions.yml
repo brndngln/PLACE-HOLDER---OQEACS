@@ -1,0 +1,182 @@
+###############################################################################
+# SLA Definitions — Service Level Objectives for All Omni Quantum Services
+###############################################################################
+
+sla_definitions:
+  #---------------------------------------------------------------------------
+  # Tier 1: Critical Services — 99.9% uptime (8.76h/year downtime max)
+  #---------------------------------------------------------------------------
+  critical:
+    target_uptime: 99.9
+    error_budget_window: 30d
+    services:
+      - name: postgresql
+        endpoint: http://omni-postgres:5432
+        check_type: tcp
+        description: "Primary database"
+
+      - name: redis
+        endpoint: http://omni-redis:6379
+        check_type: tcp
+        description: "Cache and message broker"
+
+      - name: caddy
+        endpoint: http://omni-caddy:80/health
+        check_type: http
+        description: "Reverse proxy / edge gateway"
+
+      - name: litellm
+        endpoint: http://omni-litellm:4000/health
+        check_type: http
+        description: "AI gateway — Token Infinity System"
+
+      - name: vault
+        endpoint: http://omni-vault:8200/v1/sys/health
+        check_type: http
+        description: "Secrets management"
+
+      - name: authentik
+        endpoint: http://omni-authentik:9000/-/health/ready/
+        check_type: http
+        description: "Identity & authentication"
+
+  #---------------------------------------------------------------------------
+  # Tier 2: High Priority Services — 99.5% uptime (3.65h/month downtime max)
+  #---------------------------------------------------------------------------
+  high:
+    target_uptime: 99.5
+    error_budget_window: 30d
+    services:
+      - name: ollama
+        endpoint: http://omni-ollama:11434/api/tags
+        check_type: http
+        description: "Local AI model serving"
+
+      - name: gitea
+        endpoint: http://omni-gitea:3000/api/v1/version
+        check_type: http
+        description: "Git hosting"
+
+      - name: n8n
+        endpoint: http://omni-n8n:5678/healthz
+        check_type: http
+        description: "Workflow automation"
+
+      - name: mattermost
+        endpoint: http://omni-mattermost:8065/api/v4/system/ping
+        check_type: http
+        description: "Team communication"
+
+      - name: prometheus
+        endpoint: http://omni-prometheus:9090/-/healthy
+        check_type: http
+        description: "Metrics collection"
+
+      - name: grafana
+        endpoint: http://omni-grafana:3000/api/health
+        check_type: http
+        description: "Dashboards & visualization"
+
+      - name: loki
+        endpoint: http://omni-loki:3100/ready
+        check_type: http
+        description: "Log aggregation"
+
+      - name: qdrant
+        endpoint: http://omni-qdrant:6333/healthz
+        check_type: http
+        description: "Vector database"
+
+      - name: minio
+        endpoint: http://omni-minio:9000/minio/health/live
+        check_type: http
+        description: "Object storage"
+
+  #---------------------------------------------------------------------------
+  # Tier 3: Standard Services — 99.0% uptime (7.3h/month downtime max)
+  #---------------------------------------------------------------------------
+  standard:
+    target_uptime: 99.0
+    error_budget_window: 30d
+    services:
+      - name: langfuse
+        endpoint: http://omni-langfuse:3000/api/public/health
+        check_type: http
+        description: "AI observability"
+
+      - name: plane-web
+        endpoint: http://omni-plane-web:3000
+        check_type: http
+        description: "Project management UI"
+
+      - name: nango
+        endpoint: http://omni-nango:3003/health
+        check_type: http
+        description: "API integration platform"
+
+      - name: openhands
+        endpoint: http://omni-openhands:3000/health
+        check_type: http
+        description: "AI coding agent"
+
+      - name: swe-agent
+        endpoint: http://omni-swe-agent:8000/health
+        check_type: http
+        description: "AI software engineer"
+
+      - name: coolify
+        endpoint: http://omni-coolify:8000/api/health
+        check_type: http
+        description: "Deployment platform"
+
+      - name: flowise
+        endpoint: http://omni-flowise:3000/api/v1/ping
+        check_type: http
+        description: "Visual AI workflow builder"
+
+      - name: wikijs
+        endpoint: http://omni-wikijs:3000/healthz
+        check_type: http
+        description: "Knowledge base"
+
+      - name: superset
+        endpoint: http://omni-superset:8088/health
+        check_type: http
+        description: "Analytics engine"
+
+      - name: calcom
+        endpoint: http://omni-calcom:3000/api/health
+        check_type: http
+        description: "Scheduling system"
+
+      - name: twenty-crm
+        endpoint: http://omni-twenty:3000/api/health
+        check_type: http
+        description: "CRM system"
+
+      - name: crater
+        endpoint: http://omni-crater:80/api/health
+        check_type: http
+        description: "Invoice system"
+
+# SLI Definitions (Service Level Indicators)
+sli_queries:
+  availability:
+    query: "avg_over_time(up{job='{{ service }}'}[{{ window }}])"
+    description: "Percentage of time the service is up"
+
+  latency_p95:
+    query: "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job='{{ service }}'}[5m]))"
+    description: "95th percentile latency"
+
+  latency_p99:
+    query: "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{job='{{ service }}'}[5m]))"
+    description: "99th percentile latency"
+
+  error_rate:
+    query: "rate(http_requests_total{job='{{ service }}', code=~'5..'}[5m]) / rate(http_requests_total{job='{{ service }}'}[5m])"
+    description: "Percentage of 5xx errors"
+
+  saturation:
+    query: "container_memory_usage_bytes{name='omni-{{ service }}'} / container_spec_memory_limit_bytes{name='omni-{{ service }}'}"
+    description: "Resource utilization percentage"

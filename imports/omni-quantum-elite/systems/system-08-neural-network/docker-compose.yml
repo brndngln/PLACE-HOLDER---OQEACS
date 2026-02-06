@@ -1,0 +1,39 @@
+###############################################################################
+# System 8 — Neural Network (Ollama)
+# Local LLM inference server — runs open models on GPU/CPU.
+###############################################################################
+services:
+  omni-ollama:
+    image: ollama/ollama:0.3
+    container_name: omni-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.system: "8"
+      omni.name: "Neural Network"
+      omni.tier: "critical"
+
+volumes:
+  ollama-models:
+    name: omni-ollama-models
+
+networks:
+  omni-quantum-network:
+    external: true

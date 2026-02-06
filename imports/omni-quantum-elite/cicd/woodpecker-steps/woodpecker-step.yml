@@ -1,0 +1,24 @@
+# ╔══════════════════════════════════════════════════════════════════════════════════════╗
+# ║  CONTINUOUS BENCHMARKING — Woodpecker CI Step                                      ║
+# ║  OMNI QUANTUM ELITE v3.0                                                           ║
+# ╚══════════════════════════════════════════════════════════════════════════════════════╝
+
+benchmark:
+  image: python:3.12-slim
+  commands:
+    - pip install pytest-benchmark hyperfine requests --quiet
+    - |
+      # Run benchmarks
+      ./waves/wave-9-performance/benchmarking/benchmark-runner.sh
+      
+      # Report to Bencher
+      if [[ -f benchmark-results.json ]]; then
+        curl -X POST "${BENCHER_URL:-http://omni-bencher:9293}/api/v1/benchmarks" \
+          -H "Content-Type: application/json" \
+          -H "Authorization: Bearer ${BENCHER_TOKEN:-}" \
+          -d @benchmark-results.json || echo "Bencher report skipped"
+      fi
+  environment:
+    - BENCHER_URL
+    - BENCHER_TOKEN
+    - MATTERMOST_WEBHOOK_URL

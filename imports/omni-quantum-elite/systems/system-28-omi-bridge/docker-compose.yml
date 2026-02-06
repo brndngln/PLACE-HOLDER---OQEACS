@@ -1,0 +1,34 @@
+###############################################################################
+# System 28 — Omi Wearable Bridge
+# Connects Omi AI wearable device to the platform for voice commands and context.
+###############################################################################
+services:
+  omni-omi-bridge:
+    image: python:3.12-slim
+    container_name: omni-omi-bridge
+    restart: unless-stopped
+    ports:
+      - "9700:9700"
+    environment:
+      LITELLM_URL: http://omni-litellm:4000
+      LITELLM_KEY: ${LITELLM_MASTER_KEY:-sk-omni-litellm-master}
+      ORCHESTRATOR_URL: http://omni-orchestrator:9500
+    volumes:
+      - ./app:/app
+    working_dir: /app
+    command: ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "9700"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:9700/health').raise_for_status()"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.system: "28"
+      omni.name: "Omi Wearable Bridge"
+      omni.tier: "standard"
+
+networks:
+  omni-quantum-network:
+    external: true

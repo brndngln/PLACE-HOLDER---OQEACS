@@ -1,0 +1,50 @@
+###############################################################################
+# System 6 — Log Nexus (Loki + Promtail)
+# Centralized log aggregation for all platform containers.
+###############################################################################
+services:
+  omni-loki:
+    image: grafana/loki:3.1.0
+    container_name: omni-loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki-data:/loki
+      - ./config/loki-config.yml:/etc/loki/config.yml:ro
+    command: -config.file=/etc/loki/config.yml
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3100/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.system: "6"
+      omni.name: "Log Nexus"
+      omni.tier: "critical"
+
+  omni-promtail:
+    image: grafana/promtail:3.1.0
+    container_name: omni-promtail
+    restart: unless-stopped
+    volumes:
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./config/promtail-config.yml:/etc/promtail/config.yml:ro
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      omni-loki:
+        condition: service_healthy
+    networks:
+      - omni-quantum-network
+
+volumes:
+  loki-data:
+    name: omni-loki-data
+
+networks:
+  omni-quantum-network:
+    external: true

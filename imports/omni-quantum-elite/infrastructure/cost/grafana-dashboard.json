@@ -1,0 +1,137 @@
+{
+  "dashboard": {
+    "title": "Omni Quantum Elite \u2014 Cost Tracking",
+    "uid": "omni-costs",
+    "tags": [
+      "omni",
+      "costs",
+      "finance"
+    ],
+    "timezone": "utc",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Total Cost (30 days)",
+        "type": "stat",
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "targets": [
+          {
+            "expr": "cost_total_usd_30d",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "none"
+        }
+      },
+      {
+        "id": 2,
+        "title": "Token Cost",
+        "type": "stat",
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 6,
+          "y": 0
+        },
+        "targets": [
+          {
+            "expr": "cost_tokens_usd_30d",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Compute Cost",
+        "type": "stat",
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 12,
+          "y": 0
+        },
+        "targets": [
+          {
+            "expr": "cost_compute_usd_30d",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Storage Cost",
+        "type": "stat",
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 18,
+          "y": 0
+        },
+        "targets": [
+          {
+            "expr": "cost_storage_usd_30d",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Daily Cost Trend",
+        "type": "timeseries",
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 4
+        },
+        "targets": [
+          {
+            "expr": "sum(rate(cost_total_usd_30d[1d]))",
+            "legendFormat": "Total",
+            "refId": "A"
+          },
+          {
+            "expr": "sum(rate(cost_tokens_usd_30d[1d]))",
+            "legendFormat": "Tokens",
+            "refId": "B"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Cost by Category",
+        "type": "piechart",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 12
+        },
+        "targets": [
+          {
+            "expr": "cost_tokens_usd_30d",
+            "legendFormat": "Tokens",
+            "refId": "A"
+          },
+          {
+            "expr": "cost_compute_usd_30d",
+            "legendFormat": "Compute",
+            "refId": "B"
+          },
+          {
+            "expr": "cost_storage_usd_30d",
+            "legendFormat": "Storage",
+            "refId": "C"
+          }
+        ]
+      }
+    ]
+  }
+}

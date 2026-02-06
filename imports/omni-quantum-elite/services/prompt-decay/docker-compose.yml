@@ -1,0 +1,37 @@
+
+services:
+  prompt-decay:
+    build:
+      context: .
+    image: omni/prompt-decay:1.0.0
+    container_name: omni-prompt-decay
+    environment:
+      - CODE_SCORER_URL=${CODE_SCORER_URL:-http://omni-code-scorer:8350}
+      - MATTERMOST_WEBHOOK=${MATTERMOST_WEBHOOK:-}
+      - OMI_ENDPOINT=${OMI_ENDPOINT:-http://omni-omi-bridge:9700/api/v1/notify}
+      - DECAY_THRESHOLD=${DECAY_THRESHOLD:-8.0}
+      - DECAY_INTERVAL_HOURS=${DECAY_INTERVAL_HOURS:-168}
+      - GOLDEN_TESTS_FILE=${GOLDEN_TESTS_FILE:-}
+      - ENABLE_SCHEDULER=${ENABLE_SCHEDULER:-true}
+    networks:
+      - omni-quantum-network
+    ports:
+      - "8333:8333"
+    depends_on:
+      - code-scorer
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8333/ready"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+
+networks:
+  omni-quantum-network:
+    external: true

@@ -1,0 +1,39 @@
+###############################################################################
+# System 14 — Project Command (Plane)
+# Project management — issues, sprints, roadmaps with AI integration.
+###############################################################################
+services:
+  omni-plane-web:
+    image: makeplane/plane-frontend:stable
+    container_name: omni-plane-web
+    restart: unless-stopped
+    ports:
+      - "3070:3000"
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://omni-plane-api:8000
+    depends_on:
+      - omni-plane-api
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.system: "14"
+      omni.name: "Project Command"
+      omni.tier: "standard"
+
+  omni-plane-api:
+    image: makeplane/plane-backend:stable
+    container_name: omni-plane-api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@omni-postgres:5432/plane
+      REDIS_URL: redis://omni-redis:6379
+      SECRET_KEY: ${PLANE_SECRET_KEY:-omni-plane-secret}
+    depends_on:
+      omni-postgres:
+        condition: service_healthy
+    networks:
+      - omni-quantum-network
+
+networks:
+  omni-quantum-network:
+    external: true

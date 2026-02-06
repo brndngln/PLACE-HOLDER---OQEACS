@@ -1,0 +1,66 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - alert-rules.yml
+
+scrape_configs:
+  # Self-monitoring
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Foundation Services
+  - job_name: vault
+    metrics_path: /v1/sys/metrics
+    params:
+      format: ['prometheus']
+    static_configs:
+      - targets: ['omni-vault:8200']
+
+  # Intelligence Microservices
+  - job_name: intelligence-services
+    static_configs:
+      - targets:
+        - 'omni-code-scorer:8350'
+        - 'omni-gate-engine:8351'
+        - 'omni-intent-verifier:8352'
+        - 'omni-context-compiler:8325'
+        - 'omni-tool-selector:8326'
+        - 'omni-mcp-registry:8327'
+        - 'omni-mcp-docs:8328'
+        - 'omni-mcp-schema:8329'
+        - 'omni-mcp-pipeline:8330'
+        - 'omni-anti-patterns:8331'
+        - 'omni-spec-generator:8332'
+        - 'omni-prompt-decay:8333'
+        - 'omni-cross-learning:8334'
+
+  # Enhanced Monitoring
+  - job_name: enhanced-monitoring
+    static_configs:
+      - targets:
+        - 'omni-anomaly-detector:8181'
+        - 'omni-sla-tracker:8182'
+        - 'omni-capacity-planner:8183'
+
+  # Enhanced Services
+  - job_name: enhanced-services
+    static_configs:
+      - targets:
+        - 'omni-log-pattern-detector:8184'
+        - 'omni-log-correlator:8185'
+        - 'omni-backup-orchestrator:8187'
+        - 'omni-backup-verifier:8188'
+        - 'omni-secret-rotation:8189'
+
+  # Orchestrator
+  - job_name: orchestrator
+    static_configs:
+      - targets: ['omni-orchestrator:9500']
+
+  # Traefik
+  - job_name: traefik
+    static_configs:
+      - targets: ['omni-traefik:8899']

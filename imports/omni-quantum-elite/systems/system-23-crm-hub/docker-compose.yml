@@ -1,0 +1,34 @@
+###############################################################################
+# System 23 — CRM Hub (Twenty)
+# Open-source CRM — contacts, deals, tasks, and pipeline management.
+###############################################################################
+services:
+  omni-twenty:
+    image: twentycrm/twenty:latest
+    container_name: omni-twenty
+    restart: unless-stopped
+    ports:
+      - "3093:3000"
+    environment:
+      PG_DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@omni-postgres:5432/twenty
+      REDIS_URL: redis://omni-redis:6379
+      APP_SECRET: ${TWENTY_SECRET:-omni-twenty-secret}
+      FRONT_BASE_URL: https://crm.${DOMAIN:-omni.local}
+    depends_on:
+      omni-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:3000/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.system: "23"
+      omni.name: "CRM Hub"
+      omni.tier: "standard"
+
+networks:
+  omni-quantum-network:
+    external: true

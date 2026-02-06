@@ -1,0 +1,9 @@
+{
+  "context_compiler": "PASS",
+  "tool_selector": "PASS",
+  "spec_generator": "PASS",
+  "package_registry": "PASS",
+  "docs": "PASS",
+  "schema": "PASS",
+  "pipeline": "PASS"
+}

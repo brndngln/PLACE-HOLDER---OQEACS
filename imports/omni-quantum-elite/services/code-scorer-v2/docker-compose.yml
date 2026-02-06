@@ -1,0 +1,31 @@
+
+services:
+  code-scorer:
+    build: .
+    image: omni-code-scorer:latest
+    container_name: omni-code-scorer-v2
+    networks:
+      - omni-quantum-network
+    environment:
+      QDRANT_HOST: ${QDRANT_HOST:-omni-qdrant}
+      QDRANT_PORT: ${QDRANT_PORT:-6333}
+      MODEL_ENDPOINT: ${MODEL_ENDPOINT:-http://omni-litellm:4000/v1/chat/completions}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    ports:
+      - "8360:8350"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8350/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: "512M"
+        reservations:
+          memory: "256M"
+
+networks:
+  omni-quantum-network:
+    external: true

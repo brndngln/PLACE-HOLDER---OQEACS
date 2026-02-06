@@ -1,0 +1,37 @@
+###############################################################################
+# System 21 — Analytics Engine (Apache Superset)
+# Business intelligence dashboards, SQL lab, and data exploration.
+###############################################################################
+services:
+  omni-superset:
+    image: apache/superset:4.0
+    container_name: omni-superset
+    restart: unless-stopped
+    ports:
+      - "8088:8088"
+    environment:
+      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET:-omni-superset-secret}
+      DATABASE_DB: superset
+      DATABASE_HOST: omni-postgres
+      DATABASE_PORT: "5432"
+      DATABASE_USER: ${POSTGRES_USER:-postgres}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      REDIS_HOST: omni-redis
+    depends_on:
+      omni-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8088/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.system: "21"
+      omni.name: "Analytics Engine"
+      omni.tier: "standard"
+
+networks:
+  omni-quantum-network:
+    external: true

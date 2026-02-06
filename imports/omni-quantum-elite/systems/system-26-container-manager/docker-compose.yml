@@ -1,0 +1,34 @@
+###############################################################################
+# System 26 — Container Manager (Portainer)
+# Docker/Kubernetes management GUI with RBAC.
+###############################################################################
+services:
+  omni-portainer:
+    image: portainer/portainer-ce:2.21
+    container_name: omni-portainer
+    restart: unless-stopped
+    ports:
+      - "9444:9443"
+      - "9004:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer-data:/data
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9000/api/system/status"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.system: "26"
+      omni.name: "Container Manager"
+      omni.tier: "standard"
+
+volumes:
+  portainer-data:
+    name: omni-portainer-data
+
+networks:
+  omni-quantum-network:
+    external: true

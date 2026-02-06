@@ -1,0 +1,25 @@
+{
+  "timestamp": "2024-01-01T00:00:00Z",
+  "pipeline_sequential_ms": {
+    "lint": 5000,
+    "typecheck": 8000,
+    "format": 3000,
+    "unit_tests": 30000,
+    "sast": 15000,
+    "secrets": 5000,
+    "integration_tests": 45000,
+    "mutation": 60000,
+    "security_review": 20000,
+    "deploy": 10000
+  },
+  "total_sequential_ms": 201000,
+  "latency_p95": {
+    "semantic_cache": 150,
+    "collaboration": 100,
+    "code_reviewer": 200
+  },
+  "throughput": {
+    "api_requests_per_second": 100,
+    "pipeline_runs_per_hour": 10
+  }
+}

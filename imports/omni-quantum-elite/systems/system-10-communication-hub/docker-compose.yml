@@ -1,0 +1,47 @@
+###############################################################################
+# System 10 — Communication Hub (Mattermost)
+# Team messaging with AI bot integration and webhook support.
+###############################################################################
+services:
+  omni-mattermost:
+    image: mattermost/mattermost-team-edition:9.11
+    container_name: omni-mattermost
+    restart: unless-stopped
+    ports:
+      - "8065:8065"
+    environment:
+      MM_SQLSETTINGS_DRIVERNAME: postgres
+      MM_SQLSETTINGS_DATASOURCE: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@omni-postgres:5432/mattermost?sslmode=disable
+      MM_SERVICESETTINGS_SITEURL: https://chat.${DOMAIN:-omni.local}
+      MM_SERVICESETTINGS_ENABLEBOTACCOUNTCREATION: "true"
+      MM_PLUGINSETTINGS_ENABLEUPLOADS: "true"
+    volumes:
+      - mattermost-data:/mattermost/data
+      - mattermost-logs:/mattermost/logs
+      - mattermost-plugins:/mattermost/plugins
+    depends_on:
+      omni-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8065/api/v4/system/ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.system: "10"
+      omni.name: "Communication Hub"
+      omni.tier: "high"
+
+volumes:
+  mattermost-data:
+    name: omni-mattermost-data
+  mattermost-logs:
+    name: omni-mattermost-logs
+  mattermost-plugins:
+    name: omni-mattermost-plugins
+
+networks:
+  omni-quantum-network:
+    external: true

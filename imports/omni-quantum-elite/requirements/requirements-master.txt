@@ -1,0 +1,60 @@
+###############################################################################
+# Omni Quantum Elite — Master Requirements
+# Comprehensive list of ALL Python dependencies used across the platform.
+# Individual services have their own requirements files for slim containers.
+###############################################################################
+
+# === Web Framework ===
+fastapi==0.115.0
+uvicorn==0.30.0
+starlette==0.38.0
+
+# === HTTP Clients ===
+httpx==0.27.0
+aiohttp==3.9.5
+requests==2.32.0
+
+# === Data Validation ===
+pydantic==2.8.0
+
+# === Database ===
+asyncpg==0.29.0
+redis==5.0.1
+sqlalchemy==2.0.31
+
+# === Vector Database ===
+qdrant-client==1.10.0
+
+# === Observability ===
+structlog==24.4.0
+prometheus-client==0.20.0
+
+# === AI/ML ===
+numpy==1.26.4
+scipy==1.13.0
+tiktoken==0.7.0
+
+# === Scheduling ===
+APScheduler==3.10.4
+
+# === Configuration ===
+pyyaml==6.0.1
+
+# === Container Management ===
+docker==7.1.0
+
+# === Chat Integration ===
+mattermostdriver==7.3.2
+
+# === Security/Crypto ===
+cryptography==43.0.0
+pyjwt==2.8.0
+
+# === Linting/Quality (dev) ===
+ruff==0.5.0
+pyright==1.1.370
+pytest==8.2.0
+bandit==1.7.9
+
+# === IaC Linting ===
+checkov==3.2.1

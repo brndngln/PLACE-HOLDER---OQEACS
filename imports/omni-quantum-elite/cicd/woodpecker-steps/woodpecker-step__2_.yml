@@ -1,0 +1,21 @@
+---
+# Woodpecker CI pipeline step for Tier 3 Deep Verification
+#
+# Executes deep verification tasks including integration tests against
+# real backing services, CodeQL static analysis, Facebook Infer and
+# benchmarking. The script aggregates results and fails the pipeline
+# when any task fails. Deep verification may run for up to 10 minutes.
+
+kind: pipeline
+name: verify_deep
+
+steps:
+  verify:
+    image: omni-verify-deep
+    pull: true
+    commands:
+      - /usr/local/bin/verify.sh
+    when:
+      event:
+        - push
+        - pull_request

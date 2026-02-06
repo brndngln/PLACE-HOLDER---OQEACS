@@ -1,0 +1,72 @@
+###############################################################################
+# System 4 — Security Nexus (Authentik)
+# Identity provider — SSO, OIDC, SAML, LDAP for all platform services.
+###############################################################################
+services:
+  omni-authentik:
+    image: ghcr.io/goauthentik/server:2024.8
+    container_name: omni-authentik
+    restart: unless-stopped
+    ports:
+      - "9443:9443"
+    environment:
+      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY:-omni-authentik-secret-change-me}
+      AUTHENTIK_REDIS__HOST: omni-redis
+      AUTHENTIK_POSTGRESQL__HOST: omni-postgres
+      AUTHENTIK_POSTGRESQL__USER: ${POSTGRES_USER:-postgres}
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      AUTHENTIK_POSTGRESQL__NAME: authentik
+    command: server
+    volumes:
+      - authentik-media:/media
+      - authentik-templates:/templates
+    depends_on:
+      omni-postgres:
+        condition: service_healthy
+      omni-redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "ak", "healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.system: "4"
+      omni.name: "Security Nexus"
+      omni.tier: "critical"
+
+  omni-authentik-worker:
+    image: ghcr.io/goauthentik/server:2024.8
+    container_name: omni-authentik-worker
+    restart: unless-stopped
+    environment:
+      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY:-omni-authentik-secret-change-me}
+      AUTHENTIK_REDIS__HOST: omni-redis
+      AUTHENTIK_POSTGRESQL__HOST: omni-postgres
+      AUTHENTIK_POSTGRESQL__USER: ${POSTGRES_USER:-postgres}
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      AUTHENTIK_POSTGRESQL__NAME: authentik
+    command: worker
+    volumes:
+      - authentik-media:/media
+      - authentik-templates:/templates
+    depends_on:
+      omni-postgres:
+        condition: service_healthy
+      omni-redis:
+        condition: service_healthy
+    networks:
+      - omni-quantum-network
+
+volumes:
+  authentik-media:
+    name: omni-authentik-media
+  authentik-templates:
+    name: omni-authentik-templates
+
+networks:
+  omni-quantum-network:
+    external: true

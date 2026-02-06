@@ -1,0 +1,64 @@
+###############################################################################
+# System 0 — Foundation Data Layer (PostgreSQL + Redis)
+# Shared databases used by nearly every system in the platform.
+# Boot this FIRST before anything else.
+###############################################################################
+services:
+  omni-postgres:
+    image: postgres:16-alpine
+    container_name: omni-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_MULTIPLE_DATABASES: >-
+        litellm,authentik,gitea,n8n,mattermost,langfuse,plane,nango,
+        flowise,wikijs,superset,calcom,twenty,crater,coolify,
+        omni_orchestrator,token_infinity
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./config/postgres/init-databases.sh:/docker-entrypoint-initdb.d/01-init-databases.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.system: "0"
+      omni.name: "Foundation Data"
+      omni.tier: "critical"
+
+  omni-redis:
+    image: redis:7-alpine
+    container_name: omni-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.system: "0"
+      omni.name: "Foundation Cache"
+      omni.tier: "critical"
+
+volumes:
+  postgres-data:
+    name: omni-postgres-data
+  redis-data:
+    name: omni-redis-data
+
+networks:
+  omni-quantum-network:
+    external: true

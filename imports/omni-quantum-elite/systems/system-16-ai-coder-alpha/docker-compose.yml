@@ -1,0 +1,38 @@
+###############################################################################
+# System 16 — AI Coder Alpha (OpenHands)
+# AI-powered coding agent with full development environment.
+###############################################################################
+services:
+  omni-openhands:
+    image: ghcr.io/all-hands-ai/openhands:main
+    container_name: omni-openhands
+    restart: unless-stopped
+    ports:
+      - "3080:3000"
+    environment:
+      LLM_API_KEY: ${LITELLM_MASTER_KEY:-sk-omni-litellm-master}
+      LLM_BASE_URL: http://omni-litellm:4000
+      LLM_MODEL: gpt-4o
+      WORKSPACE_MOUNT_PATH: /opt/workspace
+    volumes:
+      - openhands-workspace:/opt/workspace
+      - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.system: "16"
+      omni.name: "AI Coder Alpha"
+      omni.tier: "standard"
+
+volumes:
+  openhands-workspace:
+    name: omni-openhands-workspace
+
+networks:
+  omni-quantum-network:
+    external: true

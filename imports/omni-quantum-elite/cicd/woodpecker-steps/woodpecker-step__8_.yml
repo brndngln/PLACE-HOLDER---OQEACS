@@ -1,0 +1,10 @@
+steps:
+  iac-lint:
+    image: omni-iac-lint:latest
+    commands:
+      - /app/lint.sh
+    when:
+      branch:
+        include:
+          - main
+          - develop

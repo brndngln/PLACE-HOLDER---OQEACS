@@ -1,0 +1,32 @@
+{
+  "checks": [
+    {
+      "id": "semantic_cache_health",
+      "expect": "HTTP 200 from :8380/health"
+    },
+    {
+      "id": "semantic_cache_hit",
+      "expect": "Second identical prompt returns faster"
+    },
+    {
+      "id": "pgbouncer_health",
+      "expect": "Connection via :6432 succeeds"
+    },
+    {
+      "id": "compose_yaml_valid",
+      "expect": "All docker-compose files parse"
+    },
+    {
+      "id": "grafana_dashboard_valid",
+      "expect": "JSON parses without error"
+    },
+    {
+      "id": "resource_limits_coverage",
+      "expect": ">=30 services in optimized-limits.yml"
+    },
+    {
+      "id": "parallel_pipeline_tiers",
+      "expect": ">=3 tiers defined"
+    }
+  ]
+}

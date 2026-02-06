@@ -1,0 +1,52 @@
+###############################################################################
+# System 25 — Security Shield (CrowdSec)
+# Collaborative intrusion detection and prevention.
+###############################################################################
+services:
+  omni-crowdsec:
+    image: crowdsecurity/crowdsec:v1.6
+    container_name: omni-crowdsec
+    restart: unless-stopped
+    ports:
+      - "8089:8080"
+      - "6060:6060"
+    environment:
+      COLLECTIONS: "crowdsecurity/traefik crowdsecurity/http-cve crowdsecurity/linux"
+      GID: "${GID:-1000}"
+    volumes:
+      - crowdsec-db:/var/lib/crowdsec/data
+      - crowdsec-config:/etc/crowdsec
+      - /var/log:/var/log:ro
+    healthcheck:
+      test: ["CMD", "cscli", "version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.system: "25"
+      omni.name: "Security Shield"
+      omni.tier: "high"
+
+  omni-crowdsec-bouncer:
+    image: fbonalair/traefik-crowdsec-bouncer:0.5
+    container_name: omni-crowdsec-bouncer
+    restart: unless-stopped
+    environment:
+      CROWDSEC_BOUNCER_API_KEY: ${CROWDSEC_BOUNCER_KEY:-omni-crowdsec-bouncer-key}
+      CROWDSEC_AGENT_HOST: omni-crowdsec:8080
+    depends_on:
+      - omni-crowdsec
+    networks:
+      - omni-quantum-network
+
+volumes:
+  crowdsec-db:
+    name: omni-crowdsec-db
+  crowdsec-config:
+    name: omni-crowdsec-config
+
+networks:
+  omni-quantum-network:
+    external: true

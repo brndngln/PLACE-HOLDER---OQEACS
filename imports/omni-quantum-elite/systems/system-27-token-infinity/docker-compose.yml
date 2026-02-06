@@ -1,0 +1,35 @@
+###############################################################################
+# System 27 — Token Infinity
+# Long-context management — sliding window, chunking, and token optimization.
+###############################################################################
+services:
+  omni-token-infinity:
+    image: python:3.12-slim
+    container_name: omni-token-infinity
+    restart: unless-stopped
+    ports:
+      - "9600:9600"
+    environment:
+      LITELLM_URL: http://omni-litellm:4000
+      LITELLM_KEY: ${LITELLM_MASTER_KEY:-sk-omni-litellm-master}
+      POSTGRES_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@omni-postgres:5432/token_infinity
+      QDRANT_URL: http://omni-qdrant:6333
+    volumes:
+      - ./app:/app
+    working_dir: /app
+    command: ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "9600"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:9600/health').raise_for_status()"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.system: "27"
+      omni.name: "Token Infinity"
+      omni.tier: "high"
+
+networks:
+  omni-quantum-network:
+    external: true

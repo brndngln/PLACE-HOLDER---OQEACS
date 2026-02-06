@@ -1,0 +1,30 @@
+###############################################################################
+# System 17 — AI Coder Beta (SWE-agent)
+# Autonomous software engineering agent for bug fixing and feature development.
+###############################################################################
+services:
+  omni-swe-agent:
+    image: sweagent/swe-agent:latest
+    container_name: omni-swe-agent
+    restart: unless-stopped
+    ports:
+      - "8001:8000"
+    environment:
+      OPENAI_API_KEY: ${LITELLM_MASTER_KEY:-sk-omni-litellm-master}
+      OPENAI_API_BASE: http://omni-litellm:4000/v1
+    volumes:
+      - swe-agent-data:/app/data
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.system: "17"
+      omni.name: "AI Coder Beta"
+      omni.tier: "standard"
+
+volumes:
+  swe-agent-data:
+    name: omni-swe-agent-data
+
+networks:
+  omni-quantum-network:
+    external: true

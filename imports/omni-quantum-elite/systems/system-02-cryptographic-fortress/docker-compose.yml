@@ -1,0 +1,43 @@
+###############################################################################
+# System 2 — Cryptographic Fortress (HashiCorp Vault)
+# Centralized secrets management, encryption-as-a-service, PKI.
+###############################################################################
+services:
+  omni-vault:
+    image: hashicorp/vault:1.17
+    container_name: omni-vault
+    restart: unless-stopped
+    ports:
+      - "8200:8200"
+    environment:
+      VAULT_ADDR: http://0.0.0.0:8200
+      VAULT_API_ADDR: http://omni-vault:8200
+      VAULT_DEV_ROOT_TOKEN_ID: ${VAULT_ROOT_TOKEN:-omni-vault-dev-token}
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - vault-data:/vault/file
+      - vault-logs:/vault/logs
+      - ./config/vault-config.hcl:/vault/config/vault-config.hcl:ro
+    command: vault server -config=/vault/config/vault-config.hcl
+    healthcheck:
+      test: ["CMD", "vault", "status", "-address=http://localhost:8200"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.system: "2"
+      omni.name: "Cryptographic Fortress"
+      omni.tier: "critical"
+
+volumes:
+  vault-data:
+    name: omni-vault-data
+  vault-logs:
+    name: omni-vault-logs
+
+networks:
+  omni-quantum-network:
+    external: true

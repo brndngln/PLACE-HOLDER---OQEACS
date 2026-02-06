@@ -1,0 +1,15 @@
+---
+kind: pipeline
+name: dependency_check
+
+steps:
+  dep-checker:
+    image: python:3.11-slim
+    pull: true
+    commands:
+      - pip install astroid==3.1.0 || true
+      - python check_dependencies.py
+    when:
+      event:
+        - push
+        - pull_request

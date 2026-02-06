@@ -1,0 +1,38 @@
+###############################################################################
+# System 12 — Object Store (MinIO)
+# S3-compatible object storage for backups, artifacts, and media.
+###############################################################################
+services:
+  omni-minio:
+    image: minio/minio:RELEASE.2024-09-13T20-26-02Z
+    container_name: omni-minio
+    restart: unless-stopped
+    ports:
+      - "9002:9000"
+      - "9003:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-omni-admin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-omni-minio-secret}
+      MINIO_BROWSER_REDIRECT_URL: https://minio-console.${DOMAIN:-omni.local}
+    volumes:
+      - minio-data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.system: "12"
+      omni.name: "Object Store"
+      omni.tier: "critical"
+
+volumes:
+  minio-data:
+    name: omni-minio-data
+
+networks:
+  omni-quantum-network:
+    external: true

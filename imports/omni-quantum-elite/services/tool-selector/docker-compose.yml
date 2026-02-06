@@ -1,0 +1,33 @@
+
+services:
+  tool-selector:
+    build:
+      context: .
+    image: omni/tool-selector:1.0.0
+    container_name: omni-tool-selector
+    environment:
+      - QDRANT_HOST=${QDRANT_HOST:-omni-qdrant}
+      - QDRANT_PORT=${QDRANT_PORT:-6333}
+      - TOOL_COLLECTION=${TOOL_COLLECTION:-tool_descriptions}
+    networks:
+      - omni-quantum-network
+    ports:
+      - "8326:8326"
+    depends_on:
+      - qdrant
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8326/ready"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+
+networks:
+  omni-quantum-network:
+    external: true

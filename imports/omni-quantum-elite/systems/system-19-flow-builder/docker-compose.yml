@@ -1,0 +1,45 @@
+###############################################################################
+# System 19 — Flow Builder (Flowise)
+# Visual AI workflow builder — drag-and-drop LLM chains and agents.
+###############################################################################
+services:
+  omni-flowise:
+    image: flowiseai/flowise:2.0
+    container_name: omni-flowise
+    restart: unless-stopped
+    ports:
+      - "3090:3000"
+    environment:
+      FLOWISE_USERNAME: ${FLOWISE_USER:-admin}
+      FLOWISE_PASSWORD: ${FLOWISE_PASSWORD:-omni-flowise-admin}
+      DATABASE_TYPE: postgres
+      DATABASE_HOST: omni-postgres
+      DATABASE_PORT: "5432"
+      DATABASE_NAME: flowise
+      DATABASE_USER: ${POSTGRES_USER:-postgres}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      APIKEY_PATH: /root/.flowise
+    volumes:
+      - flowise-data:/root/.flowise
+    depends_on:
+      omni-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/v1/ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.system: "19"
+      omni.name: "Flow Builder"
+      omni.tier: "standard"
+
+volumes:
+  flowise-data:
+    name: omni-flowise-data
+
+networks:
+  omni-quantum-network:
+    external: true

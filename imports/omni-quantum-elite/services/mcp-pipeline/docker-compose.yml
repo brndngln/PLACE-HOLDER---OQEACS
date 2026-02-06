@@ -1,0 +1,29 @@
+
+services:
+  mcp-pipeline:
+    build:
+      context: .
+    image: omni/mcp-pipeline:1.0.0
+    container_name: omni-mcp-pipeline
+    environment:
+      - PYTHONUNBUFFERED=1
+    networks:
+      - omni-quantum-network
+    ports:
+      - "8330:8330"
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8330/ready"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+
+networks:
+  omni-quantum-network:
+    external: true

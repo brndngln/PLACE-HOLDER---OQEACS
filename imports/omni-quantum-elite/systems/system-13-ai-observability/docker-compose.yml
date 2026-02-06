@@ -1,0 +1,34 @@
+###############################################################################
+# System 13 — AI Observability (Langfuse)
+# LLM trace monitoring, prompt management, and evaluation.
+###############################################################################
+services:
+  omni-langfuse:
+    image: langfuse/langfuse:2
+    container_name: omni-langfuse
+    restart: unless-stopped
+    ports:
+      - "3060:3000"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@omni-postgres:5432/langfuse
+      NEXTAUTH_URL: https://langfuse.${DOMAIN:-omni.local}
+      NEXTAUTH_SECRET: ${LANGFUSE_SECRET:-omni-langfuse-secret}
+      SALT: ${LANGFUSE_SALT:-omni-langfuse-salt}
+    depends_on:
+      omni-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/public/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.system: "13"
+      omni.name: "AI Observability"
+      omni.tier: "high"
+
+networks:
+  omni-quantum-network:
+    external: true

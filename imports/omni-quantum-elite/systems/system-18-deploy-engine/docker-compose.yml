@@ -1,0 +1,44 @@
+###############################################################################
+# System 18 — Deploy Engine (Coolify)
+# Self-hosted PaaS — deploy apps, databases, and services.
+###############################################################################
+services:
+  omni-coolify:
+    image: ghcr.io/coollabsio/coolify:4
+    container_name: omni-coolify
+    restart: unless-stopped
+    ports:
+      - "8002:8000"
+    environment:
+      APP_URL: https://deploy.${DOMAIN:-omni.local}
+      DB_HOST: omni-postgres
+      DB_PORT: "5432"
+      DB_DATABASE: coolify
+      DB_USERNAME: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      REDIS_HOST: omni-redis
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - coolify-data:/data/coolify
+    depends_on:
+      omni-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8000/api/v1/healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.system: "18"
+      omni.name: "Deploy Engine"
+      omni.tier: "standard"
+
+volumes:
+  coolify-data:
+    name: omni-coolify-data
+
+networks:
+  omni-quantum-network:
+    external: true

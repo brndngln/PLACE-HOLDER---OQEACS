@@ -1,0 +1,36 @@
+###############################################################################
+# System 20 — Knowledge Base (Wiki.js)
+# Team documentation, runbooks, and knowledge sharing.
+###############################################################################
+services:
+  omni-wikijs:
+    image: ghcr.io/requarks/wiki:2
+    container_name: omni-wikijs
+    restart: unless-stopped
+    ports:
+      - "3091:3000"
+    environment:
+      DB_TYPE: postgres
+      DB_HOST: omni-postgres
+      DB_PORT: "5432"
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASS: ${POSTGRES_PASSWORD:-postgres}
+      DB_NAME: wikijs
+    depends_on:
+      omni-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.system: "20"
+      omni.name: "Knowledge Base"
+      omni.tier: "standard"
+
+networks:
+  omni-quantum-network:
+    external: true

@@ -1,0 +1,103 @@
+###############################################################################
+# ⚛ OMNI QUANTUM ELITE — Master Docker Compose
+# Orchestrates all 37 systems on a shared network.
+#
+# Usage:
+#   docker compose -f docker-compose.master.yml up -d
+#
+# Or use the deploy script:
+#   ./deploy.sh
+###############################################################################
+name: omni-quantum-elite
+
+include:
+  ###########################################################################
+  # TIER 0 — Foundation (boot first, zero dependencies)
+  ###########################################################################
+  - path: systems/system-00-foundation-data/docker-compose.yml        # PostgreSQL + Redis
+  - path: systems/system-01-backup-fortress/docker-compose.yml        # Restic
+  - path: systems/system-02-cryptographic-fortress/docker-compose.yml # Vault
+  - path: systems/system-05-observatory/docker-compose.yml            # Prometheus + Grafana
+  - path: systems/system-06-log-nexus/docker-compose.yml              # Loki + Promtail
+  - path: systems/system-08-neural-network/docker-compose.yml         # Ollama
+  - path: systems/system-12-object-store/docker-compose.yml           # MinIO
+
+  ###########################################################################
+  # TIER 1 — Core Services (depend on Foundation)
+  ###########################################################################
+  - path: systems/system-03-ai-gateway/docker-compose.yml             # LiteLLM
+  - path: systems/system-04-security-nexus/docker-compose.yml         # Authentik
+  - path: systems/system-07-code-fortress/docker-compose.yml          # Gitea
+  - path: systems/system-09-workflow-engine/docker-compose.yml        # n8n
+  - path: systems/system-10-communication-hub/docker-compose.yml      # Mattermost
+  - path: systems/system-11-vector-memory/docker-compose.yml          # Qdrant
+  - path: systems/system-34-enhanced-proxy/docker-compose.yml         # Traefik
+
+  ###########################################################################
+  # TIER 2 — Application Services
+  ###########################################################################
+  - path: systems/system-13-ai-observability/docker-compose.yml       # Langfuse
+  - path: systems/system-14-project-command/docker-compose.yml        # Plane
+  - path: systems/system-15-integration-hub/docker-compose.yml        # Nango
+  - path: systems/system-16-ai-coder-alpha/docker-compose.yml         # OpenHands
+  - path: systems/system-17-ai-coder-beta/docker-compose.yml          # SWE-agent
+  - path: systems/system-18-deploy-engine/docker-compose.yml          # Coolify
+  - path: systems/system-19-flow-builder/docker-compose.yml           # Flowise
+  - path: systems/system-20-knowledge-base/docker-compose.yml         # Wiki.js
+  - path: systems/system-21-analytics-engine/docker-compose.yml       # Superset
+  - path: systems/system-22-schedule-manager/docker-compose.yml       # Cal.com
+  - path: systems/system-23-crm-hub/docker-compose.yml                # Twenty
+  - path: systems/system-24-invoice-manager/docker-compose.yml        # Crater
+  - path: systems/system-25-security-shield/docker-compose.yml        # CrowdSec
+  - path: systems/system-26-container-manager/docker-compose.yml      # Portainer
+  - path: systems/system-27-token-infinity/docker-compose.yml         # Token Infinity
+  - path: systems/system-28-omi-bridge/docker-compose.yml             # Omi Wearable
+
+  ###########################################################################
+  # TIER 2b — Intelligence Microservices
+  ###########################################################################
+  - path: services/code-scorer/docker-compose.yml                     # Code Scorer
+  - path: services/gate-engine/docker-compose.yml                     # Gate Engine
+  - path: services/intent-verifier/docker-compose.yml                 # Intent Verifier
+  - path: services/context-compiler/docker-compose.yml                # Context Compiler
+  - path: services/tool-selector/docker-compose.yml                   # Tool Selector
+  - path: services/mcp-package-registry/docker-compose.yml            # MCP Registry
+  - path: services/mcp-docs/docker-compose.yml                        # MCP Docs
+  - path: services/mcp-schema/docker-compose.yml                      # MCP Schema
+  - path: services/mcp-pipeline/docker-compose.yml                    # MCP Pipeline
+  - path: services/anti-patterns/docker-compose.yml                   # Anti-Patterns
+  - path: services/spec-generator/docker-compose.yml                  # Spec Generator
+  - path: services/prompt-decay/docker-compose.yml                    # Prompt Decay
+  - path: services/cross-learning/docker-compose.yml                  # Cross-Learning
+
+  ###########################################################################
+  # TIER 3 — Enhanced Infrastructure
+  ###########################################################################
+  - path: systems/system-29-enhanced-monitoring/docker-compose.yml    # Thanos + Anomaly Detection
+  - path: systems/system-30-enhanced-logging/docker-compose.yml       # Log Correlation
+  - path: systems/system-31-uptime-monitor/docker-compose.yml         # Uptime Kuma
+  - path: systems/system-32-enhanced-backup/docker-compose.yml        # Backup Orchestration
+  - path: systems/system-33-enhanced-secrets/docker-compose.yml       # Secret Rotation
+  - path: systems/system-35-cicd-pipelines/docker-compose.yml         # Woodpecker CI
+  # System 36 (Coder) uses Terraform, not Docker Compose
+
+  ###########################################################################
+  # TIER 3b — Security
+  ###########################################################################
+  - path: security/falco/docker-compose.yml                           # Runtime Security
+
+  ###########################################################################
+  # TIER 4 — Orchestration (boot last)
+  ###########################################################################
+  - path: systems/system-37-master-orchestrator/docker-compose.yml    # Master Orchestrator
+
+###############################################################################
+# Shared Network — All services communicate on this bridge
+###############################################################################
+networks:
+  omni-quantum-network:
+    driver: bridge
+    name: omni-quantum-network
+    ipam:
+      config:
+        - subnet: 172.30.0.0/16

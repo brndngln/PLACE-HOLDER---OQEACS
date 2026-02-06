@@ -1,0 +1,36 @@
+###############################################################################
+# System 1 — Backup Fortress (Restic REST Server)
+# Provides encrypted, deduplicated backup storage for all platform data.
+###############################################################################
+services:
+  omni-restic-server:
+    image: restic/rest-server:0.13.0
+    container_name: omni-restic-server
+    restart: unless-stopped
+    ports:
+      - "8003:8000"
+    environment:
+      - OPTIONS=--append-only --private-repos
+      - DATA_DIRECTORY=/data
+    volumes:
+      - restic-data:/data
+      - ./config/htpasswd:/data/.htpasswd:ro
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8000"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.system: "1"
+      omni.name: "Backup Fortress"
+      omni.tier: "critical"
+
+volumes:
+  restic-data:
+    name: omni-restic-data
+
+networks:
+  omni-quantum-network:
+    external: true
