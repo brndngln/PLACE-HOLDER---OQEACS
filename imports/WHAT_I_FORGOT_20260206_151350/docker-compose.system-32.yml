@@ -1,0 +1,126 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# ⚛ SYSTEM 32: BACKUP FORTRESS PRO — Enhanced Backup
+# ══════════════════════════════════════════════════════════════════════════════
+# Automated backup orchestration using Restic with scheduled jobs, backup
+# verification via daily restore tests, and retention policy enforcement.
+# Extends System 1 (Backup Fortress).
+# ══════════════════════════════════════════════════════════════════════════════
+
+x-common: &common
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: "50m"
+      max-file: "5"
+      tag: "{{.Name}}"
+
+networks:
+  omni-quantum-network:
+    external: true
+
+volumes:
+  backup-orchestrator-data:
+    name: omni-backup-orchestrator-data
+  backup-verify-data:
+    name: omni-backup-verify-data
+  backup-restore-test:
+    name: omni-backup-restore-test
+
+services:
+  # ─── Backup Orchestrator (custom FastAPI + Restic wrapper) ─────────────────
+  backup-orchestrator:
+    <<: *common
+    build:
+      context: ../system-32-enhanced-backup/backup-orchestrator
+      dockerfile: Dockerfile
+    image: omni-backup-orchestrator:latest
+    container_name: omni-backup-orchestrator
+    environment:
+      - DATABASE_URL=postgresql://${BACKUP_ORCHESTRATOR_DB_USER:-omni_backup_orchestrator}:${BACKUP_ORCHESTRATOR_DB_PASSWORD}@omni-postgres:5432/omni_backup_orchestrator
+      - RESTIC_REPOSITORY=${RESTIC_REPOSITORY:-s3:http://omni-minio:9000/omni-backups}
+      - RESTIC_PASSWORD=${RESTIC_PASSWORD}
+      - AWS_ACCESS_KEY_ID=${MINIO_ROOT_USER}
+      - AWS_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD}
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - PROMETHEUS_PUSHGATEWAY_URL=http://omni-prometheus:9091
+      - LOG_LEVEL=INFO
+      # Backup schedules (cron format)
+      - SCHEDULE_POSTGRES=0 */6 * * *
+      - SCHEDULE_VOLUMES=0 2 * * *
+      - SCHEDULE_CONFIGS=0 1 * * *
+      - SCHEDULE_GITEA=0 3 * * *
+      # Retention policy
+      - RETENTION_KEEP_HOURLY=24
+      - RETENTION_KEEP_DAILY=7
+      - RETENTION_KEEP_WEEKLY=4
+      - RETENTION_KEEP_MONTHLY=6
+      - RETENTION_KEEP_YEARLY=2
+      # Sources
+      - POSTGRES_HOST=omni-postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=${POSTGRES_SUPERUSER:-omni_admin}
+      - POSTGRES_PASSWORD=${POSTGRES_SUPERUSER_PASSWORD}
+      - VAULT_ADDR=http://omni-vault:8200
+      - VAULT_TOKEN=${VAULT_ROOT_TOKEN:-}
+    ports:
+      - "${BACKUP_ORCHESTRATOR_PORT:-9321}:8000"
+    volumes:
+      - backup-orchestrator-data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ${OMNI_DATA_DIR:-/var/lib/omni}:/source/volumes:ro
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: "enhanced-backup"
+      omni.quantum.tier: "HIGH"
+      omni.quantum.system: "32"
+      omni.quantum.critical: "true"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # ─── Backup Verifier (daily restore tests) ─────────────────────────────────
+  backup-verifier:
+    <<: *common
+    build:
+      context: ../system-32-enhanced-backup/backup-verifier
+      dockerfile: Dockerfile
+    image: omni-backup-verifier:latest
+    container_name: omni-backup-verifier
+    environment:
+      - ORCHESTRATOR_URL=http://omni-backup-orchestrator:8000
+      - RESTIC_REPOSITORY=${RESTIC_REPOSITORY:-s3:http://omni-minio:9000/omni-backups}
+      - RESTIC_PASSWORD=${RESTIC_PASSWORD}
+      - AWS_ACCESS_KEY_ID=${MINIO_ROOT_USER}
+      - AWS_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD}
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - LOG_LEVEL=INFO
+      # Verification schedule
+      - VERIFY_SCHEDULE=0 5 * * *
+      - RESTORE_TEST_SCHEDULE=0 6 * * 0
+      - MAX_VERIFY_DURATION_MINUTES=60
+    ports:
+      - "${BACKUP_VERIFIER_PORT:-9322}:8000"
+    volumes:
+      - backup-verify-data:/app/data
+      - backup-restore-test:/app/restore-test
+    networks:
+      - omni-quantum-network
+    depends_on:
+      backup-orchestrator:
+        condition: service_healthy
+    labels:
+      omni.quantum.component: "enhanced-backup"
+      omni.quantum.tier: "HIGH"
+      omni.quantum.system: "32"
+      omni.quantum.service: "backup-verifier"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 15s

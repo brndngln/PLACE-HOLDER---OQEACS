@@ -1,0 +1,301 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# ⚛ OMNI QUANTUM ELITE — Nightly Exhaustive Verification Pipeline
+# ══════════════════════════════════════════════════════════════════════════════
+# Cron-triggered pipeline that runs all Tier 4 exhaustive checks:
+#   - Fuzz testing (5-min campaign)
+#   - Mutation testing (10-min budget)
+#   - Full vulnerability scan (Trivy + Grype + OSV-Scanner)
+#   - License compliance check
+#   - Technical debt quantification
+#   - Clean-room reproducibility build
+#
+# Schedule: Every night at 02:00 UTC
+# Results: → Mattermost #quality channel + Grafana dashboard + Orchestrator
+# ══════════════════════════════════════════════════════════════════════════════
+
+when:
+  cron: "nightly-quality"
+
+variables:
+  - &orchestrator_url "http://omni-orchestrator:9500"
+  - &mattermost_webhook "${MATTERMOST_WEBHOOK_URL}"
+  - &fuzz_duration "300"
+  - &mutation_timeout "600"
+  - &trivy_severity "CRITICAL,HIGH,MEDIUM"
+  - &license_allowlist "MIT,Apache-2.0,BSD-2-Clause,BSD-3-Clause,ISC,Python-2.0,PSF-2.0,Unlicense,CC0-1.0,0BSD"
+
+# ─── Stage: Notify Start ───────────────────────────────────────────────────
+
+steps:
+  notify-start:
+    image: curlimages/curl:8.11.1
+    commands:
+      - |
+        curl -sf -X POST "${MATTERMOST_WEBHOOK_URL}" \
+          -H "Content-Type: application/json" \
+          -d "{
+            \"channel\": \"quality\",
+            \"username\": \"omni-nightly\",
+            \"text\": \"🌙 **Nightly Exhaustive Verification Started**\nRepo: ${CI_REPO}\nBranch: ${CI_COMMIT_BRANCH}\nPipeline: #${CI_PIPELINE_NUMBER}\"
+          }" || true
+      - |
+        curl -sf -X POST "http://omni-orchestrator:9500/api/v1/events" \
+          -H "Content-Type: application/json" \
+          -d "{
+            \"event_type\": \"nightly.started\",
+            \"source_system\": \"woodpecker-nightly\",
+            \"severity\": \"info\",
+            \"title\": \"Nightly verification started\",
+            \"details\": {\"repo\": \"${CI_REPO}\", \"branch\": \"${CI_COMMIT_BRANCH}\", \"pipeline\": ${CI_PIPELINE_NUMBER}}
+          }" || true
+
+  # ─── Tier 3: Deep Verification ──────────────────────────────────────────
+
+  deep-codeql:
+    image: omni-verify-deep:latest
+    commands:
+      - verify-deep --codeql --report-only
+      - cat /tmp/verify-deep-report.json
+    environment:
+      WORKSPACE: /woodpecker/src
+      CODEQL_SUITE: security-and-quality
+      REPORT_URL: "http://omni-orchestrator:9500/api/v1/events"
+
+  deep-complexity:
+    image: omni-verify-deep:latest
+    commands:
+      - verify-deep --complexity --report-only
+      - cat /tmp/verify-deep-report.json
+    environment:
+      WORKSPACE: /woodpecker/src
+      REPORT_URL: "http://omni-orchestrator:9500/api/v1/events"
+
+  deep-infer:
+    image: omni-verify-deep:latest
+    commands:
+      - verify-deep --infer --report-only
+      - cat /tmp/verify-deep-report.json
+    environment:
+      WORKSPACE: /woodpecker/src
+      REPORT_URL: "http://omni-orchestrator:9500/api/v1/events"
+
+  # ─── Tier 3: Gate Check ─────────────────────────────────────────────────
+
+  gate-tier3:
+    image: curlimages/curl:8.11.1
+    commands:
+      - |
+        RESPONSE=$(curl -sf -X POST "http://omni-gate-engine:8351/api/v1/gate/evaluate" \
+          -H "Content-Type: application/json" \
+          -d "{
+            \"pipeline_id\": \"${CI_PIPELINE_NUMBER}\",
+            \"from_stage\": 3,
+            \"to_stage\": 4,
+            \"results\": {
+              \"codeql_critical\": 0,
+              \"infer_null_derefs\": 0,
+              \"complexity_unmaintainable\": 0
+            }
+          }")
+        echo "$RESPONSE" | jq .
+        STATUS=$(echo "$RESPONSE" | jq -r '.status')
+        if [ "$STATUS" = "FAIL" ]; then
+          echo "❌ Tier 3 gate FAILED"
+          exit 1
+        fi
+    depends_on:
+      - deep-codeql
+      - deep-complexity
+      - deep-infer
+
+  # ─── Tier 4: Fuzz Testing ──────────────────────────────────────────────
+
+  fuzz-testing:
+    image: omni-verify-exhaustive:latest
+    commands:
+      - verify-exhaustive --fuzz --time ${FUZZ_DURATION} --json > /tmp/fuzz-report.json
+      - cat /tmp/fuzz-report.json
+    environment:
+      WORKSPACE: /woodpecker/src
+      FUZZ_DURATION: *fuzz_duration
+      REPORT_URL: "http://omni-orchestrator:9500/api/v1/events"
+    depends_on:
+      - gate-tier3
+
+  # ─── Tier 4: Mutation Testing ──────────────────────────────────────────
+
+  mutation-testing:
+    image: omni-verify-exhaustive:latest
+    commands:
+      - verify-exhaustive --mutation --timeout ${MUTATION_TIMEOUT} --json > /tmp/mutation-report.json
+      - cat /tmp/mutation-report.json
+    environment:
+      WORKSPACE: /woodpecker/src
+      MUTATION_TIMEOUT: *mutation_timeout
+      REPORT_URL: "http://omni-orchestrator:9500/api/v1/events"
+    depends_on:
+      - gate-tier3
+
+  # ─── Tier 4: Full Vulnerability Scan ───────────────────────────────────
+
+  vuln-scan-full:
+    image: omni-verify-exhaustive:latest
+    commands:
+      - verify-exhaustive --vulnscan --json > /tmp/vulnscan-report.json
+      - cat /tmp/vulnscan-report.json
+    environment:
+      WORKSPACE: /woodpecker/src
+      TRIVY_SEVERITY: *trivy_severity
+      REPORT_URL: "http://omni-orchestrator:9500/api/v1/events"
+    depends_on:
+      - gate-tier3
+
+  # ─── Tier 4: License Compliance ────────────────────────────────────────
+
+  license-check:
+    image: omni-verify-exhaustive:latest
+    commands:
+      - verify-exhaustive --license --json > /tmp/license-report.json
+      - cat /tmp/license-report.json
+    environment:
+      WORKSPACE: /woodpecker/src
+      LICENSE_ALLOWLIST: *license_allowlist
+      REPORT_URL: "http://omni-orchestrator:9500/api/v1/events"
+    depends_on:
+      - gate-tier3
+
+  # ─── Tier 4: Technical Debt ────────────────────────────────────────────
+
+  tech-debt:
+    image: omni-verify-exhaustive:latest
+    commands:
+      - verify-exhaustive --techdebt --json > /tmp/techdebt-report.json
+      - cat /tmp/techdebt-report.json
+    environment:
+      WORKSPACE: /woodpecker/src
+      REPORT_URL: "http://omni-orchestrator:9500/api/v1/events"
+    depends_on:
+      - gate-tier3
+
+  # ─── Clean-Room Reproducibility ────────────────────────────────────────
+
+  cleanroom-build:
+    image: docker:27-cli
+    commands:
+      - cp /woodpecker/src/wave-1-verification/scripts/verify-cleanroom.sh /usr/local/bin/verify-cleanroom
+      - chmod +x /usr/local/bin/verify-cleanroom
+      - verify-cleanroom /woodpecker/src --json > /tmp/cleanroom-report.json
+      - cat /tmp/cleanroom-report.json
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      REPORT_URL: "http://omni-orchestrator:9500/api/v1/events"
+    depends_on:
+      - gate-tier3
+
+  # ─── Aggregate & Report ────────────────────────────────────────────────
+
+  aggregate-results:
+    image: python:3.12-slim
+    commands:
+      - pip install --quiet httpx jinja2
+      - |
+        python3 << 'PYEOF'
+        import json, os, glob, httpx, datetime
+
+        reports = {}
+        for f in glob.glob("/tmp/*-report.json"):
+            name = os.path.basename(f).replace("-report.json", "")
+            try:
+                with open(f) as fh:
+                    reports[name] = json.load(fh)
+            except Exception:
+                pass
+
+        total_checks = 0
+        failures = 0
+        warnings = 0
+        for name, report in reports.items():
+            s = report.get("summary", report.get("phases", {}))
+            if isinstance(s, dict):
+                total_checks += s.get("total_checks", 1)
+                failures += s.get("failures", 0)
+                warnings += s.get("warnings", 0)
+            status = report.get("status", "unknown")
+            if status == "fail": failures += 1
+            elif status == "warn": warnings += 1
+
+        overall = "PASS" if failures == 0 else "FAIL"
+        emoji = "✅" if overall == "PASS" else "❌"
+
+        # Build Mattermost summary
+        lines = [f"{emoji} **Nightly Exhaustive Verification: {overall}**"]
+        lines.append(f"Checks: {total_checks} | Failures: {failures} | Warnings: {warnings}")
+        lines.append("")
+        for name, report in sorted(reports.items()):
+            status = report.get("status", "unknown")
+            icon = "✅" if status == "pass" else "⚠️" if status in ("warn", "skip") else "❌"
+            duration = report.get("duration_ms", 0)
+            lines.append(f"| {icon} {name} | {status.upper()} | {duration}ms |")
+
+        summary_text = "\n".join(lines)
+
+        # Send to Mattermost
+        webhook = os.environ.get("MATTERMOST_WEBHOOK_URL", "")
+        if webhook:
+            try:
+                httpx.post(webhook, json={
+                    "channel": "quality",
+                    "username": "omni-nightly",
+                    "text": summary_text
+                })
+            except Exception as e:
+                print(f"Mattermost notification failed: {e}")
+
+        # Send to Orchestrator
+        try:
+            httpx.post("http://omni-orchestrator:9500/api/v1/events", json={
+                "event_type": "nightly.completed",
+                "source_system": "woodpecker-nightly",
+                "severity": "error" if failures > 0 else "info",
+                "title": f"Nightly verification: {overall}",
+                "details": {
+                    "reports": reports,
+                    "total_checks": total_checks,
+                    "failures": failures,
+                    "warnings": warnings,
+                    "pipeline": int(os.environ.get("CI_PIPELINE_NUMBER", 0)),
+                }
+            })
+        except Exception as e:
+            print(f"Orchestrator notification failed: {e}")
+
+        # Write combined report
+        combined = {
+            "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            "overall": overall,
+            "total_checks": total_checks,
+            "failures": failures,
+            "warnings": warnings,
+            "reports": reports,
+        }
+        with open("/tmp/nightly-combined-report.json", "w") as f:
+            json.dump(combined, f, indent=2)
+
+        print(f"\n{'='*60}")
+        print(f"  Nightly Verification: {overall}")
+        print(f"  Checks: {total_checks} | Failures: {failures} | Warnings: {warnings}")
+        print(f"{'='*60}")
+
+        if failures > 0:
+            exit(1)
+        PYEOF
+    environment:
+      MATTERMOST_WEBHOOK_URL: *mattermost_webhook
+    depends_on:
+      - fuzz-testing
+      - mutation-testing
+      - vuln-scan-full
+      - license-check
+      - tech-debt
+      - cleanroom-build

@@ -1,0 +1,125 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# ⚛ SYSTEM 30: LOG NEXUS PRO — Enhanced Logging
+# ══════════════════════════════════════════════════════════════════════════════
+# Log pattern detection with 6 pattern types, trace correlator for distributed
+# tracing across all 37 services. Extends System 6 (Log Nexus / Loki).
+# ══════════════════════════════════════════════════════════════════════════════
+
+x-common: &common
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: "50m"
+      max-file: "5"
+      tag: "{{.Name}}"
+
+networks:
+  omni-quantum-network:
+    external: true
+
+volumes:
+  log-pattern-data:
+    name: omni-log-pattern-data
+  trace-correlator-data:
+    name: omni-trace-correlator-data
+
+services:
+  # ─── Log Pattern Detector (custom FastAPI) ─────────────────────────────────
+  log-pattern-detector:
+    <<: *common
+    build:
+      context: ../system-30-enhanced-logging/log-pattern-detector
+      dockerfile: Dockerfile
+    image: omni-log-pattern-detector:latest
+    container_name: omni-log-pattern-detector
+    environment:
+      - LOKI_URL=http://omni-loki:3100
+      - PROMETHEUS_URL=http://omni-prometheus:9090
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - QDRANT_URL=http://omni-qdrant:6333
+      - DATABASE_URL=postgresql://${ORCHESTRATOR_DB_USER:-omni_orchestrator}:${ORCHESTRATOR_DB_PASSWORD}@omni-postgres:5432/omni_orchestrator
+      - SCAN_INTERVAL_SECONDS=30
+      - LOG_LEVEL=INFO
+      # Pattern detection thresholds
+      - ERROR_BURST_THRESHOLD=10
+      - ERROR_BURST_WINDOW_SECONDS=60
+      - MEMORY_LEAK_SLOPE_THRESHOLD=0.05
+      - LATENCY_SPIKE_STDDEV_MULTIPLIER=3.0
+      - CASCADING_FAILURE_MIN_SERVICES=3
+      - CASCADING_FAILURE_WINDOW_SECONDS=120
+      - DISK_EXHAUSTION_THRESHOLD_PERCENT=85
+      - CONNECTION_POOL_THRESHOLD_PERCENT=80
+    ports:
+      - "${LOG_PATTERN_DETECTOR_PORT:-9301}:8000"
+    volumes:
+      - log-pattern-data:/app/data
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: "enhanced-logging"
+      omni.quantum.tier: "STANDARD"
+      omni.quantum.system: "30"
+      omni.quantum.service: "log-pattern-detector"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ─── Trace Correlator (custom FastAPI) ─────────────────────────────────────
+  trace-correlator:
+    <<: *common
+    build:
+      context: ../system-30-enhanced-logging/trace-correlator
+      dockerfile: Dockerfile
+    image: omni-trace-correlator:latest
+    container_name: omni-trace-correlator
+    environment:
+      - LOKI_URL=http://omni-loki:3100
+      - PROMETHEUS_URL=http://omni-prometheus:9090
+      - DATABASE_URL=postgresql://${ORCHESTRATOR_DB_USER:-omni_orchestrator}:${ORCHESTRATOR_DB_PASSWORD}@omni-postgres:5432/omni_orchestrator
+      - QDRANT_URL=http://omni-qdrant:6333
+      - CORRELATION_WINDOW_SECONDS=300
+      - LOG_LEVEL=INFO
+    ports:
+      - "${TRACE_CORRELATOR_PORT:-9302}:8000"
+    volumes:
+      - trace-correlator-data:/app/data
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: "enhanced-logging"
+      omni.quantum.tier: "STANDARD"
+      omni.quantum.system: "30"
+      omni.quantum.service: "trace-correlator"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ─── Loki Gateway (centralized log routing) ────────────────────────────────
+  loki-gateway:
+    <<: *common
+    image: nginx:1.27-alpine
+    container_name: omni-loki-gateway
+    volumes:
+      - ./config/loki-gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "${LOKI_GATEWAY_PORT:-3110}:3110"
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: "enhanced-logging"
+      omni.quantum.tier: "STANDARD"
+      omni.quantum.system: "30"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3110/ready"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

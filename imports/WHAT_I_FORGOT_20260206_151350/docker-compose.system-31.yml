@@ -1,0 +1,89 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# ⚛ SYSTEM 31: GUARDIAN EYE — Uptime Monitoring
+# ══════════════════════════════════════════════════════════════════════════════
+# Uptime Kuma for external-perspective monitoring of all services. Webhook
+# relay forwards alerts to Mattermost + Omi wearable.
+# ══════════════════════════════════════════════════════════════════════════════
+
+x-common: &common
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: "50m"
+      max-file: "5"
+      tag: "{{.Name}}"
+
+networks:
+  omni-quantum-network:
+    external: true
+
+volumes:
+  uptime-kuma-data:
+    name: omni-uptime-kuma-data
+
+services:
+  # ─── Uptime Kuma ───────────────────────────────────────────────────────────
+  uptime-kuma:
+    <<: *common
+    image: louislam/uptime-kuma:1
+    container_name: omni-uptime-kuma
+    environment:
+      - UPTIME_KUMA_PORT=3001
+    ports:
+      - "${UPTIME_KUMA_PORT:-3001}:3001"
+    volumes:
+      - uptime-kuma-data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: "uptime-monitor"
+      omni.quantum.tier: "HIGH"
+      omni.quantum.system: "31"
+      omni.quantum.critical: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"const http=require('http');const r=http.get('http://localhost:3001/api/entry-page',{timeout:5000},s=>{process.exit(s.statusCode===200?0:1)});r.on('error',()=>process.exit(1));r.end()\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ─── Webhook Relay (forwards alerts to Mattermost + Omi) ──────────────────
+  webhook-relay:
+    <<: *common
+    build:
+      context: ../system-31-uptime-monitor/webhook-relay
+      dockerfile: Dockerfile
+    image: omni-webhook-relay:latest
+    container_name: omni-webhook-relay
+    environment:
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - MATTERMOST_CHANNEL=${MATTERMOST_ALERTS_CHANNEL:-alerts}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - PROMETHEUS_PUSHGATEWAY_URL=http://omni-prometheus:9091
+      - LOG_LEVEL=INFO
+      # Alert routing rules
+      - CRITICAL_SERVICES=omni-postgres,omni-redis,omni-vault,omni-traefik,omni-litellm,omni-gitea,omni-minio,omni-orchestrator
+      - HIGH_SERVICES=omni-ollama,omni-mattermost,omni-qdrant,omni-prometheus,omni-loki
+      - HAPTIC_ON_CRITICAL=true
+      - HAPTIC_ON_HIGH=true
+      - HAPTIC_ON_STANDARD=false
+    ports:
+      - "${WEBHOOK_RELAY_PORT:-9315}:8000"
+    networks:
+      - omni-quantum-network
+    depends_on:
+      uptime-kuma:
+        condition: service_healthy
+    labels:
+      omni.quantum.component: "uptime-monitor"
+      omni.quantum.tier: "HIGH"
+      omni.quantum.system: "31"
+      omni.quantum.service: "webhook-relay"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

@@ -1,0 +1,142 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# ⚛ SYSTEM 34: GATEWAY SENTINEL PRO — Enhanced Proxy
+# ══════════════════════════════════════════════════════════════════════════════
+# Traefik reverse proxy with auto-discovery, mTLS termination, rate limiting,
+# and 20+ service routes. Custom rate limiter with per-service and per-IP
+# limits with Redis-backed sliding window counters.
+# ══════════════════════════════════════════════════════════════════════════════
+
+x-common: &common
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: "50m"
+      max-file: "5"
+      tag: "{{.Name}}"
+
+networks:
+  omni-quantum-network:
+    external: true
+
+volumes:
+  traefik-certs:
+    name: omni-traefik-certs
+  traefik-acme:
+    name: omni-traefik-acme
+
+services:
+  # ─── Traefik Reverse Proxy ─────────────────────────────────────────────────
+  traefik:
+    <<: *common
+    image: traefik:v3.2
+    container_name: omni-traefik
+    command:
+      # API & Dashboard
+      - --api.dashboard=true
+      - --api.insecure=true
+      # Entry Points
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      # TLS (Let's Encrypt or self-signed)
+      - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:-admin@${OMNI_DOMAIN:-localhost}}
+      - --certificatesresolvers.letsencrypt.acme.storage=/acme/acme.json
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+      # Providers
+      - --providers.docker=true
+      - --providers.docker.network=omni-quantum-network
+      - --providers.docker.exposedbydefault=false
+      - --providers.file.directory=/etc/traefik/dynamic
+      - --providers.file.watch=true
+      # Metrics
+      - --metrics.prometheus=true
+      - --metrics.prometheus.buckets=0.1,0.3,1.2,5.0
+      - --metrics.prometheus.addEntryPointsLabels=true
+      - --metrics.prometheus.addServicesLabels=true
+      # Access Log
+      - --accesslog=true
+      - --accesslog.filepath=/var/log/traefik/access.log
+      - --accesslog.format=json
+      - --accesslog.bufferingsize=100
+      # Logging
+      - --log.level=${TRAEFIK_LOG_LEVEL:-INFO}
+      - --log.format=json
+    ports:
+      - "80:80"
+      - "443:443"
+      - "${TRAEFIK_DASHBOARD_PORT:-8080}:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-certs:/certs
+      - traefik-acme:/acme
+      - ./config/traefik/dynamic:/etc/traefik/dynamic:ro
+      - ./config/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: "enhanced-proxy"
+      omni.quantum.tier: "CRITICAL"
+      omni.quantum.system: "34"
+      omni.quantum.critical: "true"
+      # Traefik dashboard routing
+      traefik.enable: "true"
+      traefik.http.routers.traefik-dashboard.rule: "Host(`traefik.${OMNI_DOMAIN:-localhost}`)"
+      traefik.http.routers.traefik-dashboard.service: "api@internal"
+      traefik.http.routers.traefik-dashboard.middlewares: "auth-basic"
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ─── Rate Limiter (Redis-backed sliding window) ────────────────────────────
+  rate-limiter:
+    <<: *common
+    build:
+      context: ../system-34-enhanced-proxy/rate-limiter
+      dockerfile: Dockerfile
+    image: omni-rate-limiter:latest
+    container_name: omni-rate-limiter
+    environment:
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@omni-redis:6379/2
+      - PROMETHEUS_URL=http://omni-prometheus:9090
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - LOG_LEVEL=INFO
+      # Global defaults
+      - DEFAULT_RATE_LIMIT=100
+      - DEFAULT_WINDOW_SECONDS=60
+      - DEFAULT_BURST=20
+      # Per-service overrides (JSON)
+      - |
+        SERVICE_LIMITS={
+          "omni-litellm": {"rate": 200, "window": 60, "burst": 50},
+          "omni-orchestrator": {"rate": 500, "window": 60, "burst": 100},
+          "omni-gitea": {"rate": 300, "window": 60, "burst": 60},
+          "omni-openhands": {"rate": 50, "window": 60, "burst": 10},
+          "omni-swe-agent": {"rate": 50, "window": 60, "burst": 10}
+        }
+      # IP-based limits
+      - IP_RATE_LIMIT=1000
+      - IP_WINDOW_SECONDS=3600
+      - IP_BURST=200
+      # Ban thresholds
+      - BAN_THRESHOLD=5000
+      - BAN_DURATION_SECONDS=3600
+    ports:
+      - "${RATE_LIMITER_PORT:-9341}:8000"
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: "enhanced-proxy"
+      omni.quantum.tier: "HIGH"
+      omni.quantum.system: "34"
+      omni.quantum.service: "rate-limiter"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

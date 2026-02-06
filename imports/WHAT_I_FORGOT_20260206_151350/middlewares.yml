@@ -1,0 +1,24 @@
+http:
+  middlewares:
+    auth-basic:
+      basicAuth:
+        users:
+          - "omni-admin:$2y$10$placeholder"  # Replace with: htpasswd -nB omni-admin
+    rate-limit:
+      rateLimit:
+        average: 100
+        burst: 50
+        period: 1m
+    security-headers:
+      headers:
+        browserXssFilter: true
+        contentTypeNosniff: true
+        frameDeny: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 31536000
+        customFrameOptionsValue: SAMEORIGIN
+    compress:
+      compress:
+        excludedContentTypes:
+          - text/event-stream

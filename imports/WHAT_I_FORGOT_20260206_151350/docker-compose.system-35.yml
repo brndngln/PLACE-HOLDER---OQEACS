@@ -1,0 +1,174 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# ⚛ SYSTEM 35: BUILD FORGE — CI/CD Pipelines
+# ══════════════════════════════════════════════════════════════════════════════
+# Woodpecker CI for automated build, test, scan, and deploy pipelines.
+# Integrates with Gitea (System 7), Trivy scanning, cosign signing,
+# and the 8-stage quality pipeline.
+# ══════════════════════════════════════════════════════════════════════════════
+
+x-common: &common
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: "50m"
+      max-file: "5"
+      tag: "{{.Name}}"
+
+networks:
+  omni-quantum-network:
+    external: true
+
+volumes:
+  woodpecker-server-data:
+    name: omni-woodpecker-server-data
+  woodpecker-agent-data:
+    name: omni-woodpecker-agent-data
+
+services:
+  # ─── Woodpecker CI Server ──────────────────────────────────────────────────
+  woodpecker-server:
+    <<: *common
+    image: woodpeckerci/woodpecker-server:v2.7
+    container_name: omni-woodpecker-server
+    environment:
+      # Server config
+      - WOODPECKER_OPEN=false
+      - WOODPECKER_ADMIN=${WOODPECKER_ADMIN:-omni-admin}
+      - WOODPECKER_HOST=http://${OMNI_DOMAIN:-localhost}:${WOODPECKER_PORT:-8000}
+      - WOODPECKER_AGENT_SECRET=${WOODPECKER_AGENT_SECRET}
+      # Gitea integration
+      - WOODPECKER_GITEA=true
+      - WOODPECKER_GITEA_URL=http://omni-gitea:3000
+      - WOODPECKER_GITEA_CLIENT=${WOODPECKER_GITEA_CLIENT:-}
+      - WOODPECKER_GITEA_SECRET=${WOODPECKER_GITEA_SECRET:-}
+      - WOODPECKER_GITEA_SKIP_VERIFY=true
+      # Database
+      - WOODPECKER_DATABASE_DRIVER=postgres
+      - WOODPECKER_DATABASE_DATASOURCE=postgres://${WOODPECKER_DB_USER:-omni_woodpecker}:${WOODPECKER_DB_PASSWORD}@omni-postgres:5432/omni_woodpecker?sslmode=disable
+      # Security
+      - WOODPECKER_AUTHENTICATE_PUBLIC_REPOS=false
+      - WOODPECKER_DEFAULT_CLONE_IMAGE=woodpeckerci/plugin-git:2.5
+      # Resource limits
+      - WOODPECKER_LIMIT_MEM_SWAP=0
+      - WOODPECKER_LIMIT_CPU_SET=0-3
+      # Logging
+      - WOODPECKER_LOG_LEVEL=info
+      - WOODPECKER_LOG_FILE=/data/logs/server.log
+    ports:
+      - "${WOODPECKER_PORT:-8000}:8000"
+      - "${WOODPECKER_GRPC_PORT:-9000}:9000"
+    volumes:
+      - woodpecker-server-data:/data
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: "cicd-pipelines"
+      omni.quantum.tier: "HIGH"
+      omni.quantum.system: "35"
+      omni.quantum.critical: "false"
+      # Traefik routing
+      traefik.enable: "true"
+      traefik.http.routers.woodpecker.rule: "Host(`ci.${OMNI_DOMAIN:-localhost}`)"
+      traefik.http.services.woodpecker.loadbalancer.server.port: "8000"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8000/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ─── Woodpecker Agent 1 (general purpose) ──────────────────────────────────
+  woodpecker-agent-1:
+    <<: *common
+    image: woodpeckerci/woodpecker-agent:v2.7
+    container_name: omni-woodpecker-agent-1
+    command: agent
+    environment:
+      - WOODPECKER_SERVER=omni-woodpecker-server:9000
+      - WOODPECKER_AGENT_SECRET=${WOODPECKER_AGENT_SECRET}
+      - WOODPECKER_FILTER_LABELS=platform=linux/amd64,type=general
+      - WOODPECKER_MAX_WORKFLOWS=4
+      - WOODPECKER_HEALTHCHECK=true
+      - WOODPECKER_LOG_LEVEL=info
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - woodpecker-agent-data:/data
+      - /var/run/docker.sock:/var/run/docker.sock:rw
+    networks:
+      - omni-quantum-network
+    depends_on:
+      woodpecker-server:
+        condition: service_healthy
+    labels:
+      omni.quantum.component: "cicd-pipelines"
+      omni.quantum.tier: "HIGH"
+      omni.quantum.system: "35"
+      omni.quantum.service: "agent-1"
+
+  # ─── Woodpecker Agent 2 (security scanning) ────────────────────────────────
+  woodpecker-agent-2:
+    <<: *common
+    image: woodpeckerci/woodpecker-agent:v2.7
+    container_name: omni-woodpecker-agent-2
+    command: agent
+    environment:
+      - WOODPECKER_SERVER=omni-woodpecker-server:9000
+      - WOODPECKER_AGENT_SECRET=${WOODPECKER_AGENT_SECRET}
+      - WOODPECKER_FILTER_LABELS=platform=linux/amd64,type=security
+      - WOODPECKER_MAX_WORKFLOWS=2
+      - WOODPECKER_HEALTHCHECK=true
+      - WOODPECKER_LOG_LEVEL=info
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:rw
+    networks:
+      - omni-quantum-network
+    depends_on:
+      woodpecker-server:
+        condition: service_healthy
+    labels:
+      omni.quantum.component: "cicd-pipelines"
+      omni.quantum.tier: "HIGH"
+      omni.quantum.system: "35"
+      omni.quantum.service: "agent-2-security"
+
+  # ─── CI Notifier (Mattermost + Omi alerts for build results) ───────────────
+  ci-notifier:
+    <<: *common
+    build:
+      context: ../system-35-cicd-pipelines/ci-notifier
+      dockerfile: Dockerfile
+    image: omni-ci-notifier:latest
+    container_name: omni-ci-notifier
+    environment:
+      - WOODPECKER_URL=http://omni-woodpecker-server:8000
+      - WOODPECKER_TOKEN=${WOODPECKER_API_TOKEN:-}
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - PROMETHEUS_PUSHGATEWAY_URL=http://omni-prometheus:9091
+      - LOG_LEVEL=INFO
+      - POLL_INTERVAL=15
+      # Notification rules
+      - NOTIFY_ON_SUCCESS=false
+      - NOTIFY_ON_FAILURE=true
+      - NOTIFY_ON_DEPLOY=true
+      - HAPTIC_ON_FAILURE=true
+    ports:
+      - "${CI_NOTIFIER_PORT:-9351}:8000"
+    networks:
+      - omni-quantum-network
+    depends_on:
+      woodpecker-server:
+        condition: service_healthy
+    labels:
+      omni.quantum.component: "cicd-pipelines"
+      omni.quantum.tier: "STANDARD"
+      omni.quantum.system: "35"
+      omni.quantum.service: "ci-notifier"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

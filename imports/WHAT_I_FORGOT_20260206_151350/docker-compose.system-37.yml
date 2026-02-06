@@ -1,0 +1,241 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# ⚛ SYSTEM 37: OMNI COMMAND — Master Orchestrator (CAPSTONE)
+# ══════════════════════════════════════════════════════════════════════════════
+# Unified control plane for all 36 systems. REST API, real-time dashboard,
+# ChatOps bot (Mattermost), voice control (Omi wearable), event processing
+# (Redis Streams), CLI tool, and Python SDK.
+# ══════════════════════════════════════════════════════════════════════════════
+
+x-common: &common
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: "50m"
+      max-file: "5"
+      tag: "{{.Name}}"
+
+x-orchestrator-env: &orchestrator-env
+  # Database
+  DATABASE_URL: postgresql://${ORCHESTRATOR_DB_USER:-omni_orchestrator}:${ORCHESTRATOR_DB_PASSWORD}@omni-postgres:5432/omni_orchestrator
+  # Redis
+  REDIS_URL: redis://:${REDIS_PASSWORD}@omni-redis:6379/0
+  # Service discovery
+  PROMETHEUS_URL: http://omni-thanos-query:9090
+  LOKI_URL: http://omni-loki:3100
+  GRAFANA_URL: http://omni-grafana:3000
+  VAULT_ADDR: http://omni-vault:8200
+  VAULT_TOKEN: ${VAULT_ROOT_TOKEN:-}
+  GITEA_URL: http://omni-gitea:3000
+  GITEA_TOKEN: ${GITEA_ADMIN_TOKEN:-}
+  LITELLM_URL: http://omni-litellm:4000
+  MATTERMOST_URL: http://omni-mattermost:8065
+  MATTERMOST_TOKEN: ${MATTERMOST_BOT_TOKEN:-}
+  MATTERMOST_WEBHOOK_URL: ${MATTERMOST_WEBHOOK_URL:-}
+  QDRANT_URL: http://omni-qdrant:6333
+  LANGFUSE_URL: http://omni-langfuse:3000
+  MINIO_URL: http://omni-minio:9000
+  MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+  MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+  UPTIME_KUMA_URL: http://omni-uptime-kuma:3001
+  WOODPECKER_URL: http://omni-woodpecker-server:8000
+  WOODPECKER_TOKEN: ${WOODPECKER_API_TOKEN:-}
+  COOLIFY_URL: http://omni-coolify:8000
+  COOLIFY_TOKEN: ${COOLIFY_API_TOKEN:-}
+  # Omi wearable
+  OMI_BRIDGE_URL: http://omni-omi-bridge:9700
+  # AI
+  OLLAMA_URL: http://omni-ollama:11434
+  DEFAULT_MODEL: ${DEFAULT_LLM_MODEL:-devstral:latest}
+  # Platform
+  OMNI_DOMAIN: ${OMNI_DOMAIN:-localhost}
+  OMNI_VERSION: ${OMNI_VERSION:-1.0.0}
+  LOG_LEVEL: ${ORCHESTRATOR_LOG_LEVEL:-INFO}
+
+networks:
+  omni-quantum-network:
+    external: true
+
+volumes:
+  orchestrator-data:
+    name: omni-orchestrator-data
+  dashboard-data:
+    name: omni-dashboard-data
+
+services:
+  # ─── Orchestrator API (main REST API) ──────────────────────────────────────
+  orchestrator-api:
+    <<: *common
+    build:
+      context: ../system-37-master-orchestrator/api
+      dockerfile: Dockerfile
+    image: omni-orchestrator-api:latest
+    container_name: omni-orchestrator
+    environment:
+      <<: *orchestrator-env
+      SERVICE_NAME: orchestrator-api
+      PORT: "9500"
+    ports:
+      - "${ORCHESTRATOR_API_PORT:-9500}:9500"
+    volumes:
+      - orchestrator-data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: "master-orchestrator"
+      omni.quantum.tier: "CRITICAL"
+      omni.quantum.system: "37"
+      omni.quantum.critical: "true"
+      # Traefik routing
+      traefik.enable: "true"
+      traefik.http.routers.orchestrator-api.rule: "Host(`api.${OMNI_DOMAIN:-localhost}`)"
+      traefik.http.services.orchestrator-api.loadbalancer.server.port: "9500"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9500/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # ─── Dashboard (real-time web UI) ──────────────────────────────────────────
+  orchestrator-dashboard:
+    <<: *common
+    build:
+      context: ../system-37-master-orchestrator/dashboard
+      dockerfile: Dockerfile
+    image: omni-orchestrator-dashboard:latest
+    container_name: omni-orchestrator-dashboard
+    environment:
+      <<: *orchestrator-env
+      SERVICE_NAME: orchestrator-dashboard
+      API_URL: http://omni-orchestrator:9500
+      PORT: "9501"
+    ports:
+      - "${ORCHESTRATOR_DASHBOARD_PORT:-9501}:9501"
+    volumes:
+      - dashboard-data:/app/data
+    networks:
+      - omni-quantum-network
+    depends_on:
+      orchestrator-api:
+        condition: service_healthy
+    labels:
+      omni.quantum.component: "master-orchestrator"
+      omni.quantum.tier: "CRITICAL"
+      omni.quantum.system: "37"
+      traefik.enable: "true"
+      traefik.http.routers.orchestrator-dashboard.rule: "Host(`dashboard.${OMNI_DOMAIN:-localhost}`)"
+      traefik.http.services.orchestrator-dashboard.loadbalancer.server.port: "9501"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9501/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ─── ChatOps Bot (Mattermost commands) ─────────────────────────────────────
+  orchestrator-chatops:
+    <<: *common
+    build:
+      context: ../system-37-master-orchestrator/chatops
+      dockerfile: Dockerfile
+    image: omni-orchestrator-chatops:latest
+    container_name: omni-orchestrator-chatops
+    environment:
+      <<: *orchestrator-env
+      SERVICE_NAME: orchestrator-chatops
+      API_URL: http://omni-orchestrator:9500
+      BOT_USERNAME: omni-bot
+      COMMAND_PREFIX: "!omni"
+    networks:
+      - omni-quantum-network
+    depends_on:
+      orchestrator-api:
+        condition: service_healthy
+    labels:
+      omni.quantum.component: "master-orchestrator"
+      omni.quantum.tier: "HIGH"
+      omni.quantum.system: "37"
+      omni.quantum.service: "chatops"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ─── Voice Bridge (Omi wearable + LLM intent parsing) ─────────────────────
+  orchestrator-voice:
+    <<: *common
+    build:
+      context: ../system-37-master-orchestrator/voice
+      dockerfile: Dockerfile
+    image: omni-orchestrator-voice:latest
+    container_name: omni-orchestrator-voice
+    environment:
+      <<: *orchestrator-env
+      SERVICE_NAME: orchestrator-voice
+      API_URL: http://omni-orchestrator:9500
+      PORT: "9502"
+      # Voice intent parsing
+      INTENT_MODEL: ${VOICE_INTENT_MODEL:-devstral:latest}
+      WAKE_WORD: omni
+      CONFIDENCE_THRESHOLD: "0.7"
+    ports:
+      - "${ORCHESTRATOR_VOICE_PORT:-9502}:9502"
+    networks:
+      - omni-quantum-network
+    depends_on:
+      orchestrator-api:
+        condition: service_healthy
+    labels:
+      omni.quantum.component: "master-orchestrator"
+      omni.quantum.tier: "HIGH"
+      omni.quantum.system: "37"
+      omni.quantum.service: "voice"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9502/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ─── Event Processor (Redis Streams → notifications) ───────────────────────
+  orchestrator-events:
+    <<: *common
+    build:
+      context: ../system-37-master-orchestrator/events
+      dockerfile: Dockerfile
+    image: omni-orchestrator-events:latest
+    container_name: omni-orchestrator-events
+    environment:
+      <<: *orchestrator-env
+      SERVICE_NAME: orchestrator-events
+      API_URL: http://omni-orchestrator:9500
+      # Event processing
+      STREAM_KEY: omni:events
+      CONSUMER_GROUP: orchestrator
+      CONSUMER_NAME: events-processor-1
+      BATCH_SIZE: "50"
+      BLOCK_MS: "5000"
+      # Notification routing
+      NOTIFY_CRITICAL_CHANNEL: alerts
+      NOTIFY_HIGH_CHANNEL: platform-ops
+      NOTIFY_STANDARD_CHANNEL: platform-logs
+    networks:
+      - omni-quantum-network
+    depends_on:
+      orchestrator-api:
+        condition: service_healthy
+    labels:
+      omni.quantum.component: "master-orchestrator"
+      omni.quantum.tier: "HIGH"
+      omni.quantum.system: "37"
+      omni.quantum.service: "events"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s

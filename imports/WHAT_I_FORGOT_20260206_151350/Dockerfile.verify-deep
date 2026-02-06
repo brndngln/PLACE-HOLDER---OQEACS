@@ -1,0 +1,95 @@
+###############################################################################
+# omni-verify-deep — Tier 3 Deep Verification Image (< 10 minutes)
+#
+# Heavy-weight semantic analysis and integration testing:
+#   - CodeQL: Semantic security analysis (multi-language)
+#   - Facebook Infer: Static analysis for null derefs, races, leaks
+#   - Testcontainers: Integration tests against real services
+#   - Benchmark: Performance comparison against baseline
+#   - Radon/lizard: Complexity deep analysis
+#
+# Target: Every PR merge / pipeline stage 4. Must complete in < 10 minutes.
+# Part of: Omni Quantum Elite — Wave 1 Verification Core
+###############################################################################
+FROM python:3.12-slim AS base
+
+LABEL maintainer="Omni Quantum Elite"
+LABEL omni.quantum.component="verify-deep"
+LABEL omni.quantum.tier="VERIFICATION"
+LABEL omni.quantum.wave="1"
+LABEL omni.quantum.version="1.0.0"
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# ─── System Dependencies ────────────────────────────────────────────────────
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    wget \
+    git \
+    jq \
+    unzip \
+    ca-certificates \
+    build-essential \
+    openjdk-17-jre-headless \
+    docker.io \
+    && rm -rf /var/lib/apt/lists/*
+
+# ─── CodeQL CLI ─────────────────────────────────────────────────────────────
+# CodeQL: GitHub's semantic code analysis engine
+ARG CODEQL_VERSION=2.19.3
+RUN mkdir -p /opt/codeql && \
+    cd /tmp && \
+    curl -fsSL "https://github.com/github/codeql-action/releases/download/codeql-bundle-v${CODEQL_VERSION}/codeql-bundle-linux64.tar.gz" \
+      -o codeql-bundle.tar.gz && \
+    tar -xzf codeql-bundle.tar.gz -C /opt && \
+    rm codeql-bundle.tar.gz && \
+    ln -s /opt/codeql/codeql /usr/local/bin/codeql
+
+# ─── Facebook Infer ─────────────────────────────────────────────────────────
+# Infer: Static analysis for null dereferences, data races, memory leaks
+ARG INFER_VERSION=1.2.0
+RUN cd /tmp && \
+    curl -fsSL "https://github.com/facebook/infer/releases/download/v${INFER_VERSION}/infer-linux-x86_64-v${INFER_VERSION}.tar.xz" \
+      -o infer.tar.xz && \
+    tar -xJf infer.tar.xz -C /opt && \
+    ln -s /opt/infer-linux-x86_64-v${INFER_VERSION}/bin/infer /usr/local/bin/infer && \
+    rm infer.tar.xz
+
+# ─── Python Analysis & Testing Tools ───────────────────────────────────────
+RUN pip install --no-cache-dir \
+    # Integration testing
+    testcontainers[postgresql,redis,kafka]==4.9.0 \
+    pytest==8.3.4 \
+    pytest-asyncio==0.24.0 \
+    pytest-timeout==2.3.1 \
+    pytest-xdist==3.5.0 \
+    # Complexity analysis
+    radon==6.0.1 \
+    lizard==1.17.13 \
+    xenon==0.9.3 \
+    # Benchmarking
+    pytest-benchmark==5.1.0 \
+    asv==0.6.4 \
+    # Code metrics
+    wily==1.25.0 \
+    cohesion==1.1.0 \
+    # Misc
+    httpx==0.28.1 \
+    rich==13.9.4
+
+# ─── Node.js (for JS/TS analysis) ──────────────────────────────────────────
+ARG NODE_VERSION=22
+RUN curl -fsSL "https://deb.nodesource.com/setup_${NODE_VERSION}.x" | bash - && \
+    apt-get install -y --no-install-recommends nodejs && \
+    rm -rf /var/lib/apt/lists/*
+
+# ─── Workspace ──────────────────────────────────────────────────────────────
+WORKDIR /workspace
+COPY verify-deep.sh /usr/local/bin/verify-deep
+COPY configs/ /opt/omni-configs/
+RUN chmod +x /usr/local/bin/verify-deep
+
+ENTRYPOINT ["verify-deep"]
+CMD ["--all"]

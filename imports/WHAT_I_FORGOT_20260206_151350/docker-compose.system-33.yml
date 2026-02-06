@@ -1,0 +1,157 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# ⚛ SYSTEM 33: CRYPTOGRAPHIC FORTRESS PRO — Enhanced Secrets
+# ══════════════════════════════════════════════════════════════════════════════
+# Automated secret rotation (10 secret types, 30-180 day cycles), internal
+# PKI for mTLS between services, and comprehensive audit logging.
+# Extends System 2 (Cryptographic Fortress / Vault).
+# ══════════════════════════════════════════════════════════════════════════════
+
+x-common: &common
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: "50m"
+      max-file: "5"
+      tag: "{{.Name}}"
+
+networks:
+  omni-quantum-network:
+    external: true
+
+volumes:
+  secret-rotation-data:
+    name: omni-secret-rotation-data
+  pki-data:
+    name: omni-pki-data
+  audit-data:
+    name: omni-audit-data
+
+services:
+  # ─── Secret Rotation Agent ─────────────────────────────────────────────────
+  secret-rotation:
+    <<: *common
+    build:
+      context: ../system-33-enhanced-secrets/secret-rotation
+      dockerfile: Dockerfile
+    image: omni-secret-rotation:latest
+    container_name: omni-secret-rotation
+    environment:
+      - VAULT_ADDR=http://omni-vault:8200
+      - VAULT_TOKEN=${VAULT_ROOT_TOKEN}
+      - DATABASE_URL=postgresql://${ORCHESTRATOR_DB_USER:-omni_orchestrator}:${ORCHESTRATOR_DB_PASSWORD}@omni-postgres:5432/omni_orchestrator
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=INFO
+      # Rotation schedules (days)
+      - POSTGRES_PASSWORD_ROTATION_DAYS=90
+      - REDIS_PASSWORD_ROTATION_DAYS=90
+      - MINIO_KEY_ROTATION_DAYS=60
+      - API_KEY_ROTATION_DAYS=30
+      - JWT_SECRET_ROTATION_DAYS=90
+      - WEBHOOK_SECRET_ROTATION_DAYS=60
+      - ENCRYPTION_KEY_ROTATION_DAYS=180
+      - TLS_CERT_ROTATION_DAYS=90
+      - OAUTH_SECRET_ROTATION_DAYS=90
+      - BACKUP_KEY_ROTATION_DAYS=180
+      # Grace period before old secret expires
+      - ROTATION_GRACE_PERIOD_HOURS=24
+      - ROTATION_CHECK_INTERVAL=3600
+      # PostgreSQL connection for rotation
+      - POSTGRES_HOST=omni-postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_SUPERUSER=${POSTGRES_SUPERUSER:-omni_admin}
+      - POSTGRES_SUPERUSER_PASSWORD=${POSTGRES_SUPERUSER_PASSWORD}
+    ports:
+      - "${SECRET_ROTATION_PORT:-9331}:8000"
+    volumes:
+      - secret-rotation-data:/app/data
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: "enhanced-secrets"
+      omni.quantum.tier: "HIGH"
+      omni.quantum.system: "33"
+      omni.quantum.critical: "true"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ─── Internal PKI (certificate authority for mTLS) ─────────────────────────
+  pki-manager:
+    <<: *common
+    build:
+      context: ../system-33-enhanced-secrets/pki-manager
+      dockerfile: Dockerfile
+    image: omni-pki-manager:latest
+    container_name: omni-pki-manager
+    environment:
+      - VAULT_ADDR=http://omni-vault:8200
+      - VAULT_TOKEN=${VAULT_ROOT_TOKEN}
+      - DATABASE_URL=postgresql://${ORCHESTRATOR_DB_USER:-omni_orchestrator}:${ORCHESTRATOR_DB_PASSWORD}@omni-postgres:5432/omni_orchestrator
+      - LOG_LEVEL=INFO
+      - CA_COMMON_NAME=Omni Quantum Elite Internal CA
+      - CA_ORGANIZATION=Omni Quantum Elite
+      - CA_VALIDITY_YEARS=10
+      - CERT_DEFAULT_TTL=2160h
+      - CERT_MAX_TTL=8760h
+      - CRL_DISTRIBUTION_URL=http://omni-pki-manager:8000/crl
+    ports:
+      - "${PKI_MANAGER_PORT:-9332}:8000"
+    volumes:
+      - pki-data:/app/data
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: "enhanced-secrets"
+      omni.quantum.tier: "HIGH"
+      omni.quantum.system: "33"
+      omni.quantum.service: "pki-manager"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # ─── Vault Audit Logger ────────────────────────────────────────────────────
+  vault-audit-logger:
+    <<: *common
+    build:
+      context: ../system-33-enhanced-secrets/audit-logger
+      dockerfile: Dockerfile
+    image: omni-vault-audit-logger:latest
+    container_name: omni-vault-audit-logger
+    environment:
+      - VAULT_ADDR=http://omni-vault:8200
+      - VAULT_TOKEN=${VAULT_ROOT_TOKEN}
+      - LOKI_URL=http://omni-loki:3100
+      - DATABASE_URL=postgresql://${ORCHESTRATOR_DB_USER:-omni_orchestrator}:${ORCHESTRATOR_DB_PASSWORD}@omni-postgres:5432/omni_orchestrator
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - LOG_LEVEL=INFO
+      # Alert on suspicious patterns
+      - ALERT_ON_ROOT_TOKEN_USE=true
+      - ALERT_ON_POLICY_CHANGE=true
+      - ALERT_ON_AUTH_FAILURE=true
+      - ALERT_ON_SEAL_UNSEAL=true
+      - MAX_AUTH_FAILURES_PER_HOUR=10
+    ports:
+      - "${VAULT_AUDIT_PORT:-9333}:8000"
+    volumes:
+      - audit-data:/app/data
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: "enhanced-secrets"
+      omni.quantum.tier: "STANDARD"
+      omni.quantum.system: "33"
+      omni.quantum.service: "vault-audit-logger"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 15s

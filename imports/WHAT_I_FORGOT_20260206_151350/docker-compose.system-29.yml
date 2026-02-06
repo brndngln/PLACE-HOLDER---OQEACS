@@ -1,0 +1,242 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# ⚛ SYSTEM 29: PULSE COMMAND PRO — Enhanced Monitoring
+# ══════════════════════════════════════════════════════════════════════════════
+# Thanos for long-term Prometheus storage, SLA tracking, anomaly detection,
+# and capacity planning. Extends System 5 (Observatory).
+# ══════════════════════════════════════════════════════════════════════════════
+
+x-common: &common
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: "50m"
+      max-file: "5"
+      tag: "{{.Name}}"
+
+networks:
+  omni-quantum-network:
+    external: true
+
+volumes:
+  thanos-store-data:
+    name: omni-thanos-store-data
+  thanos-compact-data:
+    name: omni-thanos-compact-data
+  sla-tracker-data:
+    name: omni-sla-tracker-data
+
+services:
+  # ─── Thanos Sidecar (attaches to existing Prometheus) ─────────────────────
+  thanos-sidecar:
+    <<: *common
+    image: quay.io/thanos/thanos:v0.35.1
+    container_name: omni-thanos-sidecar
+    command:
+      - sidecar
+      - --tsdb.path=/prometheus
+      - --prometheus.url=http://omni-prometheus:9090
+      - --objstore.config-file=/etc/thanos/objstore.yml
+      - --grpc-address=0.0.0.0:10901
+      - --http-address=0.0.0.0:10902
+    volumes:
+      - ${PROMETHEUS_DATA_DIR:-/var/lib/omni/prometheus}:/prometheus:ro
+      - ./config/thanos/objstore.yml:/etc/thanos/objstore.yml:ro
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: "enhanced-monitoring"
+      omni.quantum.tier: "HIGH"
+      omni.quantum.system: "29"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:10902/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ─── Thanos Query (federated query frontend) ─────────────────────────────
+  thanos-query:
+    <<: *common
+    image: quay.io/thanos/thanos:v0.35.1
+    container_name: omni-thanos-query
+    command:
+      - query
+      - --http-address=0.0.0.0:9090
+      - --grpc-address=0.0.0.0:10901
+      - --endpoint=omni-thanos-sidecar:10901
+      - --endpoint=omni-thanos-store:10901
+      - --query.replica-label=replica
+      - --query.auto-downsampling
+    ports:
+      - "${THANOS_QUERY_PORT:-19090}:9090"
+    networks:
+      - omni-quantum-network
+    depends_on:
+      thanos-sidecar:
+        condition: service_healthy
+    labels:
+      omni.quantum.component: "enhanced-monitoring"
+      omni.quantum.tier: "HIGH"
+      omni.quantum.system: "29"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ─── Thanos Store Gateway (long-term storage reader) ──────────────────────
+  thanos-store:
+    <<: *common
+    image: quay.io/thanos/thanos:v0.35.1
+    container_name: omni-thanos-store
+    command:
+      - store
+      - --data-dir=/data
+      - --objstore.config-file=/etc/thanos/objstore.yml
+      - --grpc-address=0.0.0.0:10901
+      - --http-address=0.0.0.0:10902
+      - --index-cache-size=500MB
+      - --chunk-pool-size=500MB
+    volumes:
+      - thanos-store-data:/data
+      - ./config/thanos/objstore.yml:/etc/thanos/objstore.yml:ro
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: "enhanced-monitoring"
+      omni.quantum.tier: "HIGH"
+      omni.quantum.system: "29"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:10902/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ─── Thanos Compactor (downsampling & compaction) ─────────────────────────
+  thanos-compact:
+    <<: *common
+    image: quay.io/thanos/thanos:v0.35.1
+    container_name: omni-thanos-compact
+    command:
+      - compact
+      - --data-dir=/data
+      - --objstore.config-file=/etc/thanos/objstore.yml
+      - --http-address=0.0.0.0:10902
+      - --retention.resolution-raw=30d
+      - --retention.resolution-5m=90d
+      - --retention.resolution-1h=365d
+      - --compact.concurrency=1
+      - --wait
+    volumes:
+      - thanos-compact-data:/data
+      - ./config/thanos/objstore.yml:/etc/thanos/objstore.yml:ro
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: "enhanced-monitoring"
+      omni.quantum.tier: "HIGH"
+      omni.quantum.system: "29"
+
+  # ─── SLA Tracker (custom FastAPI service) ──────────────────────────────────
+  sla-tracker:
+    <<: *common
+    build:
+      context: ../system-29-enhanced-monitoring/sla-tracker
+      dockerfile: Dockerfile
+    image: omni-sla-tracker:latest
+    container_name: omni-sla-tracker
+    environment:
+      - DATABASE_URL=postgresql://${SLA_TRACKER_DB_USER:-omni_sla_tracker}:${SLA_TRACKER_DB_PASSWORD}@omni-postgres:5432/omni_sla_tracker
+      - PROMETHEUS_URL=http://omni-thanos-query:9090
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - CHECK_INTERVAL_SECONDS=60
+      - LOG_LEVEL=INFO
+    ports:
+      - "${SLA_TRACKER_PORT:-9311}:8000"
+    volumes:
+      - sla-tracker-data:/app/data
+    networks:
+      - omni-quantum-network
+    depends_on:
+      thanos-query:
+        condition: service_healthy
+    labels:
+      omni.quantum.component: "enhanced-monitoring"
+      omni.quantum.tier: "HIGH"
+      omni.quantum.system: "29"
+      omni.quantum.service: "sla-tracker"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ─── Anomaly Detector (custom FastAPI service) ─────────────────────────────
+  anomaly-detector:
+    <<: *common
+    build:
+      context: ../system-29-enhanced-monitoring/anomaly-detector
+      dockerfile: Dockerfile
+    image: omni-anomaly-detector:latest
+    container_name: omni-anomaly-detector
+    environment:
+      - PROMETHEUS_URL=http://omni-thanos-query:9090
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - QDRANT_URL=http://omni-qdrant:6333
+      - DETECTION_INTERVAL=30
+      - SENSITIVITY=medium
+      - LOG_LEVEL=INFO
+    ports:
+      - "${ANOMALY_DETECTOR_PORT:-9312}:8000"
+    networks:
+      - omni-quantum-network
+    depends_on:
+      thanos-query:
+        condition: service_healthy
+    labels:
+      omni.quantum.component: "enhanced-monitoring"
+      omni.quantum.tier: "HIGH"
+      omni.quantum.system: "29"
+      omni.quantum.service: "anomaly-detector"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ─── Capacity Planner (custom FastAPI service) ─────────────────────────────
+  capacity-planner:
+    <<: *common
+    build:
+      context: ../system-29-enhanced-monitoring/capacity-planner
+      dockerfile: Dockerfile
+    image: omni-capacity-planner:latest
+    container_name: omni-capacity-planner
+    environment:
+      - PROMETHEUS_URL=http://omni-thanos-query:9090
+      - DATABASE_URL=postgresql://${SLA_TRACKER_DB_USER:-omni_sla_tracker}:${SLA_TRACKER_DB_PASSWORD}@omni-postgres:5432/omni_sla_tracker
+      - FORECAST_HORIZON_DAYS=30
+      - LOG_LEVEL=INFO
+    ports:
+      - "${CAPACITY_PLANNER_PORT:-9313}:8000"
+    networks:
+      - omni-quantum-network
+    depends_on:
+      thanos-query:
+        condition: service_healthy
+    labels:
+      omni.quantum.component: "enhanced-monitoring"
+      omni.quantum.tier: "STANDARD"
+      omni.quantum.system: "29"
+      omni.quantum.service: "capacity-planner"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 20s

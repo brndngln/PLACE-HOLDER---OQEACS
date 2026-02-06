@@ -1,0 +1,77 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# ⚛ SYSTEM 36: CODE FORGE — Development Environments
+# ══════════════════════════════════════════════════════════════════════════════
+# Coder for browser-based VS Code development environments with standardized
+# templates, GPU passthrough support, and pre-configured toolchains.
+# ══════════════════════════════════════════════════════════════════════════════
+
+x-common: &common
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: "50m"
+      max-file: "5"
+      tag: "{{.Name}}"
+
+networks:
+  omni-quantum-network:
+    external: true
+
+volumes:
+  coder-data:
+    name: omni-coder-data
+
+services:
+  # ─── Coder Server ──────────────────────────────────────────────────────────
+  coder:
+    <<: *common
+    image: ghcr.io/coder/coder:v2.17
+    container_name: omni-coder
+    environment:
+      # Server
+      - CODER_ACCESS_URL=http://${OMNI_DOMAIN:-localhost}:${CODER_PORT:-7080}
+      - CODER_HTTP_ADDRESS=0.0.0.0:7080
+      - CODER_WILDCARD_ACCESS_URL=*.coder.${OMNI_DOMAIN:-localhost}
+      # Database
+      - CODER_PG_CONNECTION_URL=postgres://${CODER_DB_USER:-omni_coder}:${CODER_DB_PASSWORD}@omni-postgres:5432/omni_coder?sslmode=disable
+      # Authentication
+      - CODER_FIRST_USER_EMAIL=${CODER_ADMIN_EMAIL:-admin@${OMNI_DOMAIN:-localhost}}
+      - CODER_FIRST_USER_USERNAME=${CODER_ADMIN_USER:-omni-admin}
+      - CODER_FIRST_USER_PASSWORD=${CODER_ADMIN_PASSWORD}
+      # Telemetry
+      - CODER_TELEMETRY_ENABLE=false
+      # Git integration
+      - CODER_GITAUTH_0_ID=gitea
+      - CODER_GITAUTH_0_TYPE=gitea
+      - CODER_GITAUTH_0_CLIENT_ID=${CODER_GITEA_CLIENT_ID:-}
+      - CODER_GITAUTH_0_CLIENT_SECRET=${CODER_GITEA_CLIENT_SECRET:-}
+      - CODER_GITAUTH_0_AUTH_URL=http://omni-gitea:3000/login/oauth/authorize
+      - CODER_GITAUTH_0_TOKEN_URL=http://omni-gitea:3000/login/oauth/access_token
+      - CODER_GITAUTH_0_VALIDATE_URL=http://omni-gitea:3000/api/v1/user
+      # Resource limits
+      - CODER_MAX_TOKEN_LIFETIME=720h
+      - CODER_SESSION_DURATION=24h
+      # Provisioner
+      - CODER_PROVISIONER_DAEMONS=3
+    ports:
+      - "${CODER_PORT:-7080}:7080"
+    volumes:
+      - coder-data:/home/coder/.config
+      - /var/run/docker.sock:/var/run/docker.sock:rw
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: "dev-environments"
+      omni.quantum.tier: "STANDARD"
+      omni.quantum.system: "36"
+      # Traefik routing
+      traefik.enable: "true"
+      traefik.http.routers.coder.rule: "Host(`code.${OMNI_DOMAIN:-localhost}`)"
+      traefik.http.services.coder.loadbalancer.server.port: "7080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7080/api/v2/buildinfo"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s

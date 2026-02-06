@@ -1,0 +1,9 @@
+type: S3
+config:
+  bucket: omni-backups
+  endpoint: omni-minio:9000
+  access_key: ${MINIO_ROOT_USER}
+  secret_key: ${MINIO_ROOT_PASSWORD}
+  insecure: true
+  signature_version2: false
+  part_size: 67108864  # 64MB
