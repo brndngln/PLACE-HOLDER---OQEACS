@@ -1,9 +1,10 @@
-"""Pattern Graph SDK — typed client for the Neo4j GraphRAG Pattern API.
+"""Neo4j Pattern Graph SDK — typed async client for the Pattern Query API v2.
 
 Usage:
-    client = PatternGraphClient()
-    patterns = await client.recommend_patterns("Build a REST API with caching", language="python")
-    detail = await client.get_pattern("repository")
+    async with Neo4jPatternClient() as client:
+        rec = await client.recommend_patterns("Build a REST API with caching", language="python")
+        detail = await client.get_pattern("repository")
+        stats = await client.graph_stats()
 """
 
 from __future__ import annotations
@@ -15,70 +16,85 @@ from pydantic import BaseModel, Field
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 
+# ---------------------------------------------------------------------------
+# Response models
+# ---------------------------------------------------------------------------
+
 class PatternSummary(BaseModel):
-    """Summarized pattern from recommendation results."""
+    """Summarized pattern from recommendation or listing."""
     name: str
     description: str
-    intent: str
+    category: str = ""
     complexity: str = ""
-    frequency: str = ""
     confidence: float = 0.0
-    category: str = ""
-
-
-class PatternDetail(BaseModel):
-    """Full pattern detail with all relationships."""
-    name: str
-    description: str
-    intent: str
-    when_to_use: str = ""
-    when_not_to_use: str = ""
-    complexity: str = ""
-    frequency: str = ""
-    category: str = ""
-    implementations: List[Dict[str, Any]] = Field(default_factory=list)
-    related_patterns: List[Dict[str, Any]] = Field(default_factory=list)
-    principles: List[Dict[str, Any]] = Field(default_factory=list)
-    trade_offs: List[Dict[str, Any]] = Field(default_factory=list)
-    anti_patterns: List[Dict[str, Any]] = Field(default_factory=list)
 
 
 class PatternRecommendation(BaseModel):
     """Recommendation result with ranked patterns."""
     task_description: str
     language: Optional[str] = None
+    keywords: List[str] = Field(default_factory=list)
     patterns: List[PatternSummary] = Field(default_factory=list)
-    warnings: List[Dict[str, Any]] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
 
 
-class RelatedPattern(BaseModel):
-    """A related pattern with relationship context."""
+class PatternDetail(BaseModel):
+    """Full pattern detail with all relationships."""
     name: str
-    relationship_type: str
+    description: str
+    category: str = ""
+    complexity: str = ""
+    when_to_use: str = ""
+    when_not_to_use: str = ""
+    trade_offs: str = ""
+    implementation_notes: str = ""
+    related_patterns: List[Dict[str, Any]] = Field(default_factory=list)
+    anti_patterns: List[Dict[str, Any]] = Field(default_factory=list)
+    code_templates: Dict[str, str] = Field(default_factory=dict)
+
+
+class PatternListItem(BaseModel):
+    """Pattern from listing endpoint."""
+    name: str
+    description: str
+    category: str = ""
+    complexity: str = ""
+
+
+class ExampleResult(BaseModel):
+    """Real-world codebase example for a pattern."""
+    pattern_name: str
+    codebase: str
+    component: str = ""
+    file_path: str = ""
     description: str = ""
 
 
-class ImplementationDetail(BaseModel):
-    """Language-specific implementation."""
-    pattern_name: str
-    language: str
-    code_template: str = ""
-    notes: str = ""
-    idioms: str = ""
-    caveats: str = ""
-
-
 class AntiPatternResult(BaseModel):
-    """Anti-pattern match result."""
+    """Anti-pattern with fix information."""
     name: str
     description: str
-    why_bad: str
-    better_alternative: str
-    related_pattern: str = ""
+    severity: str = ""
+    fixed_by: str = ""
 
 
-class PatternGraphClient:
-    """Typed async client for the Neo4j GraphRAG Pattern API."""
+class GraphStats(BaseModel):
+    """Graph node and relationship counts."""
+    patterns: int = 0
+    categories: int = 0
+    languages: int = 0
+    codebases: int = 0
+    anti_patterns: int = 0
+    relationships: int = 0
+    timestamp: str = ""
+
+
+# ---------------------------------------------------------------------------
+# Client
+# ---------------------------------------------------------------------------
+
+class Neo4jPatternClient:
+    """Typed async client for the Neo4j GraphRAG Pattern Query API v2."""
 
     def __init__(self, base_url: str = "http://localhost:7475") -> None:
         self.base_url = base_url.rstrip("/")
@@ -88,11 +104,13 @@ class PatternGraphClient:
         """Close the underlying HTTP client."""
         await self._client.aclose()
 
-    async def __aenter__(self) -> PatternGraphClient:
+    async def __aenter__(self) -> Neo4jPatternClient:
         return self
 
     async def __aexit__(self, *args: Any) -> None:
         await self.close()
+
+    # ── Recommend ──────────────────────────────────────────────────────────
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=1, max=10))
     async def recommend_patterns(
@@ -101,7 +119,7 @@ class PatternGraphClient:
         language: Optional[str] = None,
         limit: int = 5,
     ) -> PatternRecommendation:
-        """Get pattern recommendations for a task description.
+        """Get pattern recommendations for a task description via LiteLLM extraction.
 
         Args:
             task_description: Natural language description of the task.
@@ -109,18 +127,44 @@ class PatternGraphClient:
             limit: Maximum number of patterns to return.
 
         Returns:
-            PatternRecommendation with ranked patterns and warnings.
+            PatternRecommendation with ranked patterns, keywords, and warnings.
         """
-        params: Dict[str, Any] = {"task": task_description, "limit": limit}
+        payload: Dict[str, Any] = {"task": task_description, "limit": limit}
         if language:
-            params["language"] = language
-        resp = await self._client.get("/patterns/recommend", params=params)
+            payload["language"] = language
+        resp = await self._client.post("/patterns/recommend", json=payload)
         resp.raise_for_status()
         return PatternRecommendation(**resp.json())
 
+    # ── List ───────────────────────────────────────────────────────────────
+
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=1, max=10))
+    async def list_patterns(
+        self,
+        category: Optional[str] = None,
+        limit: int = 100,
+    ) -> List[PatternListItem]:
+        """List all patterns, optionally filtered by category.
+
+        Args:
+            category: Optional category name to filter by.
+            limit: Maximum patterns to return.
+
+        Returns:
+            List of PatternListItem objects.
+        """
+        params: Dict[str, Any] = {"limit": limit}
+        if category:
+            params["category"] = category
+        resp = await self._client.get("/patterns", params=params)
+        resp.raise_for_status()
+        return [PatternListItem(**item) for item in resp.json()]
+
+    # ── Detail ─────────────────────────────────────────────────────────────
+
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=1, max=10))
     async def get_pattern(self, name: str) -> PatternDetail:
-        """Get full pattern detail with implementations, relationships, principles, trade-offs.
+        """Get full pattern detail with relationships, anti-patterns, and code templates.
 
         Args:
             name: Pattern name (e.g., 'singleton', 'repository').
@@ -132,80 +176,72 @@ class PatternGraphClient:
         resp.raise_for_status()
         return PatternDetail(**resp.json())
 
+    # ── Examples ───────────────────────────────────────────────────────────
+
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=1, max=10))
-    async def get_related(self, name: str) -> List[RelatedPattern]:
-        """Get related patterns (complementary, alternative, prerequisite).
+    async def get_examples(self, name: str) -> List[ExampleResult]:
+        """Get real-world codebase examples for a pattern.
 
         Args:
             name: Pattern name.
 
         Returns:
-            List of RelatedPattern objects with relationship context.
+            List of ExampleResult with codebase details.
         """
-        resp = await self._client.get(f"/patterns/{name}/related")
+        resp = await self._client.get(f"/patterns/{name}/examples")
         resp.raise_for_status()
-        return [RelatedPattern(**item) for item in resp.json()]
+        return [ExampleResult(**item) for item in resp.json()]
+
+    # ── Anti-patterns ──────────────────────────────────────────────────────
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=1, max=10))
-    async def get_implementation(self, name: str, language: str) -> ImplementationDetail:
-        """Get language-specific implementation with idioms and caveats.
-
-        Args:
-            name: Pattern name.
-            language: Programming language (e.g., 'python', 'go').
+    async def list_antipatterns(self) -> List[AntiPatternResult]:
+        """List all known anti-patterns.
 
         Returns:
-            ImplementationDetail with code template and notes.
+            List of AntiPatternResult with severity and fix info.
         """
-        resp = await self._client.get(f"/patterns/{name}/implementations/{language}")
-        resp.raise_for_status()
-        return ImplementationDetail(**resp.json())
-
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=1, max=10))
-    async def find_anti_patterns(self, code_description: str) -> List[AntiPatternResult]:
-        """Find anti-patterns matching a code description.
-
-        Args:
-            code_description: Description of code to analyze.
-
-        Returns:
-            List of AntiPatternResult with alternatives.
-        """
-        resp = await self._client.get(
-            "/patterns/anti-patterns",
-            params={"code_description": code_description},
-        )
+        resp = await self._client.get("/antipatterns")
         resp.raise_for_status()
         return [AntiPatternResult(**item) for item in resp.json()]
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=1, max=10))
-    async def patterns_for_principle(self, principle: str) -> List[PatternSummary]:
-        """Get patterns supporting a SOLID/design principle.
+    async def antipatterns_for_task(self, task: str) -> List[AntiPatternResult]:
+        """Find anti-patterns relevant to a task description.
 
         Args:
-            principle: Principle name (e.g., 'SRP', 'OCP', 'DIP').
+            task: Task or code description to analyze.
 
         Returns:
-            List of PatternSummary objects.
+            List of matching AntiPatternResult objects.
         """
-        resp = await self._client.get(f"/patterns/for-principle/{principle}")
+        resp = await self._client.get("/antipatterns/for-task", params={"task": task})
         resp.raise_for_status()
-        return [PatternSummary(**item) for item in resp.json()]
+        return [AntiPatternResult(**item) for item in resp.json()]
+
+    # ── Graph stats ────────────────────────────────────────────────────────
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=1, max=10))
-    async def pattern_path(self, from_pattern: str, to_pattern: str) -> Dict[str, Any]:
-        """Find shortest path between two patterns through relationships.
-
-        Args:
-            from_pattern: Starting pattern name.
-            to_pattern: Target pattern name.
+    async def graph_stats(self) -> GraphStats:
+        """Return counts of all node and relationship types.
 
         Returns:
-            Dict with path nodes and relationships.
+            GraphStats with pattern, category, language, codebase counts.
         """
-        resp = await self._client.post(
-            "/patterns/path",
-            params={"from": from_pattern, "to": to_pattern},
-        )
+        resp = await self._client.get("/graph/stats")
+        resp.raise_for_status()
+        return GraphStats(**resp.json())
+
+    # ── Health ─────────────────────────────────────────────────────────────
+
+    async def health(self) -> Dict[str, Any]:
+        """Check API liveness."""
+        resp = await self._client.get("/health")
+        resp.raise_for_status()
+        return resp.json()
+
+    async def ready(self) -> Dict[str, Any]:
+        """Check API readiness (Neo4j connectivity)."""
+        resp = await self._client.get("/ready")
         resp.raise_for_status()
         return resp.json()
