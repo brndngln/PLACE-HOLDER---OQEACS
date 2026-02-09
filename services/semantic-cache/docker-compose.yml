@@ -1,0 +1,98 @@
+version: "3.8"
+
+services:
+  omni-semantic-cache:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: omni-semantic-cache
+    hostname: omni-semantic-cache
+    ports:
+      - "9440:9440"
+    environment:
+      REDIS_URL: "redis://omni-semantic-cache-redis:6379/0"
+      LITELLM_URL: "http://omni-litellm:4000"
+      LANGFUSE_URL: "http://omni-langfuse:3000"
+      LANGFUSE_PUBLIC_KEY: "${LANGFUSE_PUBLIC_KEY:-}"
+      LANGFUSE_SECRET_KEY: "${LANGFUSE_SECRET_KEY:-}"
+      SIMILARITY_THRESHOLD: "${SIMILARITY_THRESHOLD:-0.95}"
+      EMBEDDING_MODEL: "${EMBEDDING_MODEL:-text-embedding-3-small}"
+      MAX_CACHE_ENTRIES: "${MAX_CACHE_ENTRIES:-50000}"
+    networks:
+      - omni-quantum-network
+    depends_on:
+      omni-semantic-cache-redis:
+        condition: service_healthy
+      omni-litellm:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "0.5"
+        reservations:
+          memory: 256M
+          cpus: "0.1"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9440/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    labels:
+      omni.quantum.component: "semantic-cache"
+      omni.quantum.tier: "HIGH"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  omni-semantic-cache-redis:
+    image: redis:7-alpine
+    container_name: omni-semantic-cache-redis
+    hostname: omni-semantic-cache-redis
+    command: >
+      redis-server
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+      --appendfsync everysec
+      --save 60 1000
+      --save 300 100
+    volumes:
+      - semantic_cache_redis_data:/data
+    networks:
+      - omni-quantum-network
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+          cpus: "0.25"
+        reservations:
+          memory: 128M
+          cpus: "0.1"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped
+    labels:
+      omni.quantum.component: "semantic-cache-redis"
+      omni.quantum.tier: "HIGH"
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+volumes:
+  semantic_cache_redis_data:
+    driver: local
+
+networks:
+  omni-quantum-network:
+    external: true

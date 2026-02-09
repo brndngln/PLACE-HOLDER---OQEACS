@@ -1,0 +1,354 @@
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║  Knowledge Sources Configuration — Omni Quantum Elite v1.0                 ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+repositories:
+  # ── Tier 1: Architecture Exemplars ──────────────────────────────────────
+
+  - source_name: linux-kernel
+    source_url: "https://github.com/torvalds/linux.git"
+    source_category: os-internals
+    branch: master
+    languages: ["c"]
+    file_patterns: ["*.c", "*.h"]
+    exclude_patterns:
+      - "drivers/*"
+      - "arch/*"
+      - "tools/*"
+      - "Documentation/*"
+      - "samples/*"
+      - "scripts/*"
+    collection: elite_codebases
+    chunk_strategy: ast
+    tags:
+      - tier-1
+      - architecture-exemplar
+      - os-internals
+      - memory-management
+      - scheduling
+      - filesystems
+      - networking
+
+  - source_name: postgresql
+    source_url: "https://github.com/postgres/postgres.git"
+    source_category: database-internals
+    branch: master
+    languages: ["c"]
+    file_patterns: ["*.c", "*.h"]
+    exclude_patterns:
+      - "src/test/*"
+      - "doc/*"
+      - "contrib/*"
+    collection: elite_codebases
+    chunk_strategy: ast
+    tags:
+      - tier-1
+      - architecture-exemplar
+      - database-internals
+      - query-optimization
+      - mvcc
+      - storage-engine
+      - wal
+
+  - source_name: redis
+    source_url: "https://github.com/redis/redis.git"
+    source_category: data-structures
+    branch: unstable
+    languages: ["c"]
+    file_patterns: ["*.c", "*.h"]
+    exclude_patterns:
+      - "tests/*"
+      - "deps/*"
+      - "utils/*"
+    collection: elite_codebases
+    chunk_strategy: ast
+    tags:
+      - tier-1
+      - architecture-exemplar
+      - data-structures
+      - event-loop
+      - networking
+      - persistence
+
+  - source_name: sqlite
+    source_url: "https://github.com/sqlite/sqlite.git"
+    source_category: database-internals
+    branch: master
+    languages: ["c"]
+    file_patterns: ["*.c", "*.h"]
+    exclude_patterns:
+      - "test/*"
+      - "ext/*"
+      - "doc/*"
+    collection: elite_codebases
+    chunk_strategy: ast
+    tags:
+      - tier-1
+      - architecture-exemplar
+      - database-internals
+      - query-planning
+      - btree
+      - wal
+      - testing
+
+  - source_name: kubernetes
+    source_url: "https://github.com/kubernetes/kubernetes.git"
+    source_category: distributed-systems
+    branch: master
+    languages: ["go"]
+    file_patterns: ["*.go"]
+    exclude_patterns:
+      - "vendor/*"
+      - "*_test.go"
+      - "test/*"
+      - "hack/*"
+      - "third_party/*"
+    collection: elite_codebases
+    chunk_strategy: ast
+    tags:
+      - tier-1
+      - architecture-exemplar
+      - distributed-systems
+      - api-design
+      - controllers
+      - scheduling
+
+  - source_name: tokio
+    source_url: "https://github.com/tokio-rs/tokio.git"
+    source_category: async-runtime
+    branch: master
+    languages: ["rust"]
+    file_patterns: ["*.rs"]
+    exclude_patterns:
+      - "tests/*"
+      - "benches/*"
+      - "examples/*"
+    collection: elite_codebases
+    chunk_strategy: ast
+    tags:
+      - tier-1
+      - architecture-exemplar
+      - async-runtime
+      - concurrency
+      - io
+      - zero-cost-abstractions
+
+  # ── Tier 2: Application Architecture ────────────────────────────────────
+
+  - source_name: sentry
+    source_url: "https://github.com/getsentry/sentry.git"
+    source_category: error-tracking
+    branch: master
+    languages: ["python", "typescript"]
+    file_patterns: ["*.py", "*.ts", "*.tsx"]
+    exclude_patterns:
+      - "tests/*"
+      - "test/*"
+      - "fixtures/*"
+      - "node_modules/*"
+      - "static/*"
+      - "docs/*"
+    collection: elite_codebases
+    chunk_strategy: ast
+    tags:
+      - tier-2
+      - error-tracking
+      - event-processing
+      - python-architecture
+      - react-architecture
+
+  - source_name: grafana
+    source_url: "https://github.com/grafana/grafana.git"
+    source_category: observability
+    branch: main
+    languages: ["go", "typescript"]
+    file_patterns: ["*.go", "*.ts", "*.tsx"]
+    exclude_patterns:
+      - "vendor/*"
+      - "node_modules/*"
+      - "*_test.go"
+      - "**/*.test.ts"
+      - "**/*.test.tsx"
+      - "docs/*"
+      - "e2e/*"
+    collection: elite_codebases
+    chunk_strategy: ast
+    tags:
+      - tier-2
+      - plugin-architecture
+      - dashboard-framework
+      - api-design
+
+  - source_name: mattermost
+    source_url: "https://github.com/mattermost/mattermost.git"
+    source_category: real-time-messaging
+    branch: master
+    languages: ["go", "typescript"]
+    file_patterns: ["*.go", "*.ts", "*.tsx"]
+    exclude_patterns:
+      - "vendor/*"
+      - "node_modules/*"
+      - "*_test.go"
+      - "**/*.test.*"
+      - "e2e/*"
+    collection: elite_codebases
+    chunk_strategy: ast
+    tags:
+      - tier-2
+      - real-time-messaging
+      - plugin-system
+      - websocket
+
+  # ── Tier 3: AI/ML ──────────────────────────────────────────────────────
+
+  - source_name: vllm
+    source_url: "https://github.com/vllm-project/vllm.git"
+    source_category: llm-serving
+    branch: main
+    languages: ["python"]
+    file_patterns: ["*.py"]
+    exclude_patterns:
+      - "tests/*"
+      - "benchmarks/*"
+      - "docs/*"
+      - "examples/*"
+    collection: elite_codebases
+    chunk_strategy: ast
+    tags:
+      - tier-3
+      - llm-serving
+      - paged-attention
+      - batching
+      - gpu-optimization
+
+  - source_name: langchain
+    source_url: "https://github.com/langchain-ai/langchain.git"
+    source_category: agent-orchestration
+    branch: master
+    languages: ["python"]
+    file_patterns: ["*.py"]
+    exclude_patterns:
+      - "tests/*"
+      - "docs/*"
+      - "templates/*"
+      - "cookbook/*"
+    collection: elite_codebases
+    chunk_strategy: ast
+    tags:
+      - tier-3
+      - agent-orchestration
+      - rag
+      - chains
+      - tools
+      - memory
+
+# ── Post-Mortems ──────────────────────────────────────────────────────────
+
+postmortems:
+  - source_name: google-postmortems
+    url: "https://github.com/danluu/post-mortems"
+    source: danluu-post-mortems
+    collection: anti_patterns
+    tags:
+      - reliability
+      - outages
+      - root-cause-analysis
+
+# ── Technical Blogs (RSS Feeds) ──────────────────────────────────────────
+
+blogs:
+  - source_name: netflix-tech-blog
+    rss_url: "https://netflixtechblog.com/feed"
+    domain: distributed-systems
+    tags:
+      - microservices
+      - resilience
+      - java
+      - data-engineering
+
+  - source_name: stripe-engineering
+    rss_url: "https://stripe.com/blog/engineering/feed"
+    domain: api-design
+    tags:
+      - payments
+      - infrastructure
+      - ruby
+      - api-design
+
+  - source_name: cloudflare-blog
+    rss_url: "https://blog.cloudflare.com/rss"
+    domain: networking
+    tags:
+      - security
+      - performance
+      - edge
+      - rust
+      - go
+
+  - source_name: uber-engineering
+    rss_url: "https://eng.uber.com/feed"
+    domain: distributed-systems
+    tags:
+      - microservices
+      - real-time
+      - go
+      - java
+
+  - source_name: discord-engineering
+    rss_url: "https://discord.com/blog/engineering/rss.xml"
+    domain: real-time-systems
+    tags:
+      - websocket
+      - rust
+      - scaling
+      - elixir
+
+# ── ArXiv Categories for Paper Monitoring ─────────────────────────────────
+
+arxiv_categories:
+  - cs.SE    # Software Engineering
+  - cs.AI    # Artificial Intelligence
+  - cs.DC    # Distributed Computing
+  - cs.DB    # Databases
+  - cs.CR    # Cryptography and Security
+  - cs.PL    # Programming Languages
+
+# ── Domain Keywords for Relevance Filtering ───────────────────────────────
+
+domain_keywords:
+  database-internals:
+    - query optimization
+    - transaction processing
+    - storage engine
+    - concurrency control
+    - WAL
+    - B-tree
+    - MVCC
+  distributed-systems:
+    - consensus
+    - replication
+    - fault tolerance
+    - load balancing
+    - service mesh
+    - microservices
+  api-design:
+    - REST
+    - GraphQL
+    - gRPC
+    - rate limiting
+    - versioning
+    - idempotency
+  llm-serving:
+    - inference optimization
+    - model serving
+    - batching
+    - quantization
+    - KV cache
+    - speculative decoding
+  security:
+    - vulnerability
+    - CVE
+    - authentication
+    - authorization
+    - encryption
+    - zero trust

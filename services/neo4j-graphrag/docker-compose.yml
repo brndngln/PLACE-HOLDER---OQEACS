@@ -1,0 +1,101 @@
+version: "3.8"
+
+services:
+  omni-neo4j:
+    image: neo4j:5-community
+    container_name: omni-neo4j
+    hostname: omni-neo4j
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      NEO4J_AUTH: "neo4j/${NEO4J_PASSWORD:-quantum_elite_2024}"
+      NEO4J_PLUGINS: '["apoc"]'
+      NEO4J_server_memory_heap_initial__size: "512m"
+      NEO4J_server_memory_heap_max__size: "1G"
+      NEO4J_server_memory_pagecache_size: "512m"
+      NEO4J_dbms_security_procedures_unrestricted: "apoc.*"
+      NEO4J_dbms_security_procedures_allowlist: "apoc.*"
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+      - neo4j_import:/var/lib/neo4j/import
+      - ./seed:/seed:ro
+    networks:
+      - omni-quantum-network
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "1.0"
+        reservations:
+          memory: 1G
+          cpus: "0.5"
+    healthcheck:
+      test: ["CMD-SHELL", "cypher-shell -u neo4j -p ${NEO4J_PASSWORD:-quantum_elite_2024} 'RETURN 1' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    labels:
+      omni.quantum.component: "neo4j-graphrag"
+      omni.quantum.tier: "HIGH"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  omni-neo4j-api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    container_name: omni-neo4j-api
+    hostname: omni-neo4j-api
+    ports:
+      - "7475:7475"
+    environment:
+      NEO4J_URI: "bolt://omni-neo4j:7687"
+      NEO4J_USER: "neo4j"
+      NEO4J_PASSWORD: "${NEO4J_PASSWORD:-quantum_elite_2024}"
+    networks:
+      - omni-quantum-network
+    depends_on:
+      omni-neo4j:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+        reservations:
+          memory: 128M
+          cpus: "0.1"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7475/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+    labels:
+      omni.quantum.component: "neo4j-graphrag-api"
+      omni.quantum.tier: "HIGH"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  neo4j_data:
+    driver: local
+  neo4j_logs:
+    driver: local
+  neo4j_import:
+    driver: local
+
+networks:
+  omni-quantum-network:
+    external: true
