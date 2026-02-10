@@ -1,0 +1,12 @@
+name: Code Scorer
+target: http://omni-code-scorer:9700
+warmup_requests: 50
+benchmark_duration_seconds: 60
+concurrent_users: 8
+scenarios:
+  - name: score-endpoint
+    method: POST
+    path: /score
+    body: { language: "python", code: "def add(a,b): return a+b" }
+    expected_status: 200
+    thresholds: { p95_latency_ms: 300, min_rps: 20 }

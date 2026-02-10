@@ -1,0 +1,35 @@
+{
+  "consumer": {"name": "omni-orchestrator"},
+  "provider": {"name": "omni-gitea"},
+  "interactions": [
+    {
+      "description": "a request to list repositories",
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/repos/search",
+        "headers": {"Authorization": "token ${GITEA_TOKEN}"},
+        "query": {"limit": "50"}
+      },
+      "response": {
+        "status": 200,
+        "headers": {"Content-Type": "application/json"},
+        "body": {
+          "ok": true,
+          "data": [
+            {"id": 1, "name": "string", "full_name": "string", "html_url": "string", "clone_url": "string"}
+          ]
+        }
+      }
+    },
+    {
+      "description": "a request to get repository by name",
+      "request": {"method": "GET", "path": "/api/v1/repos/omni-quantum/test-repo"},
+      "response": {"status": 200, "body": {"id": 1, "name": "test-repo"}}
+    },
+    {
+      "description": "a request for non-existent repository",
+      "request": {"method": "GET", "path": "/api/v1/repos/omni-quantum/nonexistent"},
+      "response": {"status": 404}
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+version: "3.9"
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "50m"
+    max-file: "5"
+
+services:
+  toxiproxy:
+    image: ghcr.io/shopify/toxiproxy:2.11.0
+    container_name: omni-toxiproxy
+    ports:
+      - "8474:8474"
+      - "8475-8488:8475-8488"
+    command: ["-host", "0.0.0.0", "-port", "8474"]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8474/proxies"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+    mem_limit: 128m
+    restart: unless-stopped
+    logging: *default-logging
+    labels:
+      omni.quantum.component: toxiproxy
+      omni.quantum.tier: standard
+      omni.quantum.critical: "false"
+    networks:
+      - omni-quantum-network
+
+networks:
+  omni-quantum-network:
+    external: true

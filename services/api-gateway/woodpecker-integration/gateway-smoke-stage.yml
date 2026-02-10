@@ -1,0 +1,7 @@
+steps:
+  gateway-smoke:
+    image: curlimages/curl:8.8.0
+    commands:
+      - curl -fsS http://omni-kong:8100/status
+      - curl -fsS http://omni-kong:8100/metrics | head -n 5
+      - echo "Kong gateway healthy and metrics endpoint available"

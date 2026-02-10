@@ -1,0 +1,98 @@
+version: "3.9"
+
+x-default-logging: &default-logging
+  driver: json-file
+  options: {max-size: "50m", max-file: "5"}
+
+x-default-labels: &default-labels
+  omni.quantum.tier: standard
+  omni.quantum.critical: "false"
+
+services:
+  chatwoot-web:
+    image: chatwoot/chatwoot:latest
+    container_name: omni-chatwoot
+    command: ["bundle", "exec", "rails", "s", "-p", "3000", "-b", "0.0.0.0"]
+    environment: &chatwoot-env
+      RAILS_ENV: production
+      INSTALLATION_ENV: docker
+      FRONTEND_URL: http://omni-chatwoot:3000
+      SECRET_KEY_BASE: "{{ vault://secret/data/chatwoot#secret_key_base }}"
+      REDIS_URL: redis://omni-chatwoot-redis:6379
+      POSTGRES_HOST: omni-chatwoot-postgres
+      POSTGRES_DATABASE: chatwoot
+      POSTGRES_USERNAME: "{{ vault://secret/data/chatwoot#db_user }}"
+      POSTGRES_PASSWORD: "{{ vault://secret/data/chatwoot#db_password }}"
+      ENABLE_ACCOUNT_SIGNUP: "false"
+    ports: ["3000:3000"]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/" ]
+      interval: 20s
+      timeout: 10s
+      retries: 8
+      start_period: 40s
+    mem_limit: 512m
+    restart: unless-stopped
+    logging: *default-logging
+    labels: {<<: *default-labels, omni.quantum.component: chatwoot-web}
+    depends_on:
+      chatwoot-postgres: {condition: service_healthy}
+      chatwoot-redis: {condition: service_healthy}
+    networks: [omni-quantum-network]
+
+  chatwoot-sidekiq:
+    image: chatwoot/chatwoot:latest
+    container_name: omni-chatwoot-sidekiq
+    command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
+    environment: *chatwoot-env
+    healthcheck:
+      test: ["CMD", "bash", "-lc", "ps aux | grep -v grep | grep sidekiq"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+    mem_limit: 256m
+    restart: unless-stopped
+    logging: *default-logging
+    labels: {<<: *default-labels, omni.quantum.component: chatwoot-sidekiq}
+    depends_on:
+      chatwoot-web: {condition: service_started}
+    networks: [omni-quantum-network]
+
+  chatwoot-postgres:
+    image: postgres:16-alpine
+    container_name: omni-chatwoot-postgres
+    environment:
+      POSTGRES_DB: chatwoot
+      POSTGRES_USER: "{{ vault://secret/data/chatwoot#db_user }}"
+      POSTGRES_PASSWORD: "{{ vault://secret/data/chatwoot#db_password }}"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U {{ vault://secret/data/chatwoot#db_user }} -d chatwoot"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    mem_limit: 256m
+    logging: *default-logging
+    labels: {<<: *default-labels, omni.quantum.component: chatwoot-postgres}
+    volumes: [chatwoot-postgres-data:/var/lib/postgresql/data]
+    networks: [omni-quantum-network]
+
+  chatwoot-redis:
+    image: redis:7-alpine
+    container_name: omni-chatwoot-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck: {test: ["CMD", "redis-cli", "ping"], interval: 10s, timeout: 5s, retries: 5}
+    mem_limit: 128m
+    restart: unless-stopped
+    logging: *default-logging
+    labels: {<<: *default-labels, omni.quantum.component: chatwoot-redis}
+    volumes: [chatwoot-redis-data:/data]
+    networks: [omni-quantum-network]
+
+volumes:
+  chatwoot-postgres-data:
+  chatwoot-redis-data:
+
+networks:
+  omni-quantum-network:
+    external: true

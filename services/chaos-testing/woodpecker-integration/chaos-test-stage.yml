@@ -1,0 +1,14 @@
+steps:
+  chaos-test:
+    image: python:3.12-slim
+    commands:
+      - pip install httpx pytest
+      - python /chaos/scenarios/database-latency.py --target=${CI_REPO_NAME} --report-dir=/tmp/chaos
+      - python /chaos/scenarios/llm-timeout.py --target=${CI_REPO_NAME} --report-dir=/tmp/chaos
+      - |
+        if [ "${CI_COMMIT_BRANCH}" = "main" ]; then
+          python /chaos/scenarios/full-chaos-suite.py --target=${CI_REPO_NAME} --report-dir=/tmp/chaos
+        fi
+      - python -c "import json; r=json.load(open('/tmp/chaos/resilience-report.json')); score=r['overall_score']; print(f'Resilience: {score}/100'); exit(0 if score >= 60 else 1)"
+    when:
+      branch: [main, "release/*"]

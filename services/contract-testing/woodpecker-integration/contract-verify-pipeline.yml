@@ -1,0 +1,17 @@
+steps:
+  contract-verify:
+    image: pactfoundation/pact-cli:latest
+    commands:
+      - |
+        pact-broker can-i-deploy \
+          --pacticipant ${CI_REPO_NAME} \
+          --version ${CI_COMMIT_SHA:0:8} \
+          --broker-base-url http://omni-pact-broker:9292 \
+          --broker-username ${PACT_BROKER_USERNAME} \
+          --broker-password ${PACT_BROKER_PASSWORD} \
+          --to-environment production
+    environment:
+      PACT_BROKER_USERNAME:
+        from_secret: pact_broker_username
+      PACT_BROKER_PASSWORD:
+        from_secret: pact_broker_password
