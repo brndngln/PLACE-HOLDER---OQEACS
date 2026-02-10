@@ -1,0 +1,51 @@
+### Knowledge Stats
+GET http://omni-knowledge-ingestor:9420/ingest/stats
+
+### Ingest Repository
+POST http://omni-knowledge-ingestor:9420/ingest/repository
+Content-Type: application/json
+
+{
+  "source_url": "https://github.com/fastapi/fastapi.git",
+  "source_name": "fastapi",
+  "source_category": "api-design",
+  "branch": "main",
+  "languages": ["python"],
+  "file_patterns": ["fastapi/**/*.py"],
+  "exclude_patterns": ["tests/*"],
+  "collection": "elite_codebases",
+  "chunk_strategy": "ast",
+  "tags": ["api-design", "python", "async"]
+}
+
+### Ingest Blog Post
+POST http://omni-knowledge-ingestor:9420/ingest/blog
+Content-Type: application/json
+
+{
+  "url": "https://netflixtechblog.com/example-post",
+  "source": "netflix",
+  "domain": "distributed-systems",
+  "tags": ["microservices", "resilience"]
+}
+
+### Freshness — All Sources
+GET http://omni-knowledge-freshness:9430/freshness
+
+### Freshness — Stale Sources
+GET http://omni-knowledge-freshness:9430/freshness/stale
+
+### Neo4j — Recommend Patterns
+POST http://omni-neo4j-pattern-api:7475/patterns/recommend
+Content-Type: application/json
+
+{"task_description": "Build a rate limiter for API endpoints", "language": "python"}
+
+### Neo4j — Anti-Patterns
+GET http://omni-neo4j-pattern-api:7475/antipatterns/for-task?task_description=database+query+endpoint
+
+### Meilisearch — Unified Search
+POST http://omni-meilisearch-indexer:7701/search
+Content-Type: application/json
+
+{"query": "circuit breaker pattern implementation", "indexes": ["all"], "limit": 10}

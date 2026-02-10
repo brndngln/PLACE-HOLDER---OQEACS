@@ -1,0 +1,18 @@
+steps:
+  benchmark-test:
+    image: python:3.12-slim
+    commands:
+      - pip install httpx pyyaml
+      - |
+        python -c "
+        import httpx, sys
+        r = httpx.post('http://omni-benchmark-runner:3001/benchmark/service/${CI_REPO_NAME}',
+                       json={'version': '${CI_COMMIT_SHA:0:8}'}, timeout=300)
+        result = r.json()
+        print(f'Benchmark: {result[\"status\"]}')
+        for m in result.get('metrics', []):
+            print(f'  {m[\"name\"]}: {m[\"value\"]} (threshold: {m[\"threshold\"]}) — {\"PASS\" if m[\"passed\"] else \"FAIL\"}')
+        sys.exit(0 if result['status'] == 'PASS' else 1)
+        "
+    when:
+      branch: [main, "release/*"]

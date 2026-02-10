@@ -1,0 +1,23 @@
+### List All Models
+GET http://omni-model-manager:11435/models
+
+### Model Detail
+GET http://omni-model-manager:11435/models/devstral-2:123b
+
+### GPU Status
+GET http://omni-model-manager:11435/gpu/status
+
+### Load Model
+POST http://omni-model-manager:11435/models/load
+Content-Type: application/json
+
+{"name": "qwen3-coder:30b"}
+
+### Unload Model
+POST http://omni-model-manager:11435/models/unload/qwen3-coder:30b
+
+### Benchmark Model
+POST http://omni-model-manager:11435/models/benchmark/devstral-2:123b
+
+### Model Loading Queue
+GET http://omni-model-manager:11435/models/queue

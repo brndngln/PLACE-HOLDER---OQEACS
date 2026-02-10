@@ -1,0 +1,12 @@
+pipeline:
+  npm-publish:
+    image: node:20-slim
+    commands:
+      - echo "//omni-verdaccio:4873/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+      - npm publish --registry http://omni-verdaccio:4873
+    environment:
+      NPM_TOKEN:
+        from_secret: verdaccio_token
+    when:
+      event: tag
+      tag: "v*"

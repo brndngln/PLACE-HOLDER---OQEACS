@@ -1,0 +1,19 @@
+### List n8n Workflows
+GET http://omni-n8n:5678/api/v1/workflows
+X-N8N-API-KEY: {{n8n_api_key}}
+
+### Create Automation via MCP
+POST http://omni-mcp-automation:8337/tools/create_automation
+Content-Type: application/json
+
+{
+  "description": "Every morning at 8 AM, check all service health via Orchestrator API, and if any critical service is unhealthy, send a summary to Mattermost #alerts and trigger an Omi haptic alert",
+  "name": "Morning Health Check",
+  "activate": true
+}
+
+### Audit Log — Recent Events
+GET http://omni-audit-logger:9550/events?limit=50&event_type=pipeline.task_completed
+
+### Audit Log — Resource Timeline
+GET http://omni-audit-logger:9550/events/timeline/task/{{task_id}}

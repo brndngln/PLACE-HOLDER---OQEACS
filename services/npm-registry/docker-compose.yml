@@ -1,0 +1,41 @@
+version: "3.9"
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "50m"
+    max-file: "5"
+
+services:
+  verdaccio:
+    image: verdaccio/verdaccio:5
+    container_name: omni-verdaccio
+    ports:
+      - "4873:4873"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:4873/-/ping"]
+      interval: 20s
+      timeout: 10s
+      retries: 6
+      start_period: 20s
+    mem_limit: 256m
+    restart: unless-stopped
+    logging: *default-logging
+    labels:
+      omni.quantum.component: npm-registry
+      omni.quantum.tier: standard
+      omni.quantum.critical: "false"
+    volumes:
+      - verdaccio_data:/verdaccio/storage
+      - verdaccio_conf:/verdaccio/conf
+      - ./config/config.yaml:/verdaccio/conf/config.yaml:ro
+    networks:
+      - omni-quantum-network
+
+volumes:
+  verdaccio_data:
+  verdaccio_conf:
+
+networks:
+  omni-quantum-network:
+    external: true

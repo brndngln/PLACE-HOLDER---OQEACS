@@ -1,0 +1,50 @@
+### Platform Overview
+GET http://omni-orchestrator:9500/api/v1/overview
+
+### All Services Status
+GET http://omni-orchestrator:9500/api/v1/status
+
+### Single Service
+GET http://omni-orchestrator:9500/api/v1/status/name/vault
+
+### Service Topology
+GET http://omni-orchestrator:9500/api/v1/topology
+
+### Create Coding Task
+POST http://omni-orchestrator:9500/api/v1/action/build
+Content-Type: application/json
+
+{
+  "description": "Build a REST API for user management with JWT auth and PostgreSQL",
+  "task_type": "feature-build",
+  "complexity": "medium",
+  "language": "python",
+  "framework": "fastapi"
+}
+
+### Restart Service
+POST http://omni-orchestrator:9500/api/v1/action/restart
+Content-Type: application/json
+
+{"container": "omni-n8n"}
+
+### Trigger Backup
+POST http://omni-orchestrator:9500/api/v1/action/backup
+
+### Trigger Deploy
+POST http://omni-orchestrator:9500/api/v1/action/deploy
+Content-Type: application/json
+
+{"app": "client-portal", "environment": "staging"}
+
+### Docker Stats
+GET http://omni-orchestrator:9500/api/v1/docker/stats
+
+### Docker Containers
+GET http://omni-orchestrator:9500/api/v1/docker/containers
+
+### Recent Events
+GET http://omni-orchestrator:9500/api/v1/events/history
+
+### Prometheus Metrics
+GET http://omni-orchestrator:9500/metrics

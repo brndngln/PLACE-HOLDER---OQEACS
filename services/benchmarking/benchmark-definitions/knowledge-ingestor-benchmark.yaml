@@ -1,0 +1,16 @@
+name: Knowledge Ingestor
+target: http://omni-knowledge-ingestor:9300
+warmup_requests: 30
+benchmark_duration_seconds: 60
+concurrent_users: 5
+scenarios:
+  - name: health-check
+    method: GET
+    path: /health
+    expected_status: 200
+    thresholds: { p95_latency_ms: 120, min_rps: 30 }
+  - name: ingestion-status
+    method: GET
+    path: /ingestion/status
+    expected_status: 200
+    thresholds: { p95_latency_ms: 250, min_rps: 15 }

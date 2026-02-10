@@ -1,0 +1,23 @@
+### LLM Costs Today
+GET http://omni-litellm-cost-tracker:4001/costs/today
+
+### LLM Costs This Week
+GET http://omni-litellm-cost-tracker:4001/costs/range?start=2026-02-03&end=2026-02-10
+
+### Invoice Summary
+GET http://omni-invoice-generator:81/invoices/summary
+
+### Overdue Invoices
+GET http://omni-invoice-generator:81/invoices/overdue
+
+### Generate Invoice from Deal
+POST http://omni-invoice-generator:81/generate/from-deal
+Content-Type: application/json
+
+{"deal_id": "deal-123"}
+
+### CRM Pipeline Summary
+GET http://omni-crm-sync:3001/crm/pipeline-summary
+
+### Revenue Forecast
+GET http://omni-crm-sync:3001/crm/revenue-forecast
