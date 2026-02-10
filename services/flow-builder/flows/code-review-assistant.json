@@ -1,0 +1,123 @@
+{
+  "name": "Code Review Assistant",
+  "description": "AI code reviewer scoring across 10 dimensions with pattern-based recommendations",
+  "nodes": [
+    {
+      "id": "chatInput_0",
+      "type": "ChatInput",
+      "position": {"x": 100, "y": 300},
+      "data": {
+        "label": "Code Input",
+        "inputs": {},
+        "outputs": {
+          "output": "chatInput_0-output"
+        }
+      }
+    },
+    {
+      "id": "embedding_0",
+      "type": "OpenAIEmbedding",
+      "position": {"x": 400, "y": 50},
+      "data": {
+        "label": "Embeddings",
+        "inputs": {
+          "modelName": "text-embedding-ada-002",
+          "basePath": "http://omni-litellm:4000/v1",
+          "apiKey": "{{LITELLM_API_KEY}}"
+        },
+        "outputs": {
+          "output": "embedding_0-output"
+        }
+      }
+    },
+    {
+      "id": "qdrant_patterns",
+      "type": "QdrantVectorStore",
+      "position": {"x": 400, "y": 200},
+      "data": {
+        "label": "Design Patterns Retriever",
+        "inputs": {
+          "qdrantServerUrl": "http://omni-qdrant:6333",
+          "collectionName": "design_patterns",
+          "topK": 5,
+          "embeddings": "{{embedding_0-output}}"
+        },
+        "outputs": {
+          "output": "qdrant_patterns-output"
+        }
+      }
+    },
+    {
+      "id": "qdrant_antipatterns",
+      "type": "QdrantVectorStore",
+      "position": {"x": 400, "y": 400},
+      "data": {
+        "label": "Anti-Patterns Retriever",
+        "inputs": {
+          "qdrantServerUrl": "http://omni-qdrant:6333",
+          "collectionName": "anti_patterns",
+          "topK": 5,
+          "embeddings": "{{embedding_0-output}}"
+        },
+        "outputs": {
+          "output": "qdrant_antipatterns-output"
+        }
+      }
+    },
+    {
+      "id": "llm_0",
+      "type": "ChatOpenAI",
+      "position": {"x": 700, "y": 50},
+      "data": {
+        "label": "LLM",
+        "inputs": {
+          "modelName": "gpt-4",
+          "basePath": "http://omni-litellm:4000/v1",
+          "apiKey": "{{LITELLM_API_KEY}}",
+          "temperature": 0.1,
+          "maxTokens": 4096
+        },
+        "outputs": {
+          "output": "llm_0-output"
+        }
+      }
+    },
+    {
+      "id": "chain_0",
+      "type": "LLMChain",
+      "position": {"x": 700, "y": 300},
+      "data": {
+        "label": "Code Review Chain",
+        "inputs": {
+          "model": "{{llm_0-output}}",
+          "prompt": "You are an expert code reviewer. Analyze the submitted code using the design patterns and anti-patterns context provided.\n\nDesign Patterns Context:\n{design_patterns}\n\nAnti-Patterns Context:\n{anti_patterns}\n\nCode to Review:\n{input}\n\nProvide a structured review with scores (1-10) for each dimension:\n1. Correctness\n2. Performance\n3. Security\n4. Readability\n5. Maintainability\n6. Error Handling\n7. Testing Coverage\n8. Documentation\n9. Design Pattern Adherence\n10. Code Style Consistency\n\nOutput JSON format:\n{\"scores\": {\"correctness\": N, ...}, \"overall_score\": N, \"suggestions\": [...], \"pattern_recommendations\": [...], \"anti_patterns_detected\": [...]}",
+          "design_patterns": "{{qdrant_patterns-output}}",
+          "anti_patterns": "{{qdrant_antipatterns-output}}"
+        },
+        "outputs": {
+          "output": "chain_0-output"
+        }
+      }
+    },
+    {
+      "id": "output_0",
+      "type": "ChatOutput",
+      "position": {"x": 1000, "y": 300},
+      "data": {
+        "label": "Review Output",
+        "inputs": {
+          "text": "{{chain_0-output}}"
+        }
+      }
+    }
+  ],
+  "edges": [
+    {"source": "chatInput_0", "target": "chain_0", "sourceHandle": "chatInput_0-output", "targetHandle": "input"},
+    {"source": "embedding_0", "target": "qdrant_patterns", "sourceHandle": "embedding_0-output", "targetHandle": "embeddings"},
+    {"source": "embedding_0", "target": "qdrant_antipatterns", "sourceHandle": "embedding_0-output", "targetHandle": "embeddings"},
+    {"source": "qdrant_patterns", "target": "chain_0", "sourceHandle": "qdrant_patterns-output", "targetHandle": "design_patterns"},
+    {"source": "qdrant_antipatterns", "target": "chain_0", "sourceHandle": "qdrant_antipatterns-output", "targetHandle": "anti_patterns"},
+    {"source": "llm_0", "target": "chain_0", "sourceHandle": "llm_0-output", "targetHandle": "model"},
+    {"source": "chain_0", "target": "output_0", "sourceHandle": "chain_0-output", "targetHandle": "text"}
+  ]
+}

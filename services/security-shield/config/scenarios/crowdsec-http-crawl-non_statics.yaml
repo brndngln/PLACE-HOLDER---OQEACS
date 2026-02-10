@@ -1,0 +1,49 @@
+# ===========================================================================
+# CrowdSec Scenario: Aggressive Crawling / Scanning
+# Omni Quantum — Security Shield
+#
+# Detects aggressive crawling of non-static resources (API endpoints,
+# pages, dynamic routes). Ignores legitimate static asset requests.
+# Threshold: 100 non-static requests in 10 seconds → ban 1 hour
+# ===========================================================================
+
+type: leaky
+name: omni-quantum/http-aggressive-crawl
+description: "Detect aggressive crawling or scanning of non-static resources"
+filter: >-
+  evt.Meta.http_path != '' &&
+  evt.Meta.http_path not startsWith '/static/' &&
+  evt.Meta.http_path not startsWith '/assets/' &&
+  evt.Meta.http_path not startsWith '/favicon' &&
+  evt.Meta.http_path not endsWith '.css' &&
+  evt.Meta.http_path not endsWith '.js' &&
+  evt.Meta.http_path not endsWith '.png' &&
+  evt.Meta.http_path not endsWith '.jpg' &&
+  evt.Meta.http_path not endsWith '.gif' &&
+  evt.Meta.http_path not endsWith '.svg' &&
+  evt.Meta.http_path not endsWith '.ico' &&
+  evt.Meta.http_path not endsWith '.woff' &&
+  evt.Meta.http_path not endsWith '.woff2' &&
+  evt.Meta.http_path not endsWith '.ttf' &&
+  evt.Meta.http_path not endsWith '.eot' &&
+  evt.Meta.http_path not startsWith '/metrics' &&
+  evt.Meta.http_path not startsWith '/-/health'
+groupby: evt.Meta.source_ip
+capacity: 100
+leakspeed: 100ms
+blackhole: 2m
+reprocess: false
+labels:
+  service: "http"
+  type: "crawl"
+  confidence: 2
+  spoofable: 0
+  classification:
+    - "attack.T1595"
+  label: "Aggressive HTTP crawling"
+  behavior: "http:scan"
+  remediation: true
+duration: 1h
+scope:
+  type: ip
+  expression: evt.Meta.source_ip

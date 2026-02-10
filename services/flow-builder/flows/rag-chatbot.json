@@ -1,0 +1,122 @@
+{
+  "name": "RAG Knowledge Chatbot",
+  "description": "Knowledge Q&A assistant powered by elite codebases via Qdrant retrieval",
+  "nodes": [
+    {
+      "id": "chatInput_0",
+      "type": "ChatInput",
+      "position": {"x": 100, "y": 300},
+      "data": {
+        "label": "Chat Input",
+        "inputs": {},
+        "outputs": {
+          "output": "chatInput_0-output"
+        }
+      }
+    },
+    {
+      "id": "embedding_0",
+      "type": "OpenAIEmbedding",
+      "position": {"x": 400, "y": 100},
+      "data": {
+        "label": "Embeddings",
+        "inputs": {
+          "modelName": "text-embedding-ada-002",
+          "basePath": "http://omni-litellm:4000/v1",
+          "apiKey": "{{LITELLM_API_KEY}}"
+        },
+        "outputs": {
+          "output": "embedding_0-output"
+        }
+      }
+    },
+    {
+      "id": "qdrant_0",
+      "type": "QdrantVectorStore",
+      "position": {"x": 400, "y": 300},
+      "data": {
+        "label": "Qdrant Retriever",
+        "inputs": {
+          "qdrantServerUrl": "http://omni-qdrant:6333",
+          "collectionName": "elite_codebases",
+          "topK": 5,
+          "embeddings": "{{embedding_0-output}}"
+        },
+        "outputs": {
+          "output": "qdrant_0-output"
+        }
+      }
+    },
+    {
+      "id": "memory_0",
+      "type": "BufferMemory",
+      "position": {"x": 400, "y": 500},
+      "data": {
+        "label": "Conversation Memory",
+        "inputs": {
+          "memoryKey": "chat_history",
+          "k": 10,
+          "returnMessages": true
+        },
+        "outputs": {
+          "output": "memory_0-output"
+        }
+      }
+    },
+    {
+      "id": "llm_0",
+      "type": "ChatOpenAI",
+      "position": {"x": 700, "y": 100},
+      "data": {
+        "label": "LLM",
+        "inputs": {
+          "modelName": "gpt-4",
+          "basePath": "http://omni-litellm:4000/v1",
+          "apiKey": "{{LITELLM_API_KEY}}",
+          "temperature": 0.2,
+          "maxTokens": 2048
+        },
+        "outputs": {
+          "output": "llm_0-output"
+        }
+      }
+    },
+    {
+      "id": "chain_0",
+      "type": "RetrievalQAChain",
+      "position": {"x": 700, "y": 300},
+      "data": {
+        "label": "Retrieval QA Chain",
+        "inputs": {
+          "model": "{{llm_0-output}}",
+          "vectorStoreRetriever": "{{qdrant_0-output}}",
+          "memory": "{{memory_0-output}}",
+          "systemMessage": "You are the Omni Quantum Elite knowledge assistant. Answer using provided context from elite codebases. Always cite source codebase. If insufficient context, say so.",
+          "chainType": "stuff"
+        },
+        "outputs": {
+          "output": "chain_0-output"
+        }
+      }
+    },
+    {
+      "id": "output_0",
+      "type": "ChatOutput",
+      "position": {"x": 1000, "y": 300},
+      "data": {
+        "label": "Chat Output",
+        "inputs": {
+          "text": "{{chain_0-output}}"
+        }
+      }
+    }
+  ],
+  "edges": [
+    {"source": "chatInput_0", "target": "chain_0", "sourceHandle": "chatInput_0-output", "targetHandle": "question"},
+    {"source": "embedding_0", "target": "qdrant_0", "sourceHandle": "embedding_0-output", "targetHandle": "embeddings"},
+    {"source": "qdrant_0", "target": "chain_0", "sourceHandle": "qdrant_0-output", "targetHandle": "vectorStoreRetriever"},
+    {"source": "memory_0", "target": "chain_0", "sourceHandle": "memory_0-output", "targetHandle": "memory"},
+    {"source": "llm_0", "target": "chain_0", "sourceHandle": "llm_0-output", "targetHandle": "model"},
+    {"source": "chain_0", "target": "output_0", "sourceHandle": "chain_0-output", "targetHandle": "text"}
+  ]
+}

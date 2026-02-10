@@ -1,0 +1,252 @@
+# ===========================================================================
+# SYSTEM 17 -- AI CODER BETA (SWE-Agent): Configuration
+# Omni Quantum Elite AI Coding System -- Bug-Fix & Security Patch Agent
+#
+# This configuration governs the SWE-Agent's LLM backend, sandboxed
+# execution environment, integration endpoints, task classification,
+# quality gates, and anti-pattern databases.
+# ===========================================================================
+
+# ---------------------------------------------------------------------------
+# LLM provider -- routed through the shared LiteLLM gateway
+# ---------------------------------------------------------------------------
+llm:
+  provider: litellm
+  base_url: "http://omni-litellm:4000/v1"
+  model: "kimi-dev-72b"
+  api_key: from_vault
+  vault_secret_path: "secret/data/swe-agent/litellm-api-key"
+  max_tokens: 16384
+  temperature: 0.05
+  top_p: 0.95
+  frequency_penalty: 0.0
+  presence_penalty: 0.0
+  request_timeout_seconds: 120
+  retry:
+    max_attempts: 3
+    backoff_base_seconds: 2.0
+    backoff_max_seconds: 30.0
+  fallback_models:
+    - "deepseek-v3.2"
+    - "devstral-2-123b"
+
+# ---------------------------------------------------------------------------
+# Sandboxed execution environment for reproduction & verification
+# ---------------------------------------------------------------------------
+environment:
+  type: docker
+  docker_network: omni-quantum-network
+  base_image: "python:3.12-slim"
+  timeout_seconds: 900
+  max_memory_mb: 4096
+  max_cpus: 2.0
+  max_disk_mb: 8192
+  workdir: "/workspace"
+  sandbox:
+    enable_network: true
+    allowed_hosts:
+      - "omni-gitea"
+      - "omni-litellm"
+      - "omni-sourcegraph"
+      - "omni-qdrant"
+    read_only_root: false
+    tmpfs_size_mb: 512
+  cleanup:
+    remove_containers: true
+    remove_volumes: true
+    grace_period_seconds: 30
+
+# ---------------------------------------------------------------------------
+# Task classification and routing
+# ---------------------------------------------------------------------------
+task_types:
+  bug-fix:
+    description: "Fix a reported bug with regression tests"
+    priority_weight: 1.0
+    max_concurrent: 5
+    timeout_override_seconds: 1200
+  security-patch:
+    description: "Patch a security vulnerability"
+    priority_weight: 2.0
+    max_concurrent: 3
+    timeout_override_seconds: 900
+    auto_escalate: true
+  performance-fix:
+    description: "Resolve performance regression or bottleneck"
+    priority_weight: 0.8
+    max_concurrent: 4
+    timeout_override_seconds: 1500
+  dependency-update:
+    description: "Update dependencies with breaking-change handling"
+    priority_weight: 0.5
+    max_concurrent: 6
+    timeout_override_seconds: 600
+  test-coverage:
+    description: "Increase test coverage for uncovered code paths"
+    priority_weight: 0.4
+    max_concurrent: 8
+    timeout_override_seconds: 900
+
+# ---------------------------------------------------------------------------
+# Severity escalation matrix
+# ---------------------------------------------------------------------------
+severity:
+  critical:
+    auto_assign: true
+    notify_mattermost: true
+    haptic_alert: true
+    max_response_minutes: 15
+    escalation_after_minutes: 30
+  high:
+    auto_assign: true
+    notify_mattermost: true
+    haptic_alert: false
+    max_response_minutes: 60
+    escalation_after_minutes: 120
+  medium:
+    auto_assign: true
+    notify_mattermost: false
+    haptic_alert: false
+    max_response_minutes: 240
+    escalation_after_minutes: 480
+  low:
+    auto_assign: false
+    notify_mattermost: false
+    haptic_alert: false
+    max_response_minutes: 1440
+    escalation_after_minutes: 2880
+
+# ---------------------------------------------------------------------------
+# Integration endpoints
+# ---------------------------------------------------------------------------
+integrations:
+  gitea:
+    url: "http://omni-gitea:3000"
+    api_version: "v1"
+    api_token:
+      vault_path: "secret/data/swe-agent/gitea-api-token"
+    default_branch: "main"
+    pr_labels:
+      - "swe-agent"
+      - "automated"
+    pr_reviewers: []
+    webhook_secret:
+      vault_path: "secret/data/swe-agent/gitea-webhook-secret"
+
+  langfuse:
+    url: "http://omni-langfuse:3000"
+    project: "omni-swe-agent"
+    public_key:
+      vault_path: "secret/data/swe-agent/langfuse-public-key"
+    secret_key:
+      vault_path: "secret/data/swe-agent/langfuse-secret-key"
+    trace_sample_rate: 1.0
+    flush_interval_seconds: 5
+
+  sourcegraph:
+    url: "http://omni-sourcegraph:7080"
+    api_version: "v1"
+    search_timeout_seconds: 30
+    max_results: 500
+    enable_ast_analysis: true
+
+  mattermost:
+    webhook:
+      vault_path: "secret/data/swe-agent/mattermost-webhook-url"
+    default_channel: "swe-agent"
+    notification_channels:
+      critical: "incidents"
+      high: "alerts"
+      medium: "swe-agent"
+      low: "swe-agent"
+
+  token_infinity:
+    url: "http://omni-token-infinity:9600"
+    focus_strategy: "relevant_code_and_errors"
+    max_context_tokens: 32768
+
+  code_scorer:
+    url: "http://omni-code-scorer:8080"
+    min_quality_score: 7.0
+    dimensions:
+      - correctness
+      - maintainability
+      - security
+      - performance
+      - test_coverage
+
+  gate_engine:
+    url: "http://omni-gate-engine:8080"
+    required_gates:
+      - "quality_score"
+      - "test_pass"
+      - "security_scan"
+      - "backward_compatibility"
+
+  qdrant:
+    url: "http://omni-qdrant:6333"
+    collection: "swe-agent-patterns"
+    embedding_dimension: 1536
+    similarity_threshold: 0.78
+
+  vault:
+    url: "http://omni-vault:8200"
+    auth_method: "approle"
+    role_id_env: "VAULT_ROLE_ID"
+    secret_id_env: "VAULT_SECRET_ID"
+    secret_mount: "secret"
+    ttl_seconds: 3600
+
+# ---------------------------------------------------------------------------
+# Quality gates and thresholds
+# ---------------------------------------------------------------------------
+quality:
+  min_code_score: 7.0
+  max_complexity_increase: 5
+  require_tests: true
+  min_test_coverage_delta: 0.0
+  max_lines_changed: 500
+  backward_compatibility_check: true
+  security_scan: true
+  lint_check: true
+
+# ---------------------------------------------------------------------------
+# Anti-pattern database for learning
+# ---------------------------------------------------------------------------
+anti_patterns:
+  storage: qdrant
+  collection: "swe-agent-anti-patterns"
+  auto_learn_from_rejections: true
+  similarity_search_top_k: 10
+  categories:
+    - "unsafe_type_cast"
+    - "missing_null_check"
+    - "sql_injection"
+    - "race_condition"
+    - "resource_leak"
+    - "hardcoded_secret"
+    - "unbounded_loop"
+    - "missing_error_handling"
+    - "deprecated_api_usage"
+    - "insecure_deserialization"
+
+# ---------------------------------------------------------------------------
+# Logging configuration
+# ---------------------------------------------------------------------------
+logging:
+  level: "INFO"
+  format: "json"
+  include_timestamp: true
+  include_trace_id: true
+  include_service_name: true
+  service_name: "swe-agent"
+  system_id: "17"
+
+# ---------------------------------------------------------------------------
+# Metrics
+# ---------------------------------------------------------------------------
+metrics:
+  enabled: true
+  port: 9090
+  path: "/metrics"
+  prefix: "swe_agent"

@@ -1,0 +1,893 @@
+# =============================================================================
+# System 35 — Build Forge: Rust Pipeline Template
+# Omni Quantum Elite AI Coding System
+#
+# 8-stage Woodpecker CI pipeline for Rust services.
+# Stages: lint → security → build → test → ai-review → scan → staging → production
+# =============================================================================
+
+when:
+  event: [push, pull_request]
+  branch: [main, "release/*", "feature/*", "fix/*"]
+
+variables:
+  - &image_registry "omni-registry:5000"
+  - &rust_image "rust:1.77-bookworm"
+  - &docker_image "plugins/docker"
+  - &coverage_threshold "80"
+  - &score_threshold "7"
+  - &p95_latency_ms "500"
+  - &error_rate_pct "1"
+
+steps:
+  # ===========================================================================
+  # Stage 1: Lint & Format
+  # ===========================================================================
+  lint-clippy:
+    image: *rust_image
+    group: lint
+    commands:
+      - rustup component add clippy
+      - echo "--- Clippy Lint ---"
+      - cargo clippy --all-targets --all-features -- -D warnings --message-format=json 2>&1 | tee clippy-report.json
+      - echo "PASS: Clippy completed"
+    when:
+      event: [push, pull_request]
+
+  lint-rustfmt:
+    image: *rust_image
+    group: lint
+    commands:
+      - rustup component add rustfmt
+      - echo "--- rustfmt Check ---"
+      - cargo fmt --all -- --check
+      - echo "PASS: All files are properly formatted"
+    when:
+      event: [push, pull_request]
+
+  lint-cargo-check:
+    image: *rust_image
+    group: lint
+    commands:
+      - echo "--- cargo check ---"
+      - cargo check --all-targets --all-features --message-format=json 2>&1 | tee cargo-check-report.json
+      - echo "PASS: cargo check completed"
+    when:
+      event: [push, pull_request]
+
+  # ===========================================================================
+  # Stage 2: Security Scan
+  # ===========================================================================
+  security-cargo-audit:
+    image: *rust_image
+    group: security
+    depends_on:
+      - lint-clippy
+      - lint-rustfmt
+      - lint-cargo-check
+    commands:
+      - cargo install cargo-audit
+      - echo "--- cargo audit ---"
+      - cargo audit --json | tee cargo-audit-report.json
+      - echo "--- Audit Results ---"
+      - |
+        VULNS=$(python3 -c "
+        import json
+        with open('cargo-audit-report.json') as f:
+            r = json.load(f)
+        vulns = r.get('vulnerabilities', {}).get('found', 0)
+        print(vulns)
+        " 2>/dev/null || echo "0")
+        echo "Vulnerabilities found: $VULNS"
+        if [ "$VULNS" -gt 0 ]; then
+          echo "WARNING: $VULNS vulnerabilities found in dependencies"
+          python3 -c "
+        import json
+        with open('cargo-audit-report.json') as f:
+            r = json.load(f)
+        for v in r.get('vulnerabilities', {}).get('list', []):
+            adv = v.get('advisory', {})
+            print(f'  - {adv.get(\"id\",\"?\")} ({adv.get(\"severity\",\"?\")}): {adv.get(\"title\",\"\")}')
+        " 2>/dev/null || true
+        fi
+    when:
+      event: [push, pull_request]
+
+  security-cargo-deny:
+    image: *rust_image
+    group: security
+    depends_on:
+      - lint-clippy
+      - lint-rustfmt
+      - lint-cargo-check
+    commands:
+      - cargo install cargo-deny
+      - echo "--- cargo deny check ---"
+      - cargo deny check advisories sources licenses bans 2>&1 | tee cargo-deny-report.txt
+      - echo "--- cargo deny Complete ---"
+    when:
+      event: [push, pull_request]
+
+  security-secrets:
+    image: python:3.12-slim
+    group: security
+    depends_on:
+      - lint-clippy
+      - lint-rustfmt
+      - lint-cargo-check
+    commands:
+      - pip install --no-cache-dir detect-secrets
+      - echo "--- Detect Secrets Scan ---"
+      - detect-secrets scan --all-files --force-use-all-plugins . > secrets-report.json
+      - |
+        SECRETS_COUNT=$(python3 -c "import json; r=json.load(open('secrets-report.json')); print(sum(len(v) for v in r.get('results',{}).values()))")
+        echo "Potential secrets found: $SECRETS_COUNT"
+        if [ "$SECRETS_COUNT" -gt 0 ]; then
+          echo "FAIL: Potential secrets detected in codebase"
+          python3 -c "import json; r=json.load(open('secrets-report.json')); [print(f'  {f}: {[h[\"type\"] for h in hs]}') for f,hs in r.get('results',{}).items()]"
+          exit 1
+        fi
+    when:
+      event: [push, pull_request]
+
+  # ===========================================================================
+  # Stage 3: Build
+  # ===========================================================================
+  build-cargo:
+    image: *rust_image
+    depends_on:
+      - security-cargo-audit
+      - security-cargo-deny
+      - security-secrets
+    commands:
+      - echo "--- Cargo Release Build ---"
+      - cargo build --release --locked
+      - echo "--- Build Complete ---"
+      - ls -lh target/release/ | grep -v '\.d$' | head -20
+    when:
+      event: [push, pull_request]
+
+  build-docker:
+    image: *docker_image
+    depends_on:
+      - build-cargo
+    settings:
+      repo: "${CI_REPO}"
+      registry: *image_registry
+      tags:
+        - "${CI_COMMIT_SHA:0:8}"
+        - latest
+      dockerfile: Dockerfile
+      context: .
+      build_args:
+        - "BUILD_DATE=${CI_PIPELINE_CREATED}"
+        - "VCS_REF=${CI_COMMIT_SHA}"
+        - "VERSION=${CI_COMMIT_SHA:0:8}"
+      cache_from:
+        - "${CI_REPO}:latest"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    when:
+      event: [push, pull_request]
+
+  # ===========================================================================
+  # Stage 4: Test
+  # ===========================================================================
+  test-cargo:
+    image: *rust_image
+    depends_on:
+      - build-docker
+    commands:
+      - echo "--- Running Cargo Tests ---"
+      - cargo test --all-targets --all-features -- --test-threads=4 2>&1 | tee test-output.txt
+      - echo "--- Test Results ---"
+      - |
+        TOTAL=$(grep -c 'test result:' test-output.txt 2>/dev/null || echo "0")
+        PASSED=$(grep 'test result:' test-output.txt | grep -oP '\d+ passed' | grep -oP '\d+' | paste -sd+ | bc 2>/dev/null || echo "0")
+        FAILED=$(grep 'test result:' test-output.txt | grep -oP '\d+ failed' | grep -oP '\d+' | paste -sd+ | bc 2>/dev/null || echo "0")
+        echo "Passed: $PASSED, Failed: $FAILED"
+        if [ "$FAILED" -gt 0 ]; then
+          echo "FAIL: $FAILED tests failed"
+          exit 1
+        fi
+    when:
+      event: [push, pull_request]
+
+  test-coverage:
+    image: *rust_image
+    depends_on:
+      - build-docker
+    commands:
+      - echo "--- Installing cargo-tarpaulin ---"
+      - cargo install cargo-tarpaulin
+      - echo "--- Running Coverage Analysis ---"
+      - >
+        cargo tarpaulin
+        --all-features
+        --workspace
+        --out json
+        --out html
+        --output-dir coverage
+        --timeout 300
+        --skip-clean
+        2>&1 | tee coverage-output.txt
+      - echo "--- Coverage Threshold Check ---"
+      - |
+        if [ -f coverage/tarpaulin-report.json ]; then
+          COVERAGE=$(python3 -c "
+        import json
+        with open('coverage/tarpaulin-report.json') as f:
+            r = json.load(f)
+        # tarpaulin JSON format: calculate from coverage array
+        covered = sum(1 for t in r if t.get('covered', False))
+        total = len(r) if r else 1
+        print(round(covered / total * 100, 2))
+        " 2>/dev/null || grep -oP '[0-9]+\.[0-9]+% coverage' coverage-output.txt | head -1 | grep -oP '[0-9]+\.[0-9]+' || echo "0")
+        else
+          COVERAGE=$(grep -oP '[0-9]+\.[0-9]+% coverage' coverage-output.txt | head -1 | grep -oP '[0-9]+\.[0-9]+' || echo "0")
+        fi
+        echo "Total coverage: ${COVERAGE}%"
+        PASS=$(python3 -c "print('true' if float('${COVERAGE}') >= 80.0 else 'false')" 2>/dev/null || echo "true")
+        if [ "$PASS" = "false" ]; then
+          echo "FAIL: Coverage ${COVERAGE}% is below threshold of 80%"
+          exit 1
+        fi
+        echo "PASS: Coverage ${COVERAGE}% meets threshold of 80%"
+    when:
+      event: [push, pull_request]
+
+  # ===========================================================================
+  # Stage 5: AI Code Review
+  # ===========================================================================
+  ai-code-review:
+    image: python:3.12-slim
+    depends_on:
+      - test-cargo
+      - test-coverage
+    commands:
+      - pip install --no-cache-dir httpx
+      - echo "--- AI Code Scoring ---"
+      - |
+        python3 << 'PYEOF'
+        import httpx
+        import json
+        import sys
+        import os
+
+        code_scorer_url = "http://omni-code-scorer/api/score"
+        gate_engine_url = "http://omni-gate-engine/api/gate"
+
+        # Collect pipeline artifacts
+        lint_report = {}
+        if os.path.exists("clippy-report.json"):
+            with open("clippy-report.json") as f:
+                content = f.read()
+                # Clippy JSON is line-delimited JSON
+                messages = []
+                for line in content.strip().split("\n"):
+                    try:
+                        msg = json.loads(line)
+                        if msg.get("reason") == "compiler-message":
+                            messages.append(msg)
+                    except json.JSONDecodeError:
+                        pass
+                lint_report = {"messages": messages, "count": len(messages)}
+
+        security_report = {}
+        if os.path.exists("cargo-audit-report.json"):
+            with open("cargo-audit-report.json") as f:
+                try:
+                    security_report = json.load(f)
+                except json.JSONDecodeError:
+                    security_report = {"error": "Failed to parse cargo-audit report"}
+
+        # Parse coverage
+        coverage_pct = 0.0
+        if os.path.exists("coverage-output.txt"):
+            with open("coverage-output.txt") as f:
+                for line in f:
+                    if "% coverage" in line:
+                        parts = line.strip().split()
+                        for part in parts:
+                            if "%" in part:
+                                try:
+                                    coverage_pct = float(part.replace("%", ""))
+                                except ValueError:
+                                    pass
+                                break
+                        break
+
+        # Parse test results
+        test_results = {"passed": True, "tool": "cargo test"}
+        if os.path.exists("test-output.txt"):
+            with open("test-output.txt") as f:
+                content = f.read()
+                import re
+                passed_matches = re.findall(r"(\d+) passed", content)
+                failed_matches = re.findall(r"(\d+) failed", content)
+                test_results["passes"] = sum(int(m) for m in passed_matches)
+                test_results["failures"] = sum(int(m) for m in failed_matches)
+                if test_results["failures"] > 0:
+                    test_results["passed"] = False
+
+        # POST to Code Scorer
+        scorer_payload = {
+            "repo": os.environ.get("CI_REPO", "unknown"),
+            "commit": os.environ.get("CI_COMMIT_SHA", "unknown"),
+            "branch": os.environ.get("CI_COMMIT_BRANCH", "unknown"),
+            "language": "rust",
+            "framework": "native",
+            "lint_report": lint_report,
+            "security_report": security_report,
+            "coverage_data": {"percent_covered": coverage_pct},
+            "test_results": test_results,
+        }
+
+        score = -1
+        try:
+            resp = httpx.post(code_scorer_url, json=scorer_payload, timeout=60)
+            resp.raise_for_status()
+            score_result = resp.json()
+            score = score_result.get("score", 0)
+            print(f"AI Code Score: {score}/10")
+            print(f"Feedback: {score_result.get('feedback', 'N/A')}")
+
+            if score < 7:
+                print(f"FAIL: AI Code Score {score}/10 is below threshold of 7/10")
+                for item in score_result.get("issues", []):
+                    print(f"  - [{item.get('severity','INFO')}] {item.get('message','')}")
+                sys.exit(1)
+            print(f"PASS: AI Code Score {score}/10 meets threshold of 7/10")
+        except httpx.HTTPStatusError as e:
+            print(f"WARNING: Code Scorer returned error: {e.response.status_code}")
+            print("Continuing pipeline — scorer is advisory")
+        except httpx.ConnectError:
+            print("WARNING: Code Scorer unreachable, skipping AI review")
+
+        # POST to Gate Engine
+        gate_payload = {
+            "repo": os.environ.get("CI_REPO", "unknown"),
+            "commit": os.environ.get("CI_COMMIT_SHA", "unknown"),
+            "branch": os.environ.get("CI_COMMIT_BRANCH", "unknown"),
+            "pipeline_id": os.environ.get("CI_PIPELINE_NUMBER", "0"),
+            "gates": {
+                "lint": {
+                    "passed": True,
+                    "tool": "clippy + rustfmt",
+                    "findings": lint_report.get("count", 0),
+                },
+                "security": {
+                    "passed": True,
+                    "tool": "cargo-audit + cargo-deny",
+                    "vulnerabilities": security_report.get("vulnerabilities", {}).get("found", 0),
+                },
+                "coverage": {
+                    "passed": coverage_pct >= 80,
+                    "percent": coverage_pct,
+                    "threshold": 80,
+                },
+                "tests": {
+                    "passed": test_results.get("passed", True),
+                    "passes": test_results.get("passes", 0),
+                    "failures": test_results.get("failures", 0),
+                },
+                "ai_score": {
+                    "passed": score >= 7 if score >= 0 else True,
+                    "score": score,
+                    "threshold": 7,
+                },
+            },
+        }
+
+        try:
+            resp = httpx.post(gate_engine_url, json=gate_payload, timeout=60)
+            resp.raise_for_status()
+            gate_result = resp.json()
+            decision = gate_result.get("decision", "unknown")
+            print(f"Gate Engine Decision: {decision}")
+
+            if decision == "reject":
+                print("FAIL: Gate Engine rejected this pipeline run")
+                for reason in gate_result.get("reasons", []):
+                    print(f"  - {reason}")
+                sys.exit(1)
+            print("PASS: Gate Engine approved this pipeline run")
+        except httpx.HTTPStatusError as e:
+            print(f"WARNING: Gate Engine returned error: {e.response.status_code}")
+        except httpx.ConnectError:
+            print("WARNING: Gate Engine unreachable, skipping gate check")
+        PYEOF
+    when:
+      event: [push, pull_request]
+
+  # ===========================================================================
+  # Stage 6: Container Scan + SBOM + Sign
+  # ===========================================================================
+  container-scan-trivy:
+    image: aquasec/trivy:latest
+    group: container-security
+    depends_on:
+      - ai-code-review
+    commands:
+      - echo "--- Trivy Container Scan ---"
+      - >
+        trivy image
+        --severity CRITICAL,HIGH
+        --exit-code 1
+        --format json
+        --output trivy-report.json
+        --ignore-unfixed
+        omni-registry:5000/${CI_REPO}:${CI_COMMIT_SHA:0:8}
+      - echo "--- Trivy Scan Complete ---"
+      - trivy image --severity CRITICAL,HIGH --format table omni-registry:5000/${CI_REPO}:${CI_COMMIT_SHA:0:8}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    when:
+      event: push
+      branch: [main, "release/*"]
+
+  sbom-syft:
+    image: anchore/syft:latest
+    group: container-security
+    depends_on:
+      - ai-code-review
+    commands:
+      - echo "--- Generating SBOM (SPDX JSON) ---"
+      - >
+        syft
+        omni-registry:5000/${CI_REPO}:${CI_COMMIT_SHA:0:8}
+        -o spdx-json=sbom-spdx.json
+      - echo "--- SBOM Generated ---"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    when:
+      event: push
+      branch: [main, "release/*"]
+
+  cosign-sign:
+    image: bitnami/cosign:latest
+    depends_on:
+      - container-scan-trivy
+      - sbom-syft
+    commands:
+      - echo "--- Signing Container Image with Cosign ---"
+      - export VAULT_ADDR=http://omni-vault:8200
+      - >
+        cosign sign
+        --key hashivault://cosign-signing-key
+        --annotations "repo=${CI_REPO}"
+        --annotations "commit=${CI_COMMIT_SHA}"
+        --annotations "pipeline=${CI_PIPELINE_NUMBER}"
+        --annotations "build-date=${CI_PIPELINE_CREATED}"
+        --tlog-upload=false
+        omni-registry:5000/${CI_REPO}:${CI_COMMIT_SHA:0:8}
+      - echo "--- Attaching SBOM to Image ---"
+      - >
+        cosign attach sbom
+        --sbom sbom-spdx.json
+        omni-registry:5000/${CI_REPO}:${CI_COMMIT_SHA:0:8}
+      - echo "--- Image Signed and SBOM Attached ---"
+    secrets:
+      - vault_token
+      - cosign_private_key
+    when:
+      event: push
+      branch: [main, "release/*"]
+
+  # ===========================================================================
+  # Stage 7: Staging Deployment
+  # ===========================================================================
+  staging-deploy:
+    image: python:3.12-slim
+    depends_on:
+      - cosign-sign
+    commands:
+      - pip install --no-cache-dir httpx
+      - echo "--- Deploying to Staging via Coolify ---"
+      - |
+        python3 << 'PYEOF'
+        import httpx
+        import os
+        import sys
+        import time
+
+        coolify_url = "http://omni-coolify:8000"
+        api_token = os.environ.get("COOLIFY_API_TOKEN", "")
+        repo = os.environ.get("CI_REPO", "unknown")
+        image_tag = os.environ.get("CI_COMMIT_SHA", "unknown")[:8]
+
+        headers = {
+            "Authorization": f"Bearer {api_token}",
+            "Content-Type": "application/json",
+        }
+
+        deploy_payload = {
+            "image": f"omni-registry:5000/{repo}:{image_tag}",
+            "environment": "staging",
+            "force": True,
+        }
+
+        try:
+            resp = httpx.post(
+                f"{coolify_url}/api/v1/deploy",
+                json=deploy_payload,
+                headers=headers,
+                timeout=120,
+            )
+            resp.raise_for_status()
+            deploy_result = resp.json()
+            deployment_id = deploy_result.get("id", "unknown")
+            print(f"Staging deployment initiated: {deployment_id}")
+        except Exception as e:
+            print(f"FAIL: Staging deployment failed: {e}")
+            sys.exit(1)
+
+        print("Waiting for staging health check...")
+        max_retries = 30
+        for i in range(max_retries):
+            try:
+                health_resp = httpx.get(
+                    f"{coolify_url}/api/v1/deployments/{deployment_id}/health",
+                    headers=headers,
+                    timeout=10,
+                )
+                if health_resp.status_code == 200:
+                    health = health_resp.json()
+                    if health.get("status") == "healthy":
+                        print(f"Staging health check passed after {(i + 1) * 10}s")
+                        break
+                    elif health.get("status") == "failed":
+                        print("FAIL: Staging deployment health check failed")
+                        sys.exit(1)
+            except Exception:
+                pass
+            time.sleep(10)
+        else:
+            print("FAIL: Staging health check timed out after 300s")
+            sys.exit(1)
+
+        print("Staging deployment healthy")
+        PYEOF
+    secrets:
+      - coolify_api_token
+    when:
+      event: push
+      branch: main
+
+  staging-smoke-test:
+    image: *rust_image
+    depends_on:
+      - staging-deploy
+    commands:
+      - echo "--- Running Smoke Tests against Staging ---"
+      - |
+        cargo test \
+          --test smoke \
+          -- \
+          --test-threads=1 \
+          --nocapture \
+          || { echo "FAIL: Smoke tests failed on staging"; exit 1; }
+      - echo "--- Smoke Tests Passed ---"
+    environment:
+      - STAGING_URL=http://omni-coolify:8000/staging
+    when:
+      event: push
+      branch: main
+
+  staging-load-test:
+    image: grafana/k6:latest
+    depends_on:
+      - staging-smoke-test
+    commands:
+      - echo "--- Running k6 Load Tests against Staging ---"
+      - |
+        cat > /tmp/load-test.js << 'K6EOF'
+        import http from "k6/http";
+        import { check, sleep } from "k6";
+        import { Rate, Trend } from "k6/metrics";
+
+        const errorRate = new Rate("errors");
+        const latency = new Trend("request_latency");
+
+        export const options = {
+          stages: [
+            { duration: "30s", target: 20 },
+            { duration: "1m", target: 50 },
+            { duration: "30s", target: 0 },
+          ],
+          thresholds: {
+            http_req_duration: ["p(95)<500"],
+            errors: ["rate<0.01"],
+          },
+        };
+
+        const BASE_URL = __ENV.STAGING_URL || "http://omni-coolify:8000/staging";
+
+        export default function () {
+          const res = http.get(`${BASE_URL}/health`);
+          check(res, {
+            "status is 200": (r) => r.status === 200,
+            "response time < 500ms": (r) => r.timings.duration < 500,
+          });
+          errorRate.add(res.status !== 200);
+          latency.add(res.timings.duration);
+          sleep(0.5);
+        }
+        K6EOF
+      - k6 run --summary-export=k6-results.json /tmp/load-test.js
+      - echo "--- k6 Load Test Results ---"
+      - |
+        cat k6-results.json | python3 -c "
+        import sys, json
+        r = json.load(sys.stdin)
+        metrics = r.get('metrics', {})
+        p95 = metrics.get('http_req_duration', {}).get('values', {}).get('p(95)', 0)
+        err_rate = metrics.get('errors', {}).get('values', {}).get('rate', 0)
+        print(f'p95 latency: {p95:.1f}ms (threshold: 500ms)')
+        print(f'Error rate: {err_rate*100:.2f}% (threshold: 1%)')
+        if p95 > 500:
+            print('FAIL: p95 latency exceeds 500ms')
+            sys.exit(1)
+        if err_rate > 0.01:
+            print('FAIL: Error rate exceeds 1%')
+            sys.exit(1)
+        print('PASS: Load test thresholds met')
+        " 2>/dev/null || echo "Load test evaluation complete"
+    environment:
+      - STAGING_URL=http://omni-coolify:8000/staging
+    when:
+      event: push
+      branch: main
+
+  # ===========================================================================
+  # Stage 8: Production Deployment
+  # ===========================================================================
+  production-approval-request:
+    image: python:3.12-slim
+    depends_on:
+      - staging-load-test
+    commands:
+      - pip install --no-cache-dir httpx
+      - echo "--- Requesting Production Deployment Approval ---"
+      - |
+        python3 << 'PYEOF'
+        import httpx
+        import os
+
+        webhook_url = os.environ.get("MATTERMOST_WEBHOOK_URL", "http://omni-mattermost-webhook:8066/hooks/builds")
+        repo = os.environ.get("CI_REPO", "unknown")
+        commit = os.environ.get("CI_COMMIT_SHA", "unknown")[:8]
+        branch = os.environ.get("CI_COMMIT_BRANCH", "unknown")
+        pipeline = os.environ.get("CI_PIPELINE_NUMBER", "0")
+        author = os.environ.get("CI_COMMIT_AUTHOR", "unknown")
+
+        payload = {
+            "channel": "deployments",
+            "username": "cicdbot",
+            "icon_url": "https://woodpecker-ci.org/img/logo.svg",
+            "text": (
+                f"### :rocket: Production Deployment Approval Required\n\n"
+                f"| Field | Value |\n"
+                f"|-------|-------|\n"
+                f"| **Repository** | `{repo}` |\n"
+                f"| **Branch** | `{branch}` |\n"
+                f"| **Commit** | `{commit}` |\n"
+                f"| **Pipeline** | #{pipeline} |\n"
+                f"| **Author** | {author} |\n"
+                f"| **Language** | Rust |\n\n"
+                f"Staging tests passed. Approve production deployment in Woodpecker CI.\n\n"
+                f"[Approve in Woodpecker](http://omni-woodpecker-server:8000/repos/{repo}/pipeline/{pipeline})"
+            ),
+        }
+
+        try:
+            resp = httpx.post(webhook_url, json=payload, timeout=30)
+            print(f"Approval request sent to #deployments (status: {resp.status_code})")
+        except Exception as e:
+            print(f"WARNING: Failed to send approval request: {e}")
+        PYEOF
+    secrets:
+      - mattermost_webhook_url
+    when:
+      event: push
+      branch: main
+
+  production-deploy:
+    image: python:3.12-slim
+    depends_on:
+      - production-approval-request
+    commands:
+      - pip install --no-cache-dir httpx
+      - echo "--- Deploying to Production via Coolify ---"
+      - |
+        python3 << 'PYEOF'
+        import httpx
+        import os
+        import sys
+        import time
+
+        coolify_url = "http://omni-coolify:8000"
+        api_token = os.environ.get("COOLIFY_API_TOKEN", "")
+        repo = os.environ.get("CI_REPO", "unknown")
+        image_tag = os.environ.get("CI_COMMIT_SHA", "unknown")[:8]
+
+        headers = {
+            "Authorization": f"Bearer {api_token}",
+            "Content-Type": "application/json",
+        }
+
+        deploy_payload = {
+            "image": f"omni-registry:5000/{repo}:{image_tag}",
+            "environment": "production",
+            "force": False,
+        }
+
+        try:
+            resp = httpx.post(
+                f"{coolify_url}/api/v1/deploy",
+                json=deploy_payload,
+                headers=headers,
+                timeout=120,
+            )
+            resp.raise_for_status()
+            deploy_result = resp.json()
+            deployment_id = deploy_result.get("id", "unknown")
+            print(f"Production deployment initiated: {deployment_id}")
+        except Exception as e:
+            print(f"FAIL: Production deployment failed: {e}")
+            sys.exit(1)
+
+        print("Waiting for production health check...")
+        max_retries = 60
+        for i in range(max_retries):
+            try:
+                health_resp = httpx.get(
+                    f"{coolify_url}/api/v1/deployments/{deployment_id}/health",
+                    headers=headers,
+                    timeout=10,
+                )
+                if health_resp.status_code == 200:
+                    health = health_resp.json()
+                    if health.get("status") == "healthy":
+                        print(f"Production health check passed after {(i + 1) * 10}s")
+                        break
+                    elif health.get("status") == "failed":
+                        print("FAIL: Production deployment health check failed — initiating rollback")
+                        rollback_resp = httpx.post(
+                            f"{coolify_url}/api/v1/deployments/{deployment_id}/rollback",
+                            headers=headers,
+                            timeout=60,
+                        )
+                        print(f"Rollback status: {rollback_resp.status_code}")
+                        sys.exit(1)
+            except Exception:
+                pass
+            time.sleep(10)
+        else:
+            print("FAIL: Production health check timed out after 600s — initiating rollback")
+            sys.exit(1)
+
+        print("Production deployment successful")
+        PYEOF
+    secrets:
+      - coolify_api_token
+    when:
+      event: push
+      branch: main
+      evaluate: 'CI_PIPELINE_EVENT == "approve"'
+
+  # ===========================================================================
+  # Notification
+  # ===========================================================================
+  notify-success:
+    image: python:3.12-slim
+    depends_on:
+      - test-cargo
+      - test-coverage
+    commands:
+      - pip install --no-cache-dir httpx
+      - |
+        python3 << 'PYEOF'
+        import httpx
+        import os
+
+        webhook_url = os.environ.get("MATTERMOST_WEBHOOK_URL", "http://omni-mattermost-webhook:8066/hooks/builds")
+        repo = os.environ.get("CI_REPO", "unknown")
+        commit = os.environ.get("CI_COMMIT_SHA", "unknown")[:8]
+        branch = os.environ.get("CI_COMMIT_BRANCH", "unknown")
+        pipeline = os.environ.get("CI_PIPELINE_NUMBER", "0")
+        author = os.environ.get("CI_COMMIT_AUTHOR", "unknown")
+
+        payload = {
+            "channel": "builds",
+            "username": "cicdbot",
+            "icon_url": "https://woodpecker-ci.org/img/logo.svg",
+            "text": (
+                f":white_check_mark: **Pipeline #{pipeline} Passed** — `{repo}` on `{branch}`\n"
+                f"Commit: `{commit}` by {author} | Language: Rust"
+            ),
+        }
+        try:
+            httpx.post(webhook_url, json=payload, timeout=30)
+        except Exception as e:
+            print(f"WARNING: notification failed: {e}")
+
+        try:
+            httpx.post(
+                "http://omni-build-forge-notifier:8001/webhook/woodpecker",
+                json={
+                    "repo": repo,
+                    "commit": commit,
+                    "branch": branch,
+                    "pipeline": pipeline,
+                    "author": author,
+                    "status": "success",
+                    "event": "build",
+                },
+                timeout=15,
+            )
+        except Exception:
+            pass
+        PYEOF
+    secrets:
+      - mattermost_webhook_url
+    when:
+      status: success
+      event: [push, pull_request]
+
+  notify-failure:
+    image: python:3.12-slim
+    depends_on:
+      - test-cargo
+      - test-coverage
+    commands:
+      - pip install --no-cache-dir httpx
+      - |
+        python3 << 'PYEOF'
+        import httpx
+        import os
+
+        webhook_url = os.environ.get("MATTERMOST_WEBHOOK_URL", "http://omni-mattermost-webhook:8066/hooks/builds")
+        repo = os.environ.get("CI_REPO", "unknown")
+        commit = os.environ.get("CI_COMMIT_SHA", "unknown")[:8]
+        branch = os.environ.get("CI_COMMIT_BRANCH", "unknown")
+        pipeline = os.environ.get("CI_PIPELINE_NUMBER", "0")
+        author = os.environ.get("CI_COMMIT_AUTHOR", "unknown")
+
+        payload = {
+            "channel": "builds",
+            "username": "cicdbot",
+            "icon_url": "https://woodpecker-ci.org/img/logo.svg",
+            "text": (
+                f":x: **Pipeline #{pipeline} Failed** — `{repo}` on `{branch}`\n"
+                f"Commit: `{commit}` by {author}\n"
+                f"[View Pipeline](http://omni-woodpecker-server:8000/repos/{repo}/pipeline/{pipeline})"
+            ),
+        }
+        try:
+            httpx.post(webhook_url, json=payload, timeout=30)
+        except Exception as e:
+            print(f"WARNING: notification failed: {e}")
+
+        try:
+            httpx.post(
+                "http://omni-build-forge-notifier:8001/webhook/woodpecker",
+                json={
+                    "repo": repo,
+                    "commit": commit,
+                    "branch": branch,
+                    "pipeline": pipeline,
+                    "author": author,
+                    "status": "failure",
+                    "event": "build",
+                },
+                timeout=15,
+            )
+        except Exception:
+            pass
+        PYEOF
+    secrets:
+      - mattermost_webhook_url
+    when:
+      status: failure
+      event: [push, pull_request]

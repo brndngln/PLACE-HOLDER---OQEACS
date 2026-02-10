@@ -1,0 +1,252 @@
+# ===========================================================================
+# SYSTEM 6 — LOG NEXUS: Loki Alerting Rules
+# Omni Quantum Elite AI Coding System — Observability Layer
+# Rules evaluated by Loki Ruler, alerts forwarded to Alertmanager
+# Place in: /loki/rules/omni-quantum/alerting-rules.yml
+# ===========================================================================
+
+groups:
+
+  # ─────────────────────────────────────────────────────
+  # Error Detection Rules
+  # ─────────────────────────────────────────────────────
+  - name: error-detection
+    interval: 1m
+    rules:
+      - alert: HighErrorRate
+        expr: |
+          sum(rate({omni_tier=~".+"} |= "ERROR" [5m])) by (container) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High error rate in {{ $labels.container }}"
+          description: "Container {{ $labels.container }} is generating more than 0.5 errors/sec over the last 5 minutes."
+          runbook_url: "https://wiki.omni-quantum.internal/runbooks/high-error-rate"
+
+      - alert: CriticalServiceError
+        expr: |
+          sum(rate({omni_tier="critical"} |= "ERROR" [1m])) by (container) > 0
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Critical service {{ $labels.container }} is logging errors"
+          description: "Critical-tier service {{ $labels.container }} has logged errors in the last minute. Immediate investigation required."
+          runbook_url: "https://wiki.omni-quantum.internal/runbooks/critical-service-error"
+
+      - alert: ErrorBurstDetected
+        expr: |
+          sum(rate({omni_tier=~".+"} |= "ERROR" [1m])) by (container) > 5
+        for: 2m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Error burst in {{ $labels.container }}"
+          description: "Container {{ $labels.container }} is producing >5 errors/sec — possible cascading failure."
+
+  # ─────────────────────────────────────────────────────
+  # Infrastructure Health Rules
+  # ─────────────────────────────────────────────────────
+  - name: infrastructure-health
+    interval: 1m
+    rules:
+      - alert: OOMDetected
+        expr: |
+          {omni_tier=~".+"} |= "OOMKilled" or {omni_tier=~".+"} |= "out of memory"
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "OOM kill detected in {{ $labels.container }}"
+          description: "Container {{ $labels.container }} logged an OOM event. Review memory limits and allocation."
+          runbook_url: "https://wiki.omni-quantum.internal/runbooks/oom-detected"
+
+      - alert: DatabaseConnectionFailure
+        expr: |
+          {omni_tier=~".+"} |= "connection refused" |= "postgres"
+        for: 30s
+        labels:
+          severity: critical
+          team: database
+        annotations:
+          summary: "PostgreSQL connection failure in {{ $labels.container }}"
+          description: "Container {{ $labels.container }} cannot connect to PostgreSQL. Check database health and network connectivity."
+          runbook_url: "https://wiki.omni-quantum.internal/runbooks/db-connection-failure"
+
+      - alert: RedisConnectionFailure
+        expr: |
+          {omni_tier=~".+"} |= "connection refused" |= "redis"
+        for: 30s
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "Redis connection failure in {{ $labels.container }}"
+          description: "Container {{ $labels.container }} cannot connect to Redis. Check Redis health."
+
+      - alert: DiskSpaceWarning
+        expr: |
+          {omni_tier=~".+"} |= "No space left on device" or {omni_tier=~".+"} |= "disk full"
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "Disk space exhausted in {{ $labels.container }}"
+          description: "Container {{ $labels.container }} reports disk space exhaustion."
+
+  # ─────────────────────────────────────────────────────
+  # Security Rules
+  # ─────────────────────────────────────────────────────
+  - name: security-alerts
+    interval: 30s
+    rules:
+      - alert: AuthenticationFailureSpike
+        expr: |
+          sum(rate({container=~"omni-authentik|omni-gitea|omni-vault"} |= "authentication failed" [5m])) > 5
+        for: 2m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "Authentication failure spike detected"
+          description: "More than 5 authentication failures per second across auth services. Possible brute-force attack."
+          runbook_url: "https://wiki.omni-quantum.internal/runbooks/auth-failure-spike"
+
+      - alert: VaultSealedDetected
+        expr: |
+          {container="omni-vault"} |= "sealed"
+        labels:
+          severity: critical
+          team: security
+        annotations:
+          summary: "Vault has been sealed"
+          description: "HashiCorp Vault is in sealed state. All secret operations are blocked. Unseal immediately."
+          runbook_url: "https://wiki.omni-quantum.internal/runbooks/vault-sealed"
+
+      - alert: UnauthorizedAccessAttempt
+        expr: |
+          {omni_tier=~".+"} |= "unauthorized" |= "403"
+        for: 5m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "Repeated unauthorized access attempts in {{ $labels.container }}"
+          description: "Container {{ $labels.container }} is logging repeated 403/unauthorized events."
+
+      - alert: SSLCertificateError
+        expr: |
+          {omni_tier=~".+"} |= "certificate" |= "expired" or {omni_tier=~".+"} |= "x509"
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "SSL certificate issue detected in {{ $labels.container }}"
+
+  # ─────────────────────────────────────────────────────
+  # Backup and Data Protection Rules
+  # ─────────────────────────────────────────────────────
+  - name: backup-alerts
+    interval: 5m
+    rules:
+      - alert: BackupFailureDetected
+        expr: |
+          {container=~"omni-backup.*"} |= "backup failed"
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "Backup failure in {{ $labels.container }}"
+          description: "Container {{ $labels.container }} reports a backup failure. Data protection may be compromised."
+          runbook_url: "https://wiki.omni-quantum.internal/runbooks/backup-failure"
+
+      - alert: BackupStale
+        expr: |
+          {container=~"omni-backup.*"} |= "last backup" |= "hours ago"
+        for: 30m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "Backup may be stale in {{ $labels.container }}"
+
+  # ─────────────────────────────────────────────────────
+  # Performance Rules
+  # ─────────────────────────────────────────────────────
+  - name: performance-alerts
+    interval: 1m
+    rules:
+      - alert: SlowQueryDetected
+        expr: |
+          {omni_tier=~".+"} | json | duration > 5
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Slow operations detected in {{ $labels.container }}"
+          description: "Container {{ $labels.container }} has operations taking >5s consistently."
+          runbook_url: "https://wiki.omni-quantum.internal/runbooks/slow-queries"
+
+      - alert: HighLatencyLLMCalls
+        expr: |
+          {omni_component=~"ai-pipeline|openhands|swe-agent"} | json | duration > 120
+        for: 10m
+        labels:
+          severity: warning
+          team: ai-platform
+        annotations:
+          summary: "High latency LLM calls in {{ $labels.container }}"
+          description: "AI service {{ $labels.container }} has LLM calls exceeding 2 minutes."
+
+      - alert: QueueBacklogGrowing
+        expr: |
+          {omni_tier=~".+"} |= "queue" |= "backlog" |= "growing"
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Queue backlog growing in {{ $labels.container }}"
+
+  # ─────────────────────────────────────────────────────
+  # AI Pipeline-Specific Rules
+  # ─────────────────────────────────────────────────────
+  - name: ai-pipeline-alerts
+    interval: 1m
+    rules:
+      - alert: LLMRateLimited
+        expr: |
+          {omni_component=~"ai-pipeline|openhands|swe-agent|flowise"} |= "rate limit" or {omni_component=~"ai-pipeline|openhands|swe-agent|flowise"} |= "429"
+        for: 2m
+        labels:
+          severity: warning
+          team: ai-platform
+        annotations:
+          summary: "LLM API rate limiting detected in {{ $labels.container }}"
+          description: "AI service is being rate-limited by upstream LLM provider."
+
+      - alert: LLMAPIKeyInvalid
+        expr: |
+          {omni_component=~"ai-pipeline|openhands|swe-agent|flowise"} |= "invalid api key" or {omni_component=~"ai-pipeline|openhands|swe-agent|flowise"} |= "401"
+        labels:
+          severity: critical
+          team: ai-platform
+        annotations:
+          summary: "LLM API key invalid in {{ $labels.container }}"
+          description: "AI service has an invalid or expired API key. All AI operations are blocked."
+
+      - alert: ModelFallbackTriggered
+        expr: |
+          {omni_component=~"ai-pipeline|openhands|swe-agent"} |= "fallback" |= "model"
+        for: 5m
+        labels:
+          severity: warning
+          team: ai-platform
+        annotations:
+          summary: "Model fallback triggered in {{ $labels.container }}"
+          description: "Primary model unavailable, fallback model in use. Check provider status."

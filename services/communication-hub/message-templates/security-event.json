@@ -1,0 +1,41 @@
+{
+  "username": "alertbot",
+  "icon_emoji": "🛡️",
+  "attachments": [
+    {
+      "color": "#FF6600",
+      "title": "Security Event — {{event_type}}",
+      "title_link": "{{dashboard_link}}",
+      "text": "{{description}}",
+      "fields": [
+        {
+          "short": true,
+          "title": "Event Type",
+          "value": "{{event_type}}"
+        },
+        {
+          "short": true,
+          "title": "Source",
+          "value": "{{source_ip_or_service}}"
+        },
+        {
+          "short": true,
+          "title": "Action Taken",
+          "value": "{{action_taken}}"
+        },
+        {
+          "short": true,
+          "title": "Duration",
+          "value": "{{duration}}"
+        },
+        {
+          "short": false,
+          "title": "Reason",
+          "value": "{{reason}}"
+        }
+      ],
+      "footer": "Omni Quantum Security | CrowdSec + Vault + Authentik",
+      "footer_icon": "https://omni-quantum.internal/icons/security.png"
+    }
+  ]
+}

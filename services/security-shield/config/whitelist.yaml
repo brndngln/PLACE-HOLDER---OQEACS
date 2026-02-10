@@ -1,0 +1,78 @@
+# ===========================================================================
+# SYSTEM 25 — SECURITY SHIELD: CrowdSec Whitelist Configuration
+# Omni Quantum Elite AI Coding System — Security & Identity Layer
+#
+# Whitelists trusted IPs, internal networks, and monitoring sources
+# to prevent false-positive bans on legitimate traffic.
+#
+# Install path: /etc/crowdsec/parsers/s02-enrich/omni-whitelist.yaml
+# ===========================================================================
+
+name: omni-quantum/whitelist
+description: "Whitelist internal infrastructure, trusted IPs, and monitoring sources"
+whitelist:
+  reason: "Omni Quantum trusted infrastructure"
+
+  # ─────────────────────────────────────────────────────
+  # Trusted IP addresses
+  # ─────────────────────────────────────────────────────
+  ip:
+    # Localhost
+    - "127.0.0.1"
+    - "::1"
+
+    # Docker default bridge gateway
+    - "172.17.0.1"
+
+  # ─────────────────────────────────────────────────────
+  # Trusted CIDR ranges
+  # ─────────────────────────────────────────────────────
+  cidr:
+    # Docker omni-quantum-network default range
+    - "172.18.0.0/16"
+    # Docker compose default network range
+    - "172.19.0.0/16"
+    # Alternative Docker network ranges
+    - "172.20.0.0/16"
+    - "172.21.0.0/16"
+    # Private RFC1918 ranges (internal only)
+    - "10.0.0.0/8"
+    # Link-local
+    - "169.254.0.0/16"
+
+  # ─────────────────────────────────────────────────────
+  # Expression-based whitelists (dynamic evaluation)
+  # ─────────────────────────────────────────────────────
+  expression:
+    # Whitelist Prometheus health check scrapes
+    - >-
+      evt.Meta.http_path startsWith '/metrics' ||
+      evt.Meta.http_path startsWith '/-/health' ||
+      evt.Meta.http_path startsWith '/health' ||
+      evt.Meta.http_path startsWith '/healthz' ||
+      evt.Meta.http_path startsWith '/ready' ||
+      evt.Meta.http_path startsWith '/api/v1/ping' ||
+      evt.Meta.http_path == '/api/health'
+
+    # Whitelist Uptime Kuma monitoring probes (User-Agent based)
+    - >-
+      evt.Meta.http_user_agent contains 'Uptime-Kuma' ||
+      evt.Meta.http_user_agent contains 'uptime-kuma'
+
+    # Whitelist Prometheus scraper
+    - >-
+      evt.Meta.http_user_agent contains 'Prometheus/' ||
+      evt.Meta.http_user_agent contains 'prometheus'
+
+    # Whitelist Traefik internal health checks
+    - >-
+      evt.Meta.http_user_agent contains 'Traefik' ||
+      evt.Meta.http_user_agent == 'Go-http-client/1.1'
+
+    # Whitelist CrowdSec own health checks
+    - >-
+      evt.Meta.http_user_agent contains 'CrowdSec'
+
+    # Whitelist requests from known trusted external IPs
+    # (populated from TRUSTED_IPS environment variable during init)
+    # Example: evt.Meta.source_ip == '203.0.113.50'

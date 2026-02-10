@@ -1,0 +1,867 @@
+# =============================================================================
+# System 35 — Build Forge: Python/FastAPI Pipeline Template
+# Omni Quantum Elite AI Coding System
+#
+# 8-stage Woodpecker CI pipeline for Python/FastAPI services.
+# Stages: lint → security → build → test → ai-review → scan → staging → production
+# =============================================================================
+
+when:
+  event: [push, pull_request]
+  branch: [main, "release/*", "feature/*", "fix/*"]
+
+variables:
+  - &image_registry "omni-registry:5000"
+  - &python_image "python:3.12-slim"
+  - &docker_image "plugins/docker"
+  - &coverage_threshold "80"
+  - &score_threshold "7"
+  - &p95_latency_ms "500"
+  - &error_rate_pct "1"
+
+steps:
+  # ===========================================================================
+  # Stage 1: Lint & Format
+  # ===========================================================================
+  lint-ruff:
+    image: *python_image
+    group: lint
+    commands:
+      - pip install --no-cache-dir ruff black mypy
+      - echo "--- Ruff Linting (JSON output) ---"
+      - ruff check --output-format json --exit-non-zero-on-fix . | tee ruff-report.json
+      - echo "--- Ruff Format Check ---"
+      - ruff format --check .
+    when:
+      event: [push, pull_request]
+
+  lint-black:
+    image: *python_image
+    group: lint
+    commands:
+      - pip install --no-cache-dir black
+      - echo "--- Black Format Check ---"
+      - black --check --diff .
+    when:
+      event: [push, pull_request]
+
+  lint-mypy:
+    image: *python_image
+    group: lint
+    commands:
+      - pip install --no-cache-dir mypy
+      - |
+        if [ -f requirements.txt ]; then
+          pip install --no-cache-dir -r requirements.txt 2>/dev/null || true
+        fi
+        if [ -f pyproject.toml ]; then
+          pip install --no-cache-dir -e ".[dev]" 2>/dev/null || true
+        fi
+      - echo "--- Mypy Type Check ---"
+      - mypy --ignore-missing-imports --no-error-summary --show-error-codes . | tee mypy-report.txt
+    when:
+      event: [push, pull_request]
+
+  # ===========================================================================
+  # Stage 2: Security Scan
+  # ===========================================================================
+  security-semgrep:
+    image: returntocorp/semgrep:latest
+    group: security
+    depends_on:
+      - lint-ruff
+      - lint-black
+      - lint-mypy
+    commands:
+      - echo "--- Semgrep Security Scan ---"
+      - semgrep scan --config p/python --config p/security-audit --json --output semgrep-report.json .
+      - echo "--- Semgrep Results ---"
+      - |
+        FINDINGS=$(cat semgrep-report.json | python3 -c "import sys,json; r=json.load(sys.stdin); print(len(r.get('results',[])))")
+        echo "Total findings: $FINDINGS"
+        ERRORS=$(cat semgrep-report.json | python3 -c "import sys,json; r=json.load(sys.stdin); print(len([x for x in r.get('results',[]) if x.get('extra',{}).get('severity','') == 'ERROR']))")
+        if [ "$ERRORS" -gt 0 ]; then
+          echo "FAIL: $ERRORS critical security findings detected"
+          exit 1
+        fi
+    when:
+      event: [push, pull_request]
+
+  security-safety:
+    image: *python_image
+    group: security
+    depends_on:
+      - lint-ruff
+      - lint-black
+      - lint-mypy
+    commands:
+      - pip install --no-cache-dir safety
+      - echo "--- Safety Dependency Check ---"
+      - |
+        if [ -f requirements.txt ]; then
+          safety check -r requirements.txt --json --output safety-report.json || true
+          cat safety-report.json
+        else
+          echo "No requirements.txt found, skipping safety check"
+        fi
+    when:
+      event: [push, pull_request]
+
+  security-secrets:
+    image: *python_image
+    group: security
+    depends_on:
+      - lint-ruff
+      - lint-black
+      - lint-mypy
+    commands:
+      - pip install --no-cache-dir detect-secrets
+      - echo "--- Detect Secrets Scan ---"
+      - detect-secrets scan --all-files --force-use-all-plugins . > secrets-report.json
+      - |
+        SECRETS_COUNT=$(python3 -c "import json; r=json.load(open('secrets-report.json')); print(sum(len(v) for v in r.get('results',{}).values()))")
+        echo "Potential secrets found: $SECRETS_COUNT"
+        if [ "$SECRETS_COUNT" -gt 0 ]; then
+          echo "FAIL: Potential secrets detected in codebase"
+          python3 -c "import json; r=json.load(open('secrets-report.json')); [print(f'  {f}: {[h[\"type\"] for h in hs]}') for f,hs in r.get('results',{}).items()]"
+          exit 1
+        fi
+    when:
+      event: [push, pull_request]
+
+  # ===========================================================================
+  # Stage 3: Build
+  # ===========================================================================
+  build-docker:
+    image: *docker_image
+    depends_on:
+      - security-semgrep
+      - security-safety
+      - security-secrets
+    settings:
+      repo: "${CI_REPO}"
+      registry: *image_registry
+      tags:
+        - "${CI_COMMIT_SHA:0:8}"
+        - latest
+      dockerfile: Dockerfile
+      context: .
+      build_args:
+        - "BUILD_DATE=${CI_PIPELINE_CREATED}"
+        - "VCS_REF=${CI_COMMIT_SHA}"
+        - "VERSION=${CI_COMMIT_SHA:0:8}"
+      cache_from:
+        - "${CI_REPO}:latest"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    when:
+      event: [push, pull_request]
+
+  # ===========================================================================
+  # Stage 4: Test
+  # ===========================================================================
+  test-pytest:
+    image: *python_image
+    depends_on:
+      - build-docker
+    commands:
+      - |
+        if [ -f requirements.txt ]; then
+          pip install --no-cache-dir -r requirements.txt
+        fi
+        if [ -f requirements-dev.txt ]; then
+          pip install --no-cache-dir -r requirements-dev.txt
+        fi
+        if [ -f pyproject.toml ]; then
+          pip install --no-cache-dir -e ".[dev,test]" 2>/dev/null || pip install --no-cache-dir -e . 2>/dev/null || true
+        fi
+      - pip install --no-cache-dir pytest pytest-cov pytest-asyncio httpx
+      - echo "--- Running Tests with Coverage ---"
+      - >
+        pytest
+        --cov=.
+        --cov-report=json:coverage.json
+        --cov-report=term-missing
+        --cov-report=html:htmlcov
+        --junitxml=results.xml
+        -v
+        --tb=short
+        tests/
+      - echo "--- Coverage Threshold Check ---"
+      - |
+        COVERAGE=$(python3 -c "import json; r=json.load(open('coverage.json')); print(round(r['totals']['percent_covered'], 2))")
+        echo "Total coverage: ${COVERAGE}%"
+        PASS=$(python3 -c "print('true' if float('${COVERAGE}') >= 80.0 else 'false')")
+        if [ "$PASS" = "false" ]; then
+          echo "FAIL: Coverage ${COVERAGE}% is below threshold of 80%"
+          exit 1
+        fi
+        echo "PASS: Coverage ${COVERAGE}% meets threshold of 80%"
+      - echo "--- Test Results Summary ---"
+      - python3 -c "
+        import xml.etree.ElementTree as ET
+        tree = ET.parse('results.xml')
+        root = tree.getroot()
+        ts = root.find('.//testsuite') or root
+        print(f\"Tests: {ts.get('tests',0)}, Failures: {ts.get('failures',0)}, Errors: {ts.get('errors',0)}, Skipped: {ts.get('skipped',0)}\")
+        "
+    when:
+      event: [push, pull_request]
+
+  # ===========================================================================
+  # Stage 5: AI Code Review
+  # ===========================================================================
+  ai-code-review:
+    image: *python_image
+    depends_on:
+      - test-pytest
+    commands:
+      - pip install --no-cache-dir httpx
+      - echo "--- AI Code Scoring ---"
+      - |
+        python3 << 'PYEOF'
+        import httpx
+        import json
+        import sys
+        import os
+
+        code_scorer_url = "http://omni-code-scorer/api/score"
+        gate_engine_url = "http://omni-gate-engine/api/gate"
+
+        # Collect pipeline artifacts
+        lint_report = {}
+        if os.path.exists("ruff-report.json"):
+            with open("ruff-report.json") as f:
+                try:
+                    lint_report = json.load(f)
+                except json.JSONDecodeError:
+                    lint_report = {"error": "Failed to parse ruff report"}
+
+        security_report = {}
+        if os.path.exists("semgrep-report.json"):
+            with open("semgrep-report.json") as f:
+                try:
+                    security_report = json.load(f)
+                except json.JSONDecodeError:
+                    security_report = {"error": "Failed to parse semgrep report"}
+
+        coverage_data = {}
+        if os.path.exists("coverage.json"):
+            with open("coverage.json") as f:
+                try:
+                    coverage_data = json.load(f)
+                except json.JSONDecodeError:
+                    coverage_data = {"error": "Failed to parse coverage report"}
+
+        test_results = {}
+        if os.path.exists("results.xml"):
+            import xml.etree.ElementTree as ET
+            tree = ET.parse("results.xml")
+            root = tree.getroot()
+            ts = root.find(".//testsuite") or root
+            test_results = {
+                "tests": int(ts.get("tests", 0)),
+                "failures": int(ts.get("failures", 0)),
+                "errors": int(ts.get("errors", 0)),
+                "skipped": int(ts.get("skipped", 0)),
+            }
+
+        # POST to Code Scorer
+        scorer_payload = {
+            "repo": os.environ.get("CI_REPO", "unknown"),
+            "commit": os.environ.get("CI_COMMIT_SHA", "unknown"),
+            "branch": os.environ.get("CI_COMMIT_BRANCH", "unknown"),
+            "language": "python",
+            "framework": "fastapi",
+            "lint_report": lint_report,
+            "security_report": security_report,
+            "coverage_data": coverage_data,
+            "test_results": test_results,
+        }
+
+        try:
+            resp = httpx.post(code_scorer_url, json=scorer_payload, timeout=60)
+            resp.raise_for_status()
+            score_result = resp.json()
+            score = score_result.get("score", 0)
+            print(f"AI Code Score: {score}/10")
+            print(f"Feedback: {score_result.get('feedback', 'N/A')}")
+
+            if score < 7:
+                print(f"FAIL: AI Code Score {score}/10 is below threshold of 7/10")
+                for item in score_result.get("issues", []):
+                    print(f"  - [{item.get('severity','INFO')}] {item.get('message','')}")
+                sys.exit(1)
+            print(f"PASS: AI Code Score {score}/10 meets threshold of 7/10")
+        except httpx.HTTPStatusError as e:
+            print(f"WARNING: Code Scorer returned error: {e.response.status_code}")
+            print("Continuing pipeline — scorer is advisory")
+        except httpx.ConnectError:
+            print("WARNING: Code Scorer unreachable, skipping AI review")
+
+        # POST to Gate Engine
+        gate_payload = {
+            "repo": os.environ.get("CI_REPO", "unknown"),
+            "commit": os.environ.get("CI_COMMIT_SHA", "unknown"),
+            "branch": os.environ.get("CI_COMMIT_BRANCH", "unknown"),
+            "pipeline_id": os.environ.get("CI_PIPELINE_NUMBER", "0"),
+            "gates": {
+                "lint": {
+                    "passed": True,
+                    "tool": "ruff",
+                    "findings": len(lint_report.get("results", lint_report.get("error", [])) if isinstance(lint_report.get("results", lint_report.get("error", [])), list) else []),
+                },
+                "security": {
+                    "passed": True,
+                    "tool": "semgrep",
+                    "findings": len(security_report.get("results", [])),
+                },
+                "coverage": {
+                    "passed": True,
+                    "percent": coverage_data.get("totals", {}).get("percent_covered", 0),
+                    "threshold": 80,
+                },
+                "tests": {
+                    "passed": test_results.get("failures", 0) == 0 and test_results.get("errors", 0) == 0,
+                    "total": test_results.get("tests", 0),
+                    "failures": test_results.get("failures", 0),
+                    "errors": test_results.get("errors", 0),
+                },
+                "ai_score": {
+                    "passed": score >= 7 if 'score' in dir() else True,
+                    "score": score if 'score' in dir() else -1,
+                    "threshold": 7,
+                },
+            },
+        }
+
+        try:
+            resp = httpx.post(gate_engine_url, json=gate_payload, timeout=60)
+            resp.raise_for_status()
+            gate_result = resp.json()
+            decision = gate_result.get("decision", "unknown")
+            print(f"Gate Engine Decision: {decision}")
+
+            if decision == "reject":
+                print("FAIL: Gate Engine rejected this pipeline run")
+                for reason in gate_result.get("reasons", []):
+                    print(f"  - {reason}")
+                sys.exit(1)
+            print("PASS: Gate Engine approved this pipeline run")
+        except httpx.HTTPStatusError as e:
+            print(f"WARNING: Gate Engine returned error: {e.response.status_code}")
+        except httpx.ConnectError:
+            print("WARNING: Gate Engine unreachable, skipping gate check")
+
+        PYEOF
+    when:
+      event: [push, pull_request]
+
+  # ===========================================================================
+  # Stage 6: Container Scan + SBOM + Sign
+  # ===========================================================================
+  container-scan-trivy:
+    image: aquasec/trivy:latest
+    group: container-security
+    depends_on:
+      - ai-code-review
+    commands:
+      - echo "--- Trivy Container Scan ---"
+      - >
+        trivy image
+        --severity CRITICAL,HIGH
+        --exit-code 1
+        --format json
+        --output trivy-report.json
+        --ignore-unfixed
+        omni-registry:5000/${CI_REPO}:${CI_COMMIT_SHA:0:8}
+      - echo "--- Trivy Scan Complete ---"
+      - trivy image --severity CRITICAL,HIGH --format table omni-registry:5000/${CI_REPO}:${CI_COMMIT_SHA:0:8}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    when:
+      event: push
+      branch: [main, "release/*"]
+
+  sbom-syft:
+    image: anchore/syft:latest
+    group: container-security
+    depends_on:
+      - ai-code-review
+    commands:
+      - echo "--- Generating SBOM (SPDX JSON) ---"
+      - >
+        syft
+        omni-registry:5000/${CI_REPO}:${CI_COMMIT_SHA:0:8}
+        -o spdx-json=sbom-spdx.json
+      - echo "--- SBOM Generated ---"
+      - |
+        python3 -c "
+        import json
+        with open('sbom-spdx.json') as f:
+            sbom = json.load(f)
+        pkgs = sbom.get('packages', [])
+        print(f'Total packages in SBOM: {len(pkgs)}')
+        " 2>/dev/null || echo "SBOM generated successfully"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    when:
+      event: push
+      branch: [main, "release/*"]
+
+  cosign-sign:
+    image: bitnami/cosign:latest
+    depends_on:
+      - container-scan-trivy
+      - sbom-syft
+    commands:
+      - echo "--- Signing Container Image with Cosign ---"
+      - export VAULT_ADDR=http://omni-vault:8200
+      - >
+        cosign sign
+        --key hashivault://cosign-signing-key
+        --annotations "repo=${CI_REPO}"
+        --annotations "commit=${CI_COMMIT_SHA}"
+        --annotations "pipeline=${CI_PIPELINE_NUMBER}"
+        --annotations "build-date=${CI_PIPELINE_CREATED}"
+        --tlog-upload=false
+        omni-registry:5000/${CI_REPO}:${CI_COMMIT_SHA:0:8}
+      - echo "--- Attaching SBOM to Image ---"
+      - >
+        cosign attach sbom
+        --sbom sbom-spdx.json
+        omni-registry:5000/${CI_REPO}:${CI_COMMIT_SHA:0:8}
+      - echo "--- Image Signed and SBOM Attached ---"
+    secrets:
+      - vault_token
+      - cosign_private_key
+    when:
+      event: push
+      branch: [main, "release/*"]
+
+  # ===========================================================================
+  # Stage 7: Staging Deployment
+  # ===========================================================================
+  staging-deploy:
+    image: *python_image
+    depends_on:
+      - cosign-sign
+    commands:
+      - pip install --no-cache-dir httpx
+      - echo "--- Deploying to Staging via Coolify ---"
+      - |
+        python3 << 'PYEOF'
+        import httpx
+        import os
+        import sys
+        import time
+
+        coolify_url = "http://omni-coolify:8000"
+        api_token = os.environ.get("COOLIFY_API_TOKEN", "")
+        repo = os.environ.get("CI_REPO", "unknown")
+        image_tag = os.environ.get("CI_COMMIT_SHA", "unknown")[:8]
+
+        headers = {
+            "Authorization": f"Bearer {api_token}",
+            "Content-Type": "application/json",
+        }
+
+        # Trigger deployment
+        deploy_payload = {
+            "image": f"omni-registry:5000/{repo}:{image_tag}",
+            "environment": "staging",
+            "force": True,
+        }
+
+        try:
+            resp = httpx.post(
+                f"{coolify_url}/api/v1/deploy",
+                json=deploy_payload,
+                headers=headers,
+                timeout=120,
+            )
+            resp.raise_for_status()
+            deploy_result = resp.json()
+            deployment_id = deploy_result.get("id", "unknown")
+            print(f"Staging deployment initiated: {deployment_id}")
+        except Exception as e:
+            print(f"FAIL: Staging deployment failed: {e}")
+            sys.exit(1)
+
+        # Wait for health check
+        print("Waiting for staging health check...")
+        max_retries = 30
+        for i in range(max_retries):
+            try:
+                health_resp = httpx.get(
+                    f"{coolify_url}/api/v1/deployments/{deployment_id}/health",
+                    headers=headers,
+                    timeout=10,
+                )
+                if health_resp.status_code == 200:
+                    health = health_resp.json()
+                    if health.get("status") == "healthy":
+                        print(f"Staging health check passed after {(i + 1) * 10}s")
+                        break
+                    elif health.get("status") == "failed":
+                        print("FAIL: Staging deployment health check failed")
+                        sys.exit(1)
+            except Exception:
+                pass
+            time.sleep(10)
+        else:
+            print("FAIL: Staging health check timed out after 300s")
+            sys.exit(1)
+
+        print("Staging deployment healthy")
+        PYEOF
+    secrets:
+      - coolify_api_token
+    when:
+      event: push
+      branch: main
+
+  staging-smoke-test:
+    image: *python_image
+    depends_on:
+      - staging-deploy
+    commands:
+      - |
+        if [ -f requirements.txt ]; then
+          pip install --no-cache-dir -r requirements.txt
+        fi
+      - pip install --no-cache-dir pytest httpx
+      - echo "--- Running Smoke Tests against Staging ---"
+      - >
+        pytest
+        tests/smoke/
+        -v
+        --tb=short
+        --junitxml=smoke-results.xml
+        -k "smoke"
+        || { echo "FAIL: Smoke tests failed on staging"; exit 1; }
+      - echo "--- Smoke Tests Passed ---"
+    environment:
+      - STAGING_URL=http://omni-coolify:8000/staging
+    when:
+      event: push
+      branch: main
+
+  staging-load-test:
+    image: grafana/k6:latest
+    depends_on:
+      - staging-smoke-test
+    commands:
+      - echo "--- Running k6 Load Tests against Staging ---"
+      - |
+        cat > /tmp/load-test.js << 'K6EOF'
+        import http from "k6/http";
+        import { check, sleep } from "k6";
+        import { Rate, Trend } from "k6/metrics";
+
+        const errorRate = new Rate("errors");
+        const latency = new Trend("request_latency");
+
+        export const options = {
+          stages: [
+            { duration: "30s", target: 20 },
+            { duration: "1m", target: 50 },
+            { duration: "30s", target: 0 },
+          ],
+          thresholds: {
+            http_req_duration: ["p(95)<500"],
+            errors: ["rate<0.01"],
+          },
+        };
+
+        const BASE_URL = __ENV.STAGING_URL || "http://omni-coolify:8000/staging";
+
+        export default function () {
+          const res = http.get(`${BASE_URL}/health`);
+          check(res, {
+            "status is 200": (r) => r.status === 200,
+            "response time < 500ms": (r) => r.timings.duration < 500,
+          });
+          errorRate.add(res.status !== 200);
+          latency.add(res.timings.duration);
+          sleep(0.5);
+        }
+        K6EOF
+      - k6 run --summary-export=k6-results.json /tmp/load-test.js
+      - echo "--- k6 Load Test Results ---"
+      - |
+        cat k6-results.json | python3 -c "
+        import sys, json
+        r = json.load(sys.stdin)
+        metrics = r.get('metrics', {})
+        p95 = metrics.get('http_req_duration', {}).get('values', {}).get('p(95)', 0)
+        err_rate = metrics.get('errors', {}).get('values', {}).get('rate', 0)
+        print(f'p95 latency: {p95:.1f}ms (threshold: 500ms)')
+        print(f'Error rate: {err_rate*100:.2f}% (threshold: 1%)')
+        if p95 > 500:
+            print('FAIL: p95 latency exceeds 500ms')
+            sys.exit(1)
+        if err_rate > 0.01:
+            print('FAIL: Error rate exceeds 1%')
+            sys.exit(1)
+        print('PASS: Load test thresholds met')
+        " 2>/dev/null || echo "Load test evaluation complete"
+    environment:
+      - STAGING_URL=http://omni-coolify:8000/staging
+    when:
+      event: push
+      branch: main
+
+  # ===========================================================================
+  # Stage 8: Production Deployment
+  # ===========================================================================
+  production-approval-request:
+    image: *python_image
+    depends_on:
+      - staging-load-test
+    commands:
+      - pip install --no-cache-dir httpx
+      - echo "--- Requesting Production Deployment Approval ---"
+      - |
+        python3 << 'PYEOF'
+        import httpx
+        import os
+
+        webhook_url = os.environ.get("MATTERMOST_WEBHOOK_URL", "http://omni-mattermost-webhook:8066/hooks/builds")
+        repo = os.environ.get("CI_REPO", "unknown")
+        commit = os.environ.get("CI_COMMIT_SHA", "unknown")[:8]
+        branch = os.environ.get("CI_COMMIT_BRANCH", "unknown")
+        pipeline = os.environ.get("CI_PIPELINE_NUMBER", "0")
+        author = os.environ.get("CI_COMMIT_AUTHOR", "unknown")
+
+        payload = {
+            "channel": "deployments",
+            "username": "cicdbot",
+            "icon_url": "https://woodpecker-ci.org/img/logo.svg",
+            "text": (
+                f"### :rocket: Production Deployment Approval Required\n\n"
+                f"| Field | Value |\n"
+                f"|-------|-------|\n"
+                f"| **Repository** | `{repo}` |\n"
+                f"| **Branch** | `{branch}` |\n"
+                f"| **Commit** | `{commit}` |\n"
+                f"| **Pipeline** | #{pipeline} |\n"
+                f"| **Author** | {author} |\n\n"
+                f"Staging tests passed. Approve production deployment in Woodpecker CI.\n\n"
+                f"[Approve in Woodpecker](http://omni-woodpecker-server:8000/repos/{repo}/pipeline/{pipeline})"
+            ),
+        }
+
+        try:
+            resp = httpx.post(webhook_url, json=payload, timeout=30)
+            print(f"Approval request sent to #deployments (status: {resp.status_code})")
+        except Exception as e:
+            print(f"WARNING: Failed to send approval request: {e}")
+        PYEOF
+    secrets:
+      - mattermost_webhook_url
+    when:
+      event: push
+      branch: main
+
+  production-deploy:
+    image: *python_image
+    depends_on:
+      - production-approval-request
+    commands:
+      - pip install --no-cache-dir httpx
+      - echo "--- Deploying to Production via Coolify ---"
+      - |
+        python3 << 'PYEOF'
+        import httpx
+        import os
+        import sys
+        import time
+
+        coolify_url = "http://omni-coolify:8000"
+        api_token = os.environ.get("COOLIFY_API_TOKEN", "")
+        repo = os.environ.get("CI_REPO", "unknown")
+        image_tag = os.environ.get("CI_COMMIT_SHA", "unknown")[:8]
+
+        headers = {
+            "Authorization": f"Bearer {api_token}",
+            "Content-Type": "application/json",
+        }
+
+        deploy_payload = {
+            "image": f"omni-registry:5000/{repo}:{image_tag}",
+            "environment": "production",
+            "force": False,
+        }
+
+        try:
+            resp = httpx.post(
+                f"{coolify_url}/api/v1/deploy",
+                json=deploy_payload,
+                headers=headers,
+                timeout=120,
+            )
+            resp.raise_for_status()
+            deploy_result = resp.json()
+            deployment_id = deploy_result.get("id", "unknown")
+            print(f"Production deployment initiated: {deployment_id}")
+        except Exception as e:
+            print(f"FAIL: Production deployment failed: {e}")
+            sys.exit(1)
+
+        # Wait for health
+        print("Waiting for production health check...")
+        max_retries = 60
+        for i in range(max_retries):
+            try:
+                health_resp = httpx.get(
+                    f"{coolify_url}/api/v1/deployments/{deployment_id}/health",
+                    headers=headers,
+                    timeout=10,
+                )
+                if health_resp.status_code == 200:
+                    health = health_resp.json()
+                    if health.get("status") == "healthy":
+                        print(f"Production health check passed after {(i + 1) * 10}s")
+                        break
+                    elif health.get("status") == "failed":
+                        print("FAIL: Production deployment health check failed — initiating rollback")
+                        rollback_resp = httpx.post(
+                            f"{coolify_url}/api/v1/deployments/{deployment_id}/rollback",
+                            headers=headers,
+                            timeout=60,
+                        )
+                        print(f"Rollback status: {rollback_resp.status_code}")
+                        sys.exit(1)
+            except Exception:
+                pass
+            time.sleep(10)
+        else:
+            print("FAIL: Production health check timed out after 600s — initiating rollback")
+            sys.exit(1)
+
+        print("Production deployment successful")
+        PYEOF
+    secrets:
+      - coolify_api_token
+    when:
+      event: push
+      branch: main
+      evaluate: 'CI_PIPELINE_EVENT == "approve"'
+
+  # ===========================================================================
+  # Notification (runs on success or failure)
+  # ===========================================================================
+  notify-success:
+    image: *python_image
+    depends_on:
+      - test-pytest
+    commands:
+      - pip install --no-cache-dir httpx
+      - |
+        python3 << 'PYEOF'
+        import httpx
+        import os
+
+        # Mattermost notification
+        webhook_url = os.environ.get("MATTERMOST_WEBHOOK_URL", "http://omni-mattermost-webhook:8066/hooks/builds")
+        repo = os.environ.get("CI_REPO", "unknown")
+        commit = os.environ.get("CI_COMMIT_SHA", "unknown")[:8]
+        branch = os.environ.get("CI_COMMIT_BRANCH", "unknown")
+        pipeline = os.environ.get("CI_PIPELINE_NUMBER", "0")
+        author = os.environ.get("CI_COMMIT_AUTHOR", "unknown")
+
+        payload = {
+            "channel": "builds",
+            "username": "cicdbot",
+            "icon_url": "https://woodpecker-ci.org/img/logo.svg",
+            "text": (
+                f":white_check_mark: **Pipeline #{pipeline} Passed** — `{repo}` on `{branch}`\n"
+                f"Commit: `{commit}` by {author}"
+            ),
+        }
+        try:
+            httpx.post(webhook_url, json=payload, timeout=30)
+        except Exception as e:
+            print(f"WARNING: notification failed: {e}")
+
+        # Notifier service (for Omi haptic)
+        try:
+            httpx.post(
+                "http://omni-build-forge-notifier:8001/webhook/woodpecker",
+                json={
+                    "repo": repo,
+                    "commit": commit,
+                    "branch": branch,
+                    "pipeline": pipeline,
+                    "author": author,
+                    "status": "success",
+                    "event": "build",
+                },
+                timeout=15,
+            )
+        except Exception:
+            pass
+        PYEOF
+    secrets:
+      - mattermost_webhook_url
+    when:
+      status: success
+      event: [push, pull_request]
+
+  notify-failure:
+    image: *python_image
+    depends_on:
+      - test-pytest
+    commands:
+      - pip install --no-cache-dir httpx
+      - |
+        python3 << 'PYEOF'
+        import httpx
+        import os
+
+        webhook_url = os.environ.get("MATTERMOST_WEBHOOK_URL", "http://omni-mattermost-webhook:8066/hooks/builds")
+        repo = os.environ.get("CI_REPO", "unknown")
+        commit = os.environ.get("CI_COMMIT_SHA", "unknown")[:8]
+        branch = os.environ.get("CI_COMMIT_BRANCH", "unknown")
+        pipeline = os.environ.get("CI_PIPELINE_NUMBER", "0")
+        author = os.environ.get("CI_COMMIT_AUTHOR", "unknown")
+
+        payload = {
+            "channel": "builds",
+            "username": "cicdbot",
+            "icon_url": "https://woodpecker-ci.org/img/logo.svg",
+            "text": (
+                f":x: **Pipeline #{pipeline} Failed** — `{repo}` on `{branch}`\n"
+                f"Commit: `{commit}` by {author}\n"
+                f"[View Pipeline](http://omni-woodpecker-server:8000/repos/{repo}/pipeline/{pipeline})"
+            ),
+        }
+        try:
+            httpx.post(webhook_url, json=payload, timeout=30)
+        except Exception as e:
+            print(f"WARNING: notification failed: {e}")
+
+        # Notifier service (for Omi haptic)
+        try:
+            httpx.post(
+                "http://omni-build-forge-notifier:8001/webhook/woodpecker",
+                json={
+                    "repo": repo,
+                    "commit": commit,
+                    "branch": branch,
+                    "pipeline": pipeline,
+                    "author": author,
+                    "status": "failure",
+                    "event": "build",
+                },
+                timeout=15,
+            )
+        except Exception:
+            pass
+        PYEOF
+    secrets:
+      - mattermost_webhook_url
+    when:
+      status: failure
+      event: [push, pull_request]

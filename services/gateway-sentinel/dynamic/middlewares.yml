@@ -1,0 +1,245 @@
+# Middleware Configuration — Omni Quantum Gateway Sentinel
+# Rate limiting, security headers, authentication, compression, and chains
+
+http:
+  middlewares:
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Rate Limiting
+    # ═══════════════════════════════════════════════════════════════════════════
+    rate-limit-standard:
+      rateLimit:
+        average: 100
+        burst: 200
+
+    rate-limit-strict:
+      rateLimit:
+        average: 10
+        burst: 20
+
+    rate-limit-api:
+      rateLimit:
+        average: 50
+        burst: 100
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Security Headers
+    # ═══════════════════════════════════════════════════════════════════════════
+    security-headers:
+      headers:
+        frameDeny: true
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: strict-origin-when-cross-origin
+        contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' wss: ws:; frame-ancestors 'self'"
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        customResponseHeaders:
+          X-Powered-By: ""
+          Server: ""
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Compression
+    # ═══════════════════════════════════════════════════════════════════════════
+    compress:
+      compress:
+        excludedContentTypes:
+          - "text/event-stream"
+        minResponseBodyBytes: 1024
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Authentication (Authentik Forward Auth)
+    # ═══════════════════════════════════════════════════════════════════════════
+    authentik-auth:
+      forwardAuth:
+        address: "http://omni-authentik:9000/outpost.goauthentik.io/auth/traefik"
+        trustForwardHeader: true
+        authResponseHeaders:
+          - X-authentik-username
+          - X-authentik-groups
+          - X-authentik-email
+          - X-authentik-name
+          - X-authentik-uid
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Strip Prefixes — One per routed service
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    # Foundation
+    strip-git:
+      stripPrefix:
+        prefixes:
+          - "/git"
+
+    strip-grafana:
+      stripPrefix:
+        prefixes:
+          - "/grafana"
+
+    strip-prometheus:
+      stripPrefix:
+        prefixes:
+          - "/prometheus"
+
+    strip-vault:
+      stripPrefix:
+        prefixes:
+          - "/vault"
+
+    strip-minio:
+      stripPrefix:
+        prefixes:
+          - "/minio"
+
+    # Security
+    strip-authentik:
+      stripPrefix:
+        prefixes:
+          - "/authentik"
+
+    strip-crowdsec:
+      stripPrefix:
+        prefixes:
+          - "/crowdsec"
+
+    # Communication
+    strip-mattermost:
+      stripPrefix:
+        prefixes:
+          - "/mattermost"
+
+    strip-n8n:
+      stripPrefix:
+        prefixes:
+          - "/n8n"
+
+    # AI
+    strip-litellm:
+      stripPrefix:
+        prefixes:
+          - "/litellm"
+
+    strip-langfuse:
+      stripPrefix:
+        prefixes:
+          - "/langfuse"
+
+    strip-ollama:
+      stripPrefix:
+        prefixes:
+          - "/ollama"
+
+    # Pipeline
+    strip-woodpecker:
+      stripPrefix:
+        prefixes:
+          - "/woodpecker"
+
+    strip-code-scorer:
+      stripPrefix:
+        prefixes:
+          - "/code-scorer"
+
+    strip-sourcegraph:
+      stripPrefix:
+        prefixes:
+          - "/sourcegraph"
+
+    # Knowledge
+    strip-wiki:
+      stripPrefix:
+        prefixes:
+          - "/wiki"
+
+    strip-qdrant:
+      stripPrefix:
+        prefixes:
+          - "/qdrant"
+
+    # Business
+    strip-plane:
+      stripPrefix:
+        prefixes:
+          - "/plane"
+
+    strip-superset:
+      stripPrefix:
+        prefixes:
+          - "/superset"
+
+    strip-cal:
+      stripPrefix:
+        prefixes:
+          - "/cal"
+
+    strip-twenty:
+      stripPrefix:
+        prefixes:
+          - "/twenty"
+
+    strip-crater:
+      stripPrefix:
+        prefixes:
+          - "/crater"
+
+    strip-flowise:
+      stripPrefix:
+        prefixes:
+          - "/flowise"
+
+    # Enhanced / Infrastructure
+    strip-thanos:
+      stripPrefix:
+        prefixes:
+          - "/thanos"
+
+    strip-uptime:
+      stripPrefix:
+        prefixes:
+          - "/uptime"
+
+    strip-portainer:
+      stripPrefix:
+        prefixes:
+          - "/portainer"
+
+    strip-coder:
+      stripPrefix:
+        prefixes:
+          - "/coder"
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Middleware Chains
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    # Public: rate limiting + security headers + compression (no auth)
+    public-chain:
+      chain:
+        middlewares:
+          - rate-limit-standard
+          - security-headers
+          - compress
+
+    # Protected: rate limiting + Authentik auth + security headers + compression
+    protected-chain:
+      chain:
+        middlewares:
+          - rate-limit-standard
+          - authentik-auth
+          - security-headers
+          - compress
+
+    # API: API rate limiting + security headers (token-based auth at service level)
+    api-chain:
+      chain:
+        middlewares:
+          - rate-limit-api
+          - security-headers
+
+    # Strict: strict rate limiting + Authentik auth + security headers (admin UIs)
+    strict-chain:
+      chain:
+        middlewares:
+          - rate-limit-strict
+          - authentik-auth
+          - security-headers

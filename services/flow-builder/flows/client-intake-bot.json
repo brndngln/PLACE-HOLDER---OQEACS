@@ -1,0 +1,101 @@
+{
+  "name": "Client Intake Bot",
+  "description": "Conversational bot that extracts structured client intake data and posts to n8n webhook",
+  "nodes": [
+    {
+      "id": "chatInput_0",
+      "type": "ChatInput",
+      "position": {"x": 100, "y": 300},
+      "data": {
+        "label": "Chat Input",
+        "inputs": {},
+        "outputs": {
+          "output": "chatInput_0-output"
+        }
+      }
+    },
+    {
+      "id": "llm_0",
+      "type": "ChatOpenAI",
+      "position": {"x": 400, "y": 100},
+      "data": {
+        "label": "LLM",
+        "inputs": {
+          "modelName": "gpt-4",
+          "basePath": "http://omni-litellm:4000/v1",
+          "apiKey": "{{LITELLM_API_KEY}}",
+          "temperature": 0.3,
+          "maxTokens": 1024
+        },
+        "outputs": {
+          "output": "llm_0-output"
+        }
+      }
+    },
+    {
+      "id": "chain_0",
+      "type": "LLMChain",
+      "position": {"x": 400, "y": 300},
+      "data": {
+        "label": "Intake Extraction Chain",
+        "inputs": {
+          "model": "{{llm_0-output}}",
+          "prompt": "You are a friendly client intake assistant for Omni Quantum Elite. Your job is to collect project information from potential clients through natural conversation.\n\nCollect the following information:\n- Full name\n- Email address\n- Company name\n- Project description\n- Estimated budget range\n- Desired timeline\n\nIf the user hasn't provided all information yet, ask for the missing fields conversationally.\n\nOnce all fields are collected, output ONLY a JSON object:\n{\"name\": \"...\", \"email\": \"...\", \"company\": \"...\", \"description\": \"...\", \"budget\": \"...\", \"timeline\": \"...\"}\n\nConversation so far:\n{input}",
+          "outputKey": "text"
+        },
+        "outputs": {
+          "output": "chain_0-output"
+        }
+      }
+    },
+    {
+      "id": "condition_0",
+      "type": "ConditionAgent",
+      "position": {"x": 700, "y": 300},
+      "data": {
+        "label": "JSON Complete Check",
+        "inputs": {
+          "input": "{{chain_0-output}}",
+          "condition": "contains '{\"name\"'"
+        },
+        "outputs": {
+          "true": "condition_0-true",
+          "false": "condition_0-false"
+        }
+      }
+    },
+    {
+      "id": "webhook_0",
+      "type": "WebhookOutput",
+      "position": {"x": 1000, "y": 200},
+      "data": {
+        "label": "Send to n8n",
+        "inputs": {
+          "url": "http://omni-n8n:5678/webhook/client-intake",
+          "method": "POST",
+          "headers": {"Content-Type": "application/json"},
+          "body": "{{chain_0-output}}"
+        }
+      }
+    },
+    {
+      "id": "output_0",
+      "type": "ChatOutput",
+      "position": {"x": 1000, "y": 400},
+      "data": {
+        "label": "Chat Output",
+        "inputs": {
+          "text": "{{chain_0-output}}"
+        }
+      }
+    }
+  ],
+  "edges": [
+    {"source": "chatInput_0", "target": "chain_0", "sourceHandle": "chatInput_0-output", "targetHandle": "input"},
+    {"source": "llm_0", "target": "chain_0", "sourceHandle": "llm_0-output", "targetHandle": "model"},
+    {"source": "chain_0", "target": "condition_0", "sourceHandle": "chain_0-output", "targetHandle": "input"},
+    {"source": "condition_0", "target": "webhook_0", "sourceHandle": "condition_0-true", "targetHandle": "body"},
+    {"source": "condition_0", "target": "output_0", "sourceHandle": "condition_0-false", "targetHandle": "text"},
+    {"source": "chain_0", "target": "output_0", "sourceHandle": "chain_0-output", "targetHandle": "text"}
+  ]
+}

@@ -1,0 +1,749 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# OMNI-QUANTUM-ELITE — System 5: OBSERVATORY
+# Prometheus Enhanced Scrape Configuration
+# ═══════════════════════════════════════════════════════════════════════════════
+# Comprehensive metrics collection across all service tiers:
+#   - Critical tier:  15s scrape interval
+#   - High tier:      30s scrape interval
+#   - Standard tier:  60s scrape interval
+# ═══════════════════════════════════════════════════════════════════════════════
+
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+  scrape_timeout: 10s
+  external_labels:
+    cluster: omni-quantum-elite
+    environment: production
+    region: primary
+
+rule_files:
+  - /etc/prometheus/alert-rules.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["omni-alertmanager:9093"]
+      scheme: http
+      timeout: 10s
+      api_version: v2
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# SCRAPE CONFIGURATIONS
+# ═══════════════════════════════════════════════════════════════════════════════
+scrape_configs:
+
+  # ═══════════════════════════════════════════════════════════════
+  # INFRASTRUCTURE LAYER — 15s interval (critical tier)
+  # ═══════════════════════════════════════════════════════════════
+
+  - job_name: prometheus
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["localhost:9090"]
+        labels:
+          instance_role: primary
+    relabel_configs:
+      - target_label: omni_service
+        replacement: prometheus
+      - target_label: omni_tier
+        replacement: critical
+      - target_label: omni_component
+        replacement: monitoring
+      - target_label: omni_layer
+        replacement: infrastructure
+
+  - job_name: node-exporter
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    static_configs:
+      - targets: ["omni-node-exporter:9100"]
+        labels:
+          instance_role: host-metrics
+    relabel_configs:
+      - target_label: omni_service
+        replacement: node-exporter
+      - target_label: omni_tier
+        replacement: critical
+      - target_label: omni_component
+        replacement: infrastructure
+      - target_label: omni_layer
+        replacement: infrastructure
+
+  - job_name: cadvisor
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    static_configs:
+      - targets: ["omni-cadvisor:8080"]
+        labels:
+          instance_role: container-metrics
+    relabel_configs:
+      - target_label: omni_service
+        replacement: cadvisor
+      - target_label: omni_tier
+        replacement: critical
+      - target_label: omni_component
+        replacement: infrastructure
+      - target_label: omni_layer
+        replacement: infrastructure
+
+  - job_name: postgres-exporter
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    static_configs:
+      - targets: ["omni-postgres-exporter:9187"]
+        labels:
+          instance_role: database-metrics
+    relabel_configs:
+      - target_label: omni_service
+        replacement: postgresql
+      - target_label: omni_tier
+        replacement: critical
+      - target_label: omni_component
+        replacement: database
+      - target_label: omni_layer
+        replacement: infrastructure
+
+  - job_name: redis-exporter
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    static_configs:
+      - targets: ["omni-redis-exporter:9121"]
+        labels:
+          instance_role: cache-metrics
+    relabel_configs:
+      - target_label: omni_service
+        replacement: redis
+      - target_label: omni_tier
+        replacement: critical
+      - target_label: omni_component
+        replacement: cache
+      - target_label: omni_layer
+        replacement: infrastructure
+
+  - job_name: minio
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    metrics_path: /minio/v2/metrics/cluster
+    static_configs:
+      - targets: ["omni-minio:9000"]
+        labels:
+          instance_role: object-storage
+    relabel_configs:
+      - target_label: omni_service
+        replacement: minio
+      - target_label: omni_tier
+        replacement: critical
+      - target_label: omni_component
+        replacement: storage
+      - target_label: omni_layer
+        replacement: infrastructure
+
+  - job_name: traefik
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["omni-traefik:8082"]
+        labels:
+          instance_role: reverse-proxy
+    relabel_configs:
+      - target_label: omni_service
+        replacement: traefik
+      - target_label: omni_tier
+        replacement: critical
+      - target_label: omni_component
+        replacement: networking
+      - target_label: omni_layer
+        replacement: infrastructure
+
+  # ═══════════════════════════════════════════════════════════════
+  # CORE SERVICES LAYER — 15s/30s interval (critical/high tier)
+  # ═══════════════════════════════════════════════════════════════
+
+  - job_name: gitea
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["omni-gitea:3000"]
+        labels:
+          instance_role: source-control
+    relabel_configs:
+      - target_label: omni_service
+        replacement: gitea
+      - target_label: omni_tier
+        replacement: critical
+      - target_label: omni_component
+        replacement: scm
+      - target_label: omni_layer
+        replacement: core
+
+  - job_name: vault
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    metrics_path: /v1/sys/metrics
+    params:
+      format: ["prometheus"]
+    bearer_token_file: /etc/prometheus/vault-token
+    static_configs:
+      - targets: ["omni-vault:8200"]
+        labels:
+          instance_role: secrets-management
+    relabel_configs:
+      - target_label: omni_service
+        replacement: vault
+      - target_label: omni_tier
+        replacement: critical
+      - target_label: omni_component
+        replacement: security
+      - target_label: omni_layer
+        replacement: core
+
+  - job_name: litellm
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["omni-litellm:4000"]
+        labels:
+          instance_role: llm-gateway
+    relabel_configs:
+      - target_label: omni_service
+        replacement: litellm
+      - target_label: omni_tier
+        replacement: critical
+      - target_label: omni_component
+        replacement: ai-gateway
+      - target_label: omni_layer
+        replacement: core
+
+  - job_name: authentik
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["omni-authentik:9000"]
+        labels:
+          instance_role: identity-provider
+    relabel_configs:
+      - target_label: omni_service
+        replacement: authentik
+      - target_label: omni_tier
+        replacement: high
+      - target_label: omni_component
+        replacement: authentication
+      - target_label: omni_layer
+        replacement: core
+
+  - job_name: langfuse
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["omni-langfuse:3000"]
+        labels:
+          instance_role: llm-observability
+    relabel_configs:
+      - target_label: omni_service
+        replacement: langfuse
+      - target_label: omni_tier
+        replacement: high
+      - target_label: omni_component
+        replacement: ai-observability
+      - target_label: omni_layer
+        replacement: core
+
+  - job_name: qdrant
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["omni-qdrant:6333"]
+        labels:
+          instance_role: vector-database
+    relabel_configs:
+      - target_label: omni_service
+        replacement: qdrant
+      - target_label: omni_tier
+        replacement: high
+      - target_label: omni_component
+        replacement: vector-store
+      - target_label: omni_layer
+        replacement: core
+
+  - job_name: ollama
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["omni-ollama:11434"]
+        labels:
+          instance_role: local-llm
+    relabel_configs:
+      - target_label: omni_service
+        replacement: ollama
+      - target_label: omni_tier
+        replacement: high
+      - target_label: omni_component
+        replacement: ai-inference
+      - target_label: omni_layer
+        replacement: core
+
+  # ═══════════════════════════════════════════════════════════════
+  # PIPELINE LAYER — 30s interval (high tier)
+  # ═══════════════════════════════════════════════════════════════
+
+  - job_name: code-scorer
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["omni-code-scorer:8350"]
+        labels:
+          instance_role: code-quality
+    relabel_configs:
+      - target_label: omni_service
+        replacement: code-scorer
+      - target_label: omni_tier
+        replacement: high
+      - target_label: omni_component
+        replacement: pipeline-scoring
+      - target_label: omni_layer
+        replacement: pipeline
+
+  - job_name: gate-engine
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["omni-gate-engine:8351"]
+        labels:
+          instance_role: quality-gate
+    relabel_configs:
+      - target_label: omni_service
+        replacement: gate-engine
+      - target_label: omni_tier
+        replacement: high
+      - target_label: omni_component
+        replacement: pipeline-gate
+      - target_label: omni_layer
+        replacement: pipeline
+
+  - job_name: context-compiler
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["omni-context-compiler:8353"]
+        labels:
+          instance_role: context-assembly
+    relabel_configs:
+      - target_label: omni_service
+        replacement: context-compiler
+      - target_label: omni_tier
+        replacement: high
+      - target_label: omni_component
+        replacement: pipeline-context
+      - target_label: omni_layer
+        replacement: pipeline
+
+  - job_name: woodpecker
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["omni-woodpecker:8000"]
+        labels:
+          instance_role: ci-cd
+    relabel_configs:
+      - target_label: omni_service
+        replacement: woodpecker
+      - target_label: omni_tier
+        replacement: high
+      - target_label: omni_component
+        replacement: pipeline-ci
+      - target_label: omni_layer
+        replacement: pipeline
+
+  - job_name: orchestrator
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["omni-orchestrator:8185"]
+        labels:
+          instance_role: task-orchestration
+    relabel_configs:
+      - target_label: omni_service
+        replacement: orchestrator
+      - target_label: omni_tier
+        replacement: critical
+      - target_label: omni_component
+        replacement: pipeline-orchestration
+      - target_label: omni_layer
+        replacement: pipeline
+
+  # ═══════════════════════════════════════════════════════════════
+  # ENHANCED SERVICES LAYER — 30s interval (high tier)
+  # ═══════════════════════════════════════════════════════════════
+
+  - job_name: thanos-query
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["omni-thanos-query:9091"]
+        labels:
+          instance_role: long-term-metrics
+    relabel_configs:
+      - target_label: omni_service
+        replacement: thanos-query
+      - target_label: omni_tier
+        replacement: high
+      - target_label: omni_component
+        replacement: monitoring
+      - target_label: omni_layer
+        replacement: enhanced
+
+  - job_name: thanos-sidecar
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["omni-thanos-sidecar:10902"]
+        labels:
+          instance_role: metrics-shipper
+    relabel_configs:
+      - target_label: omni_service
+        replacement: thanos-sidecar
+      - target_label: omni_tier
+        replacement: high
+      - target_label: omni_component
+        replacement: monitoring
+      - target_label: omni_layer
+        replacement: enhanced
+
+  - job_name: log-pattern-detector
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["omni-log-pattern-detector:8184"]
+        labels:
+          instance_role: anomaly-detection
+    relabel_configs:
+      - target_label: omni_service
+        replacement: log-pattern-detector
+      - target_label: omni_tier
+        replacement: high
+      - target_label: omni_component
+        replacement: log-analysis
+      - target_label: omni_layer
+        replacement: enhanced
+
+  - job_name: uptime-kuma
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["omni-uptime-kuma:3001"]
+        labels:
+          instance_role: uptime-monitoring
+    relabel_configs:
+      - target_label: omni_service
+        replacement: uptime-kuma
+      - target_label: omni_tier
+        replacement: high
+      - target_label: omni_component
+        replacement: availability
+      - target_label: omni_layer
+        replacement: enhanced
+
+  - job_name: backup-orchestrator
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["omni-backup-orchestrator:8000"]
+        labels:
+          instance_role: backup-management
+    relabel_configs:
+      - target_label: omni_service
+        replacement: backup-orchestrator
+      - target_label: omni_tier
+        replacement: high
+      - target_label: omni_component
+        replacement: backup
+      - target_label: omni_layer
+        replacement: enhanced
+
+  - job_name: secret-rotation
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["omni-secret-rotation:8189"]
+        labels:
+          instance_role: credential-lifecycle
+    relabel_configs:
+      - target_label: omni_service
+        replacement: secret-rotation
+      - target_label: omni_tier
+        replacement: high
+      - target_label: omni_component
+        replacement: security
+      - target_label: omni_layer
+        replacement: enhanced
+
+  - job_name: grafana
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["omni-grafana:3000"]
+        labels:
+          instance_role: dashboards
+    relabel_configs:
+      - target_label: omni_service
+        replacement: grafana
+      - target_label: omni_tier
+        replacement: high
+      - target_label: omni_component
+        replacement: monitoring
+      - target_label: omni_layer
+        replacement: enhanced
+
+  - job_name: loki
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["omni-loki:3100"]
+        labels:
+          instance_role: log-aggregation
+    relabel_configs:
+      - target_label: omni_service
+        replacement: loki
+      - target_label: omni_tier
+        replacement: high
+      - target_label: omni_component
+        replacement: logging
+      - target_label: omni_layer
+        replacement: enhanced
+
+  # ═══════════════════════════════════════════════════════════════
+  # BUSINESS LAYER — Financial Services — 60s interval (standard)
+  # ═══════════════════════════════════════════════════════════════
+
+  - job_name: token-infinity
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["omni-token-infinity:8186"]
+        labels:
+          instance_role: token-accounting
+    relabel_configs:
+      - target_label: omni_service
+        replacement: token-infinity
+      - target_label: omni_tier
+        replacement: critical
+      - target_label: omni_component
+        replacement: financial
+      - target_label: omni_layer
+        replacement: business
+
+  - job_name: budget-guardian
+    scrape_interval: 60s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["omni-budget-guardian:8187"]
+        labels:
+          instance_role: budget-enforcement
+    relabel_configs:
+      - target_label: omni_service
+        replacement: budget-guardian
+      - target_label: omni_tier
+        replacement: standard
+      - target_label: omni_component
+        replacement: financial
+      - target_label: omni_layer
+        replacement: business
+
+  - job_name: revenue-tracker
+    scrape_interval: 60s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["omni-revenue-tracker:8188"]
+        labels:
+          instance_role: revenue-analysis
+    relabel_configs:
+      - target_label: omni_service
+        replacement: revenue-tracker
+      - target_label: omni_tier
+        replacement: standard
+      - target_label: omni_component
+        replacement: financial
+      - target_label: omni_layer
+        replacement: business
+
+  - job_name: crater-invoicing
+    scrape_interval: 60s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["omni-crater:8080"]
+        labels:
+          instance_role: invoicing
+    relabel_configs:
+      - target_label: omni_service
+        replacement: crater
+      - target_label: omni_tier
+        replacement: standard
+      - target_label: omni_component
+        replacement: invoicing
+      - target_label: omni_layer
+        replacement: business
+
+  - job_name: twenty-crm
+    scrape_interval: 60s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["omni-twenty:3000"]
+        labels:
+          instance_role: crm
+    relabel_configs:
+      - target_label: omni_service
+        replacement: twenty-crm
+      - target_label: omni_tier
+        replacement: standard
+      - target_label: omni_component
+        replacement: crm
+      - target_label: omni_layer
+        replacement: business
+
+  - job_name: superset
+    scrape_interval: 60s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["omni-superset:8088"]
+        labels:
+          instance_role: analytics
+    relabel_configs:
+      - target_label: omni_service
+        replacement: superset
+      - target_label: omni_tier
+        replacement: standard
+      - target_label: omni_component
+        replacement: analytics
+      - target_label: omni_layer
+        replacement: business
+
+  # ═══════════════════════════════════════════════════════════════
+  # COMMUNICATION LAYER — 60s interval (standard tier)
+  # ═══════════════════════════════════════════════════════════════
+
+  - job_name: mattermost
+    scrape_interval: 60s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["omni-mattermost:8065"]
+        labels:
+          instance_role: team-messaging
+    relabel_configs:
+      - target_label: omni_service
+        replacement: mattermost
+      - target_label: omni_tier
+        replacement: standard
+      - target_label: omni_component
+        replacement: communication
+      - target_label: omni_layer
+        replacement: communication
+
+  - job_name: n8n
+    scrape_interval: 60s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["omni-n8n:5678"]
+        labels:
+          instance_role: workflow-automation
+    relabel_configs:
+      - target_label: omni_service
+        replacement: n8n
+      - target_label: omni_tier
+        replacement: standard
+      - target_label: omni_component
+        replacement: automation
+      - target_label: omni_layer
+        replacement: communication
+
+  # ═══════════════════════════════════════════════════════════════
+  # KNOWLEDGE LAYER — 60s interval (standard tier)
+  # ═══════════════════════════════════════════════════════════════
+
+  - job_name: wikijs
+    scrape_interval: 60s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["omni-wikijs:3000"]
+        labels:
+          instance_role: documentation
+    relabel_configs:
+      - target_label: omni_service
+        replacement: wikijs
+      - target_label: omni_tier
+        replacement: standard
+      - target_label: omni_component
+        replacement: knowledge-base
+      - target_label: omni_layer
+        replacement: knowledge
+
+  - job_name: flowise
+    scrape_interval: 60s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["omni-flowise:3000"]
+        labels:
+          instance_role: ai-workflows
+    relabel_configs:
+      - target_label: omni_service
+        replacement: flowise
+      - target_label: omni_tier
+        replacement: standard
+      - target_label: omni_component
+        replacement: ai-workflow
+      - target_label: omni_layer
+        replacement: knowledge
+
+  - job_name: qdrant-knowledge
+    scrape_interval: 60s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["omni-qdrant:6333"]
+        labels:
+          instance_role: knowledge-vectors
+    relabel_configs:
+      - target_label: omni_service
+        replacement: qdrant-knowledge
+      - target_label: omni_tier
+        replacement: standard
+      - target_label: omni_component
+        replacement: vector-knowledge
+      - target_label: omni_layer
+        replacement: knowledge
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: "qdrant_collections_.*"
+        action: keep

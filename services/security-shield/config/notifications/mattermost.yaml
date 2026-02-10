@@ -1,0 +1,91 @@
+# ===========================================================================
+# SYSTEM 25 — SECURITY SHIELD: CrowdSec Mattermost Notifications
+# Omni Quantum Elite AI Coding System — Security & Identity Layer
+#
+# Sends alerts to Mattermost #security-alerts channel when CrowdSec
+# detects and acts on threats.
+# ===========================================================================
+
+type: http
+name: mattermost_security_alerts
+log_level: info
+
+# CrowdSec notification plugin configuration
+format: |
+  {
+    "channel": "security-alerts",
+    "username": "CrowdSec Shield",
+    "icon_url": "https://crowdsec.net/wp-content/uploads/2022/01/crowdsec-logo.png",
+    "attachments": [
+      {{- range $index, $alert := .}}
+      {{- if $index}},{{end}}
+      {
+        "color": "{{if eq $alert.Remediation true}}#FF0000{{else}}#FFA500{{end}}",
+        "title": "CrowdSec Alert: {{$alert.Scenario}}",
+        "title_link": "http://omni-crowdsec:8080",
+        "fields": [
+          {
+            "short": true,
+            "title": "Source IP",
+            "value": "{{$alert.Source.IP}}"
+          },
+          {
+            "short": true,
+            "title": "Country",
+            "value": "{{$alert.Source.Cn}}"
+          },
+          {
+            "short": true,
+            "title": "AS Number",
+            "value": "{{$alert.Source.AsNumber}} ({{$alert.Source.AsName}})"
+          },
+          {
+            "short": true,
+            "title": "Events Count",
+            "value": "{{$alert.Events_count}}"
+          },
+          {
+            "short": true,
+            "title": "Scenario",
+            "value": "{{$alert.Scenario}}"
+          },
+          {
+            "short": true,
+            "title": "Action",
+            "value": "{{if $alert.Remediation}}BANNED{{else}}LOGGED{{end}}"
+          },
+          {
+            "short": true,
+            "title": "Duration",
+            "value": "{{if $alert.Decisions}}{{(index $alert.Decisions 0).Duration}}{{else}}N/A{{end}}"
+          },
+          {
+            "short": true,
+            "title": "Severity",
+            "value": "{{if $alert.Decisions}}{{if ge (len (index $alert.Decisions 0).Duration) 5}}CRITICAL{{else if ge $alert.Events_count 20}}WARNING{{else}}INFO{{end}}{{else}}INFO{{end}}"
+          },
+          {
+            "short": false,
+            "title": "Start Time",
+            "value": "{{$alert.Start_at}}"
+          }
+        ],
+        "footer": "Omni Quantum Security Shield | System 25",
+        "footer_icon": "https://crowdsec.net/wp-content/uploads/2022/01/crowdsec-logo.png"
+      }
+      {{- end}}
+    ]
+  }
+
+url: ${MATTERMOST_WEBHOOK_URL}
+
+method: POST
+
+headers:
+  Content-Type: "application/json"
+
+# Group notifications (avoid spam)
+group_wait: 30s
+group_threshold: 5
+max_retry: 3
+timeout: 10s

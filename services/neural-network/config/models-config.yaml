@@ -1,0 +1,58 @@
+# SYSTEM 8 — NEURAL NETWORK: Model Configuration
+# Omni Quantum Elite AI Coding System
+#
+# Models sorted by priority (1 = highest). Loaded in order until VRAM budget exhausted.
+
+models:
+  - name: devstral-2:123b
+    priority: 1
+    vram_estimate_gb: 70
+    context_length: 128000
+    use_cases: [heavy-reasoning, architecture-review, complex-refactoring]
+    auto_pull: true
+    min_tokens_per_sec: 15
+    tags: [tier-1, critical]
+
+  - name: deepseek-v3.2:latest
+    priority: 2
+    vram_estimate_gb: 40
+    context_length: 128000
+    use_cases: [general-reasoning, code-generation, documentation]
+    auto_pull: true
+    min_tokens_per_sec: 25
+    tags: [tier-1, balanced]
+
+  - name: qwen3-coder:30b
+    priority: 3
+    vram_estimate_gb: 18
+    context_length: 32768
+    use_cases: [fast-code-generation, linting-suggestions, test-generation]
+    auto_pull: true
+    min_tokens_per_sec: 40
+    tags: [tier-2, fast]
+
+  - name: kimi-dev-72b:latest
+    priority: 4
+    vram_estimate_gb: 42
+    context_length: 131072
+    use_cases: [bug-fixing, security-analysis, performance-optimization]
+    auto_pull: true
+    min_tokens_per_sec: 20
+    tags: [tier-1, specialized]
+
+  - name: devstral-small-2:24b
+    priority: 5
+    vram_estimate_gb: 14
+    context_length: 131072
+    use_cases: [lightweight-tasks, simple-edits, commit-messages, documentation]
+    auto_pull: true
+    min_tokens_per_sec: 50
+    tags: [tier-2, lightweight]
+
+gpu_config:
+  vram_reserve_percent: 10
+  auto_unload_idle_minutes: 120
+  max_concurrent_loads: 1
+  health_check_interval_seconds: 30
+  temperature_warning_celsius: 80
+  temperature_critical_celsius: 85

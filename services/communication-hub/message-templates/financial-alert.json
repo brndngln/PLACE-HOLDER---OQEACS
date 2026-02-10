@@ -1,0 +1,41 @@
+{
+  "username": "finbot",
+  "icon_emoji": "💰",
+  "attachments": [
+    {
+      "color": "{{urgency_color}}",
+      "title": "Financial Alert — {{alert_type}}",
+      "title_link": "{{invoice_link}}",
+      "text": "{{summary}}",
+      "fields": [
+        {
+          "short": true,
+          "title": "Client",
+          "value": "{{client_name}}"
+        },
+        {
+          "short": true,
+          "title": "Invoice #",
+          "value": "{{invoice_number}}"
+        },
+        {
+          "short": true,
+          "title": "Amount",
+          "value": "{{currency}} {{amount}}"
+        },
+        {
+          "short": true,
+          "title": "Days Overdue",
+          "value": "{{days_overdue}}"
+        },
+        {
+          "short": false,
+          "title": "Recommended Action",
+          "value": "{{action}}"
+        }
+      ],
+      "footer": "Omni Quantum Finance | Crater",
+      "footer_icon": "https://omni-quantum.internal/icons/finance.png"
+    }
+  ]
+}

@@ -1,0 +1,297 @@
+# ===========================================================================
+# SYSTEM 17 -- AI CODER BETA (SWE-Agent): Docker Compose
+# Omni Quantum Elite AI Coding System -- Bug-Fix & Security Patch Agent
+#
+# Services:
+#   omni-swe-agent-core         -- Core SWE-Agent sandbox orchestrator (8000)
+#   omni-swe-agent-task-handler -- Task lifecycle manager (8001)
+#   omni-swe-agent-issue-intake -- Gitea issue webhook processor (8002)
+#
+# Network: omni-quantum-network (external)
+# ===========================================================================
+
+version: "3.8"
+
+services:
+  # -----------------------------------------------------------------------
+  # SWE-Agent Core -- sandbox orchestrator, LLM-driven code analysis
+  # -----------------------------------------------------------------------
+  omni-swe-agent-core:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: omni-swe-agent-core
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - SERVICE_NAME=swe-agent-core
+      - SERVICE_PORT=8000
+      - SYSTEM_ID=17
+      - LOG_FORMAT=json
+      - LITELLM_BASE_URL=http://omni-litellm:4000/v1
+      - LITELLM_MODEL=kimi-dev-72b
+      - LITELLM_API_KEY=${LITELLM_API_KEY:-from_vault}
+      - TOKEN_INFINITY_URL=http://omni-token-infinity:9600
+      - CODE_SCORER_URL=http://omni-code-scorer:8080
+      - GATE_ENGINE_URL=http://omni-gate-engine:8080
+      - SOURCEGRAPH_URL=http://omni-sourcegraph:7080
+      - GITEA_URL=http://omni-gitea:3000
+      - GITEA_API_TOKEN=${GITEA_API_TOKEN:-}
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
+      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-}
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-http://omni-mattermost-webhook:8066}
+      - QDRANT_URL=http://omni-qdrant:6333
+      - VAULT_ADDR=http://omni-vault:8200
+      - VAULT_TOKEN=${VAULT_TOKEN:-}
+      - VAULT_ROLE_ID=${VAULT_ROLE_ID:-}
+      - VAULT_SECRET_ID=${VAULT_SECRET_ID:-}
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - SANDBOX_TIMEOUT=900
+      - SANDBOX_MEMORY_MB=4096
+      - SANDBOX_NETWORK=omni-quantum-network
+      - CONFIG_PATH=/app/config/swe-agent-config.yaml
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./config/swe-agent-config.yaml:/app/config/swe-agent-config.yaml:ro
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "2.0"
+        reservations:
+          memory: 512M
+          cpus: "0.5"
+    depends_on:
+      omni-litellm:
+        condition: service_started
+      omni-gitea:
+        condition: service_started
+      omni-qdrant:
+        condition: service_started
+      omni-langfuse:
+        condition: service_started
+      omni-code-scorer:
+        condition: service_started
+      omni-gate-engine:
+        condition: service_started
+      omni-token-infinity:
+        condition: service_started
+      omni-sourcegraph:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.system: "17"
+      omni.quantum.component: "swe-agent-core"
+      omni.quantum.service: "ai-coder-beta"
+      omni.quantum.tier: "high"
+      omni.quantum.description: "SWE-Agent core sandbox orchestrator"
+
+  # -----------------------------------------------------------------------
+  # Task Handler -- 9-stage lifecycle manager
+  # -----------------------------------------------------------------------
+  omni-swe-agent-task-handler:
+    build:
+      context: .
+      dockerfile: task-handler/Dockerfile
+    container_name: omni-swe-agent-task-handler
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      - SERVICE_NAME=swe-agent-task-handler
+      - SERVICE_PORT=8001
+      - SYSTEM_ID=17
+      - LOG_FORMAT=json
+      - LITELLM_BASE_URL=http://omni-litellm:4000/v1
+      - LITELLM_MODEL=kimi-dev-72b
+      - LITELLM_API_KEY=${LITELLM_API_KEY:-from_vault}
+      - TOKEN_INFINITY_URL=http://omni-token-infinity:9600
+      - CODE_SCORER_URL=http://omni-code-scorer:8080
+      - GATE_ENGINE_URL=http://omni-gate-engine:8080
+      - SOURCEGRAPH_URL=http://omni-sourcegraph:7080
+      - GITEA_URL=http://omni-gitea:3000
+      - GITEA_API_TOKEN=${GITEA_API_TOKEN:-}
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
+      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-}
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-http://omni-mattermost-webhook:8066}
+      - QDRANT_URL=http://omni-qdrant:6333
+      - VAULT_ADDR=http://omni-vault:8200
+      - VAULT_TOKEN=${VAULT_TOKEN:-}
+      - MAX_CONTEXT_TOKENS=32768
+      - SANDBOX_TIMEOUT=900
+      - SANDBOX_MEMORY_MB=4096
+      - MIN_QUALITY_SCORE=7.0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+        reservations:
+          memory: 128M
+          cpus: "0.25"
+    depends_on:
+      omni-swe-agent-core:
+        condition: service_healthy
+      omni-litellm:
+        condition: service_started
+      omni-gitea:
+        condition: service_started
+      omni-qdrant:
+        condition: service_started
+      omni-langfuse:
+        condition: service_started
+      omni-code-scorer:
+        condition: service_started
+      omni-gate-engine:
+        condition: service_started
+      omni-token-infinity:
+        condition: service_started
+      omni-sourcegraph:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.system: "17"
+      omni.quantum.component: "swe-agent-task-handler"
+      omni.quantum.service: "ai-coder-beta"
+      omni.quantum.tier: "high"
+      omni.quantum.description: "SWE-Agent 9-stage task lifecycle manager"
+
+  # -----------------------------------------------------------------------
+  # Issue Intake -- Gitea webhook processor
+  # -----------------------------------------------------------------------
+  omni-swe-agent-issue-intake:
+    build:
+      context: .
+      dockerfile: issue-intake/Dockerfile
+    container_name: omni-swe-agent-issue-intake
+    restart: unless-stopped
+    ports:
+      - "8002:8002"
+    environment:
+      - SERVICE_NAME=swe-agent-issue-intake
+      - SERVICE_PORT=8002
+      - SYSTEM_ID=17
+      - LOG_FORMAT=json
+      - TASK_HANDLER_URL=http://omni-swe-agent-task-handler:8001
+      - GITEA_URL=http://omni-gitea:3000
+      - GITEA_API_TOKEN=${GITEA_API_TOKEN:-}
+      - GITEA_WEBHOOK_SECRET=${GITEA_WEBHOOK_SECRET:-}
+      - VAULT_ADDR=http://omni-vault:8200
+      - VAULT_TOKEN=${VAULT_TOKEN:-}
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
+        reservations:
+          memory: 64M
+          cpus: "0.1"
+    depends_on:
+      omni-swe-agent-task-handler:
+        condition: service_healthy
+      omni-gitea:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.system: "17"
+      omni.quantum.component: "swe-agent-issue-intake"
+      omni.quantum.service: "ai-coder-beta"
+      omni.quantum.tier: "medium"
+      omni.quantum.description: "Gitea issue webhook processor for SWE-Agent"
+
+# ---------------------------------------------------------------------------
+# External dependencies (defined in other compose files)
+# ---------------------------------------------------------------------------
+  omni-litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: omni-litellm
+    networks:
+      - omni-quantum-network
+    profiles:
+      - external
+
+  omni-gitea:
+    image: gitea/gitea:latest
+    container_name: omni-gitea
+    networks:
+      - omni-quantum-network
+    profiles:
+      - external
+
+  omni-qdrant:
+    image: qdrant/qdrant:latest
+    container_name: omni-qdrant
+    networks:
+      - omni-quantum-network
+    profiles:
+      - external
+
+  omni-langfuse:
+    image: langfuse/langfuse:latest
+    container_name: omni-langfuse
+    networks:
+      - omni-quantum-network
+    profiles:
+      - external
+
+  omni-code-scorer:
+    image: omni-code-scorer:latest
+    container_name: omni-code-scorer
+    networks:
+      - omni-quantum-network
+    profiles:
+      - external
+
+  omni-gate-engine:
+    image: omni-gate-engine:latest
+    container_name: omni-gate-engine
+    networks:
+      - omni-quantum-network
+    profiles:
+      - external
+
+  omni-token-infinity:
+    image: omni-token-infinity:latest
+    container_name: omni-token-infinity
+    networks:
+      - omni-quantum-network
+    profiles:
+      - external
+
+  omni-sourcegraph:
+    image: sourcegraph/server:latest
+    container_name: omni-sourcegraph
+    networks:
+      - omni-quantum-network
+    profiles:
+      - external
+
+networks:
+  omni-quantum-network:
+    external: true

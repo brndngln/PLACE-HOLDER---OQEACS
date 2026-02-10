@@ -1,0 +1,110 @@
+# ===========================================================================
+# SYSTEM 3 -- AI GATEWAY: LiteLLM Proxy Configuration
+# Omni Quantum Elite AI Coding System -- AI Model Routing Layer
+#
+# Routes requests to local Ollama models with Redis caching,
+# Langfuse observability, fallback chains, and budget alerting.
+# ===========================================================================
+
+model_list:
+  # ───────────────────────────────────────────────────────
+  # Devstral 2 123B -- Heavy reasoning & critical tasks
+  # ───────────────────────────────────────────────────────
+  - model_name: devstral-2-123b
+    litellm_params:
+      model: ollama/devstral-2-123b
+      api_base: http://omni-ollama:11434
+      stream: true
+      timeout: 120
+      max_tokens: 8192
+      tags: ["heavy-reasoning", "critical"]
+    model_info:
+      max_input_tokens: 131072
+      max_output_tokens: 8192
+
+  # ───────────────────────────────────────────────────────
+  # DeepSeek V3.2 -- Balanced general-purpose model
+  # ───────────────────────────────────────────────────────
+  - model_name: deepseek-v3.2
+    litellm_params:
+      model: ollama/deepseek-v3.2
+      api_base: http://omni-ollama:11434
+      stream: true
+      timeout: 60
+      max_tokens: 8192
+      tags: ["balanced", "standard"]
+    model_info:
+      max_input_tokens: 131072
+      max_output_tokens: 8192
+
+  # ───────────────────────────────────────────────────────
+  # Qwen3 Coder 30B -- Fast code generation
+  # ───────────────────────────────────────────────────────
+  - model_name: qwen3-coder-30b
+    litellm_params:
+      model: ollama/qwen3-coder-30b
+      api_base: http://omni-ollama:11434
+      stream: true
+      timeout: 30
+      max_tokens: 8192
+      tags: ["code-generation", "fast"]
+    model_info:
+      max_input_tokens: 32768
+      max_output_tokens: 8192
+
+  # ───────────────────────────────────────────────────────
+  # Kimi Dev 72B -- Specialized bug-fixing model
+  # ───────────────────────────────────────────────────────
+  - model_name: kimi-dev-72b
+    litellm_params:
+      model: ollama/kimi-dev-72b
+      api_base: http://omni-ollama:11434
+      stream: true
+      timeout: 60
+      max_tokens: 8192
+      tags: ["bug-fixing", "specialized"]
+    model_info:
+      max_input_tokens: 131072
+      max_output_tokens: 8192
+
+litellm_settings:
+  drop_params: true
+  set_verbose: false
+  cache: true
+  cache_params:
+    type: redis
+    host: omni-redis
+    port: 6379
+    db: 2
+    ttl: 3600
+    namespace: "litellm"
+  num_retries: 3
+  request_timeout: 120
+  fallbacks:
+    - devstral-2-123b: ["deepseek-v3.2", "qwen3-coder-30b"]
+    - kimi-dev-72b: ["deepseek-v3.2"]
+  success_callback: ["langfuse"]
+  failure_callback: ["langfuse"]
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_url: os.environ/DATABASE_URL
+  alerting:
+    - slack
+  alerting_args:
+    slack_webhook_url: os.environ/MATTERMOST_WEBHOOK_URL
+    daily_report_frequency: 86400
+    budget_alerts: true
+    threshold_percentage: 80
+
+environment_variables:
+  LANGFUSE_PUBLIC_KEY: os.environ/LANGFUSE_PUBLIC_KEY
+  LANGFUSE_SECRET_KEY: os.environ/LANGFUSE_SECRET_KEY
+  LANGFUSE_HOST: http://omni-langfuse:3000
+
+router_settings:
+  routing_strategy: usage-based-routing-v2
+  enable_tag_filtering: true
+  redis_host: omni-redis
+  redis_port: 6379
+  redis_db: 2

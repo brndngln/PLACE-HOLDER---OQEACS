@@ -1,0 +1,332 @@
+# ===========================================================================
+# SYSTEM 6 — LOG NEXUS: Promtail Enhanced Configuration
+# Omni Quantum Elite AI Coding System — Observability Layer
+# Scrapes ALL 37+ services via Docker service discovery
+# ===========================================================================
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://omni-loki:3100/loki/api/v1/push
+    batchwait: 1s
+    batchsize: 1048576  # 1MB
+    timeout: 10s
+    backoff_config:
+      min_period: 500ms
+      max_period: 5m
+      max_retries: 10
+    external_labels:
+      cluster: omni-quantum-elite
+      environment: production
+
+# ───────────────────────────────────────────────────────────────────────
+# Scrape Configurations
+# ───────────────────────────────────────────────────────────────────────
+scrape_configs:
+
+  # ─────────────────────────────────────────────────────
+  # Docker Service Discovery — all omni-quantum services
+  # ─────────────────────────────────────────────────────
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+        filters:
+          - name: label
+            values: ["omni_quantum_component"]
+
+    relabel_configs:
+      # Extract container name (strip leading /)
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: 'container'
+
+      # Extract omni component label
+      - source_labels: ['__meta_docker_container_label_omni_quantum_component']
+        target_label: 'omni_component'
+
+      # Extract tier (critical, high, standard, low)
+      - source_labels: ['__meta_docker_container_label_omni_quantum_tier']
+        target_label: 'omni_tier'
+
+      # Extract system number
+      - source_labels: ['__meta_docker_container_label_omni_quantum_system']
+        target_label: 'omni_system'
+
+      # Extract stack group
+      - source_labels: ['__meta_docker_container_label_omni_quantum_stack']
+        target_label: 'omni_stack'
+
+      # Only scrape containers with the omni_quantum_component label
+      - source_labels: ['__meta_docker_container_label_omni_quantum_component']
+        regex: '.+'
+        action: keep
+
+      # Set the log path to Docker json-file driver output
+      - source_labels: ['__meta_docker_container_id']
+        target_label: '__path__'
+        replacement: '/var/lib/docker/containers/$1/$1-json.log'
+
+    pipeline_stages:
+      # Docker json-file driver wraps log lines — extract the actual log
+      - docker: {}
+
+      # ── Stage 1: Parse JSON structured logs (structlog format) ──
+      - json:
+          expressions:
+            level: level
+            message: event
+            timestamp: timestamp
+            trace_id: trace_id
+            span_id: span_id
+            service: service
+            error: error
+            duration: duration
+            request_id: request_id
+            user_id: user_id
+            task_id: task_id
+            model: model
+            tokens_used: tokens_used
+            cost: cost
+
+      # ── Stage 2: Promote extracted fields to labels ──
+      - labels:
+          level:
+          trace_id:
+          service:
+
+      # ── Stage 3: Normalize log levels ──
+      - replace:
+          expression: '(CRITICAL|FATAL)'
+          source: level
+          replace: 'critical'
+      - replace:
+          expression: '(ERROR|ERR)'
+          source: level
+          replace: 'error'
+      - replace:
+          expression: '(WARNING|WARN)'
+          source: level
+          replace: 'warning'
+      - replace:
+          expression: '(INFO)'
+          source: level
+          replace: 'info'
+      - replace:
+          expression: '(DEBUG|TRACE)'
+          source: level
+          replace: 'debug'
+
+      # ── Stage 4: Timestamp extraction ──
+      - timestamp:
+          source: timestamp
+          format: "2006-01-02T15:04:05.000Z"
+          fallback_formats:
+            - "2006-01-02T15:04:05.000000Z"
+            - "2006-01-02T15:04:05Z"
+            - "2006-01-02 15:04:05"
+            - "2006-01-02T15:04:05.000+00:00"
+            - RFC3339
+            - RFC3339Nano
+          action_on_failure: fudge
+
+      # ── Stage 5: Detect and tag multiline stack traces ──
+      - multiline:
+          firstline: '^\{'
+          max_wait_time: 3s
+          max_lines: 128
+
+      # ── Stage 6: Metrics from logs ──
+      - metrics:
+          log_lines_total:
+            type: Counter
+            description: "Total log lines by container and level"
+            prefix: promtail_custom_
+            source: level
+            config:
+              action: inc
+              match_all: true
+          log_errors_total:
+            type: Counter
+            description: "Total error log lines by container"
+            prefix: promtail_custom_
+            source: level
+            config:
+              action: inc
+              value: error
+          log_duration_seconds:
+            type: Histogram
+            description: "Request duration extracted from logs"
+            prefix: promtail_custom_
+            source: duration
+            config:
+              buckets: [0.01, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30, 60]
+
+      # ── Stage 7: Output the message field as the log line ──
+      - output:
+          source: message
+
+  # ─────────────────────────────────────────────────────
+  # Traefik Access Logs (mounted volume)
+  # ─────────────────────────────────────────────────────
+  - job_name: traefik-access
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: traefik-access
+          omni_component: traefik
+          omni_tier: critical
+          omni_system: "34"
+          __path__: /var/log/traefik/access.log
+
+    pipeline_stages:
+      - json:
+          expressions:
+            status: OriginStatus
+            method: RequestMethod
+            path: RequestPath
+            duration: Duration
+            client_ip: ClientAddr
+            service_name: ServiceName
+            router: RouterName
+            entry_point: entryPointName
+            request_host: RequestHost
+            bytes_sent: DownstreamContentSize
+            tls_version: TLSVersion
+
+      - labels:
+          status:
+          method:
+          service_name:
+
+      - template:
+          source: level
+          template: >-
+            {{ if ge (atoi .status) 500 }}error{{ else if ge (atoi .status) 400 }}warning{{ else }}info{{ end }}
+
+      - labels:
+          level:
+
+      # Track HTTP status codes as metrics
+      - metrics:
+          http_requests_total:
+            type: Counter
+            description: "HTTP requests by status code and method"
+            prefix: promtail_traefik_
+            source: status
+            config:
+              action: inc
+              match_all: true
+          http_request_duration_seconds:
+            type: Histogram
+            description: "HTTP request duration from Traefik"
+            prefix: promtail_traefik_
+            source: duration
+            config:
+              buckets: [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10]
+
+      - output:
+          source: path
+
+  # ─────────────────────────────────────────────────────
+  # Traefik Application Logs
+  # ─────────────────────────────────────────────────────
+  - job_name: traefik-app
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: traefik-app
+          omni_component: traefik
+          omni_tier: critical
+          omni_system: "34"
+          __path__: /var/log/traefik/traefik.log
+
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            message: msg
+            timestamp: time
+
+      - labels:
+          level:
+
+      - timestamp:
+          source: timestamp
+          format: RFC3339
+
+      - output:
+          source: message
+
+  # ─────────────────────────────────────────────────────
+  # PostgreSQL Logs
+  # ─────────────────────────────────────────────────────
+  - job_name: postgres
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: postgres
+          omni_component: postgres
+          omni_tier: critical
+          omni_system: "1"
+          __path__: /var/log/postgresql/*.log
+
+    pipeline_stages:
+      - regex:
+          expression: '^(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+ \w+) \[(?P<pid>\d+)\] (?P<level>\w+):  (?P<message>.*)'
+
+      - labels:
+          level:
+
+      - timestamp:
+          source: timestamp
+          format: "2006-01-02 15:04:05.000 MST"
+          action_on_failure: fudge
+
+      - output:
+          source: message
+
+  # ─────────────────────────────────────────────────────
+  # Vault Audit Logs
+  # ─────────────────────────────────────────────────────
+  - job_name: vault-audit
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: vault-audit
+          omni_component: vault
+          omni_tier: critical
+          omni_system: "4"
+          __path__: /var/log/vault/audit.log
+
+    pipeline_stages:
+      - json:
+          expressions:
+            type: type
+            auth_accessor: auth.accessor
+            auth_entity_id: auth.entity_id
+            request_operation: request.operation
+            request_path: request.path
+            response_status: response.data.http_status_code
+            timestamp: time
+
+      - labels:
+          type:
+          request_operation:
+
+      - timestamp:
+          source: timestamp
+          format: RFC3339Nano
+          action_on_failure: fudge
+
+      - output:
+          source: request_path

@@ -1,0 +1,46 @@
+{
+  "username": "cicdbot",
+  "icon_emoji": "🔨",
+  "attachments": [
+    {
+      "color": "{{status_color}}",
+      "title": "Build {{status}} — {{repo}}",
+      "title_link": "{{ci_link}}",
+      "text": "{{commit_message}}",
+      "fields": [
+        {
+          "short": true,
+          "title": "Repository",
+          "value": "{{repo}}"
+        },
+        {
+          "short": true,
+          "title": "Branch",
+          "value": "`{{branch}}`"
+        },
+        {
+          "short": true,
+          "title": "Author",
+          "value": "{{author}}"
+        },
+        {
+          "short": true,
+          "title": "Duration",
+          "value": "{{duration}}"
+        },
+        {
+          "short": true,
+          "title": "Pipeline Stage",
+          "value": "{{pipeline_stage}}"
+        },
+        {
+          "short": true,
+          "title": "Status",
+          "value": "{{status}}"
+        }
+      ],
+      "footer": "Omni Quantum CI/CD | Woodpecker",
+      "footer_icon": "https://omni-quantum.internal/icons/build.png"
+    }
+  ]
+}

@@ -1,0 +1,297 @@
+{
+  "name": "Git Push Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "gitea-push",
+        "responseMode": "onReceived",
+        "responseData": "allEntries"
+      },
+      "id": "trigger-gitea-push",
+      "name": "Gitea Push Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [240, 300],
+      "webhookId": "gitea-push-pipeline"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst repo = body.repository?.full_name || body.repo?.full_name || 'unknown';\nconst branch = (body.ref || '').replace('refs/heads/', '');\nconst commits = body.commits || [];\nconst commitMessage = commits.length > 0 ? commits[commits.length - 1].message : '';\nconst author = body.pusher?.login || body.pusher?.name || 'unknown';\nconst changedFiles = [];\nfor (const c of commits) {\n  changedFiles.push(...(c.added || []), ...(c.modified || []), ...(c.removed || []));\n}\nconst skipCI = commitMessage.toLowerCase().includes('[skip ci]');\nconst isMain = branch === 'main' || branch.startsWith('release/');\nconst isFeature = branch.startsWith('feature/') || branch.startsWith('fix/');\n\nreturn [{\n  json: {\n    repo,\n    branch,\n    commitMessage,\n    author,\n    changedFiles: [...new Set(changedFiles)],\n    skipCI,\n    isMain,\n    isFeature,\n    commitCount: commits.length,\n    compareUrl: body.compare_url || ''\n  }\n}];"
+      },
+      "id": "parse-payload",
+      "name": "Parse Push Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.skipCI }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "check-skip-ci",
+      "name": "Skip CI?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-webhook-router:8066/webhook/woodpecker",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "pipeline",
+              "value": "={{ JSON.stringify({ status: 'skipped', branch: $json.branch, message: $json.commitMessage, author: $json.author, event: 'push' }) }}"
+            },
+            {
+              "name": "repo",
+              "value": "={{ JSON.stringify({ full_name: $json.repo }) }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "post-skip-info",
+      "name": "Post Skip CI Info",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [900, 160]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.isMain }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "check-main-branch",
+      "name": "Main/Release Branch?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [900, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-woodpecker-server:8000/api/repos/{{ $json.repo }}/pipelines",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "branch",
+              "value": "={{ $json.branch }}"
+            },
+            {
+              "name": "event",
+              "value": "push"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "trigger-full-pipeline",
+      "name": "Trigger Full Pipeline",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1140, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-webhook-router:8066/webhook/woodpecker",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ pipeline: { status: 'running', branch: $('Parse Push Payload').first().json.branch, message: $('Parse Push Payload').first().json.commitMessage, author: $('Parse Push Payload').first().json.author, event: 'push', link: '' }, repo: { full_name: $('Parse Push Payload').first().json.repo } }) }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "post-build-started",
+      "name": "Post Build Started",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1360, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $('Parse Push Payload').first().json.isFeature }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "check-feature-branch",
+      "name": "Feature/Fix Branch?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1140, 540]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-gitea:3000/api/v1/repos/{{ $('Parse Push Payload').first().json.repo }}/pulls",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ title: 'Draft: ' + $('Parse Push Payload').first().json.commitMessage.split('\\n')[0], head: $('Parse Push Payload').first().json.branch, base: 'main', body: 'Auto-created draft PR for branch ' + $('Parse Push Payload').first().json.branch }) }}",
+        "options": {
+          "timeout": 10000,
+          "ignore_ssl_issues": false
+        }
+      },
+      "id": "create-draft-pr",
+      "name": "Create Draft PR",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1360, 540],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-woodpecker-server:8000/api/repos/{{ $('Parse Push Payload').first().json.repo }}/pipelines",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "branch",
+              "value": "={{ $('Parse Push Payload').first().json.branch }}"
+            },
+            {
+              "name": "event",
+              "value": "lint"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "trigger-lint-pipeline",
+      "name": "Trigger Lint-Only Pipeline",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1580, 540]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-webhook-router:8066/webhook/prometheus",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ alerts: [{ labels: { alertname: 'GitPushPipelineFailure', severity: 'warning', service: 'workflow-engine' }, annotations: { summary: 'Git push pipeline failed for ' + $('Parse Push Payload').first().json.repo + ' on branch ' + $('Parse Push Payload').first().json.branch }, startsAt: new Date().toISOString() }] }) }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "alert-on-failure",
+      "name": "Alert on Failure",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1580, 160]
+    },
+    {
+      "parameters": {},
+      "id": "noop-end",
+      "name": "End",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1800, 400]
+    }
+  ],
+  "connections": {
+    "Gitea Push Webhook": {
+      "main": [
+        [{ "node": "Parse Push Payload", "type": "main", "index": 0 }]
+      ]
+    },
+    "Parse Push Payload": {
+      "main": [
+        [{ "node": "Skip CI?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Skip CI?": {
+      "main": [
+        [{ "node": "Post Skip CI Info", "type": "main", "index": 0 }],
+        [{ "node": "Main/Release Branch?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Post Skip CI Info": {
+      "main": [
+        [{ "node": "End", "type": "main", "index": 0 }]
+      ]
+    },
+    "Main/Release Branch?": {
+      "main": [
+        [{ "node": "Trigger Full Pipeline", "type": "main", "index": 0 }],
+        [{ "node": "Feature/Fix Branch?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Trigger Full Pipeline": {
+      "main": [
+        [{ "node": "Post Build Started", "type": "main", "index": 0 }]
+      ]
+    },
+    "Post Build Started": {
+      "main": [
+        [{ "node": "End", "type": "main", "index": 0 }]
+      ]
+    },
+    "Feature/Fix Branch?": {
+      "main": [
+        [{ "node": "Create Draft PR", "type": "main", "index": 0 }],
+        [{ "node": "End", "type": "main", "index": 0 }]
+      ]
+    },
+    "Create Draft PR": {
+      "main": [
+        [{ "node": "Trigger Lint-Only Pipeline", "type": "main", "index": 0 }]
+      ]
+    },
+    "Trigger Lint-Only Pipeline": {
+      "main": [
+        [{ "node": "End", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": [
+    { "name": "ci-cd" },
+    { "name": "git" },
+    { "name": "system-9" }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

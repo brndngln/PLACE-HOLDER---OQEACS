@@ -1,0 +1,40 @@
+# ===========================================================================
+# CrowdSec Scenario: API Endpoint Abuse
+# Omni Quantum — Security Shield
+#
+# Detects excessive API calls from a single source, indicative of
+# scraping, brute-force token generation, or DoS attempts.
+# Threshold: 500 requests to /api/* in 1 minute → ban 1 hour
+# ===========================================================================
+
+type: leaky
+name: omni-quantum/api-abuse
+description: "Detect excessive API endpoint abuse (scraping, brute-force, DoS)"
+filter: >-
+  evt.Meta.http_path startsWith '/api/' ||
+  evt.Meta.http_path startsWith '/api/v1/' ||
+  evt.Meta.http_path startsWith '/api/v2/' ||
+  evt.Meta.http_path startsWith '/api/v3/' ||
+  evt.Meta.http_path startsWith '/api/v4/' ||
+  evt.Meta.http_path startsWith '/rest/' ||
+  evt.Meta.http_path startsWith '/graphql'
+groupby: evt.Meta.source_ip
+capacity: 500
+leakspeed: 120ms
+blackhole: 5m
+reprocess: false
+labels:
+  service: "http"
+  type: "abuse"
+  confidence: 2
+  spoofable: 0
+  classification:
+    - "attack.T1498"
+    - "attack.T1499"
+  label: "API endpoint abuse"
+  behavior: "http:exploit"
+  remediation: true
+duration: 1h
+scope:
+  type: ip
+  expression: evt.Meta.source_ip

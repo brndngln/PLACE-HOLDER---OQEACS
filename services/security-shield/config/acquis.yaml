@@ -1,0 +1,106 @@
+# ===========================================================================
+# SYSTEM 25 — SECURITY SHIELD: CrowdSec Acquisition Configuration
+# Omni Quantum Elite AI Coding System — Security & Identity Layer
+#
+# Defines all log sources CrowdSec monitors for threat detection.
+# ===========================================================================
+
+# ─────────────────────────────────────────────────────
+# Traefik Access Logs (primary HTTP traffic source)
+# All external HTTP/HTTPS requests pass through Traefik,
+# making this the single most important log source.
+# ─────────────────────────────────────────────────────
+- source: file
+  filenames:
+    - /var/log/traefik/access.log
+  labels:
+    type: traefik
+  poll_without_inotify: false
+
+# ─────────────────────────────────────────────────────
+# Authentik Logs (authentication events)
+# Captures login attempts, failed auths, MFA events,
+# and OAuth token issuance.
+# ─────────────────────────────────────────────────────
+- source: docker
+  container_name:
+    - omni-authentik
+  labels:
+    type: authentik
+  docker_host: unix:///var/run/docker.sock
+
+# ─────────────────────────────────────────────────────
+# Authentik Worker Logs
+# Background task failures, LDAP sync issues, etc.
+# ─────────────────────────────────────────────────────
+- source: docker
+  container_name:
+    - omni-authentik-worker
+  labels:
+    type: authentik
+  docker_host: unix:///var/run/docker.sock
+
+# ─────────────────────────────────────────────────────
+# Gitea Logs (code repository)
+# Git push/pull, API access, webhook events, auth.
+# ─────────────────────────────────────────────────────
+- source: docker
+  container_name:
+    - omni-gitea
+  labels:
+    type: gitea
+  docker_host: unix:///var/run/docker.sock
+
+# ─────────────────────────────────────────────────────
+# Vault Logs (secret management)
+# Auth attempts, secret reads, policy violations.
+# ─────────────────────────────────────────────────────
+- source: docker
+  container_name:
+    - omni-vault
+  labels:
+    type: syslog
+  docker_host: unix:///var/run/docker.sock
+
+# ─────────────────────────────────────────────────────
+# SSH Auth Logs (if host SSH is exposed)
+# Brute force, key-based auth failures.
+# ─────────────────────────────────────────────────────
+- source: file
+  filenames:
+    - /var/log/host/auth.log
+    - /var/log/host/secure
+  labels:
+    type: syslog
+  poll_without_inotify: true
+
+# ─────────────────────────────────────────────────────
+# System Syslog (kernel, systemd events)
+# ─────────────────────────────────────────────────────
+- source: file
+  filenames:
+    - /var/log/host/syslog
+    - /var/log/host/messages
+  labels:
+    type: syslog
+  poll_without_inotify: true
+
+# ─────────────────────────────────────────────────────
+# Grafana Logs (dashboard access)
+# ─────────────────────────────────────────────────────
+- source: docker
+  container_name:
+    - omni-grafana
+  labels:
+    type: grafana
+  docker_host: unix:///var/run/docker.sock
+
+# ─────────────────────────────────────────────────────
+# Portainer Logs (container management UI)
+# ─────────────────────────────────────────────────────
+- source: docker
+  container_name:
+    - omni-portainer
+  labels:
+    type: portainer
+  docker_host: unix:///var/run/docker.sock

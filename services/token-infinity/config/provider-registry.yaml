@@ -1,0 +1,316 @@
+# ===========================================================================
+# System 27 -- Token Infinity: Provider Registry
+# Omni Quantum Elite AI Coding System
+#
+# Complete registry of all LLM providers available for routing.
+# Providers are organised into tiers:
+#   - LOCAL (Tier 1):      On-premise Ollama models, zero cost, lowest latency
+#   - HIGH_SPEED (Tier 2): Cloud inference APIs with fast response times
+#   - AGGREGATOR (Tier 3): Multi-provider routing services
+#   - COMMUNITY (Tier 4):  Free/community-tier API services
+#
+# Priority determines selection order within tiers (lower = preferred).
+# Health scoring and failover logic are handled by the provider-router service.
+# ===========================================================================
+
+providers:
+  # ─────────────────────────────────────────────────────────────────────────
+  # TIER 1: LOCAL -- Ollama (self-hosted, GPU-accelerated)
+  # Zero cost, lowest latency, full data privacy.
+  # Model selection is dynamic based on loaded models from the manager.
+  # ─────────────────────────────────────────────────────────────────────────
+  - name: local-ollama
+    tier: LOCAL
+    priority: 1
+    endpoint: http://omni-ollama:11434
+    manager_url: http://omni-model-manager:11435
+    cost_per_1k_tokens: 0.0
+    max_context: 131072
+    rate_limit: 0  # No rate limit for local
+    enabled: true
+    models:
+      - devstral-2
+      - devstral-small
+      - deepseek-v3.2
+      - deepseek
+      - qwen3-coder
+    health_check:
+      endpoint: /api/tags
+      interval_seconds: 30
+      timeout_seconds: 5
+    metadata:
+      description: "Self-hosted Ollama instance with GPU acceleration"
+      data_privacy: "full"
+      gpu_required: true
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # TIER 2: HIGH_SPEED -- Cloud inference with fast response times
+  # ─────────────────────────────────────────────────────────────────────────
+  - name: groq
+    tier: HIGH_SPEED
+    priority: 2
+    endpoint: https://api.groq.com/openai/v1
+    vault_path: secret/data/omni-quantum/providers/groq
+    cost_per_1k_tokens: 0.0001
+    max_context: 131072
+    rate_limit: 30
+    enabled: true
+    models:
+      - llama-3.3-70b-versatile
+      - llama-3.1-8b-instant
+      - mixtral-8x7b-32768
+    health_check:
+      endpoint: /openai/v1/models
+      interval_seconds: 60
+      timeout_seconds: 10
+    metadata:
+      description: "Groq LPU inference engine -- ultra-low latency"
+      speciality: "fastest inference for supported models"
+      supports_streaming: true
+      supports_function_calling: true
+
+  - name: cerebras
+    tier: HIGH_SPEED
+    priority: 2
+    endpoint: https://api.cerebras.ai/v1
+    vault_path: secret/data/omni-quantum/providers/cerebras
+    cost_per_1k_tokens: 0.0001
+    max_context: 131072
+    rate_limit: 30
+    enabled: true
+    models:
+      - llama-3.3-70b
+      - llama-3.1-8b
+    health_check:
+      endpoint: /v1/models
+      interval_seconds: 60
+      timeout_seconds: 10
+    metadata:
+      description: "Cerebras wafer-scale inference -- high throughput"
+      speciality: "large batch inference with consistent latency"
+      supports_streaming: true
+      supports_function_calling: true
+
+  - name: sambanova
+    tier: HIGH_SPEED
+    priority: 2
+    endpoint: https://api.sambanova.ai/v1
+    vault_path: secret/data/omni-quantum/providers/sambanova
+    cost_per_1k_tokens: 0.00015
+    max_context: 131072
+    rate_limit: 20
+    enabled: true
+    models:
+      - Meta-Llama-3.3-70B-Instruct
+      - Meta-Llama-3.1-8B-Instruct
+      - DeepSeek-V3-0324
+    health_check:
+      endpoint: /v1/models
+      interval_seconds: 60
+      timeout_seconds: 10
+    metadata:
+      description: "SambaNova RDU-based inference -- optimised for large models"
+      speciality: "efficient large model serving"
+      supports_streaming: true
+      supports_function_calling: true
+
+  - name: together
+    tier: HIGH_SPEED
+    priority: 2
+    endpoint: https://api.together.xyz/v1
+    vault_path: secret/data/omni-quantum/providers/together
+    cost_per_1k_tokens: 0.0002
+    max_context: 131072
+    rate_limit: 60
+    enabled: true
+    models:
+      - meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo
+      - meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo
+      - deepseek-ai/DeepSeek-V3
+      - Qwen/Qwen2.5-Coder-32B-Instruct
+    health_check:
+      endpoint: /v1/models
+      interval_seconds: 60
+      timeout_seconds: 10
+    metadata:
+      description: "Together AI -- broad model catalogue with competitive pricing"
+      speciality: "wide model selection and fine-tuning support"
+      supports_streaming: true
+      supports_function_calling: true
+
+  - name: fireworks
+    tier: HIGH_SPEED
+    priority: 2
+    endpoint: https://api.fireworks.ai/inference/v1
+    vault_path: secret/data/omni-quantum/providers/fireworks
+    cost_per_1k_tokens: 0.0002
+    max_context: 131072
+    rate_limit: 60
+    enabled: true
+    models:
+      - accounts/fireworks/models/llama-v3p3-70b-instruct
+      - accounts/fireworks/models/llama-v3p1-8b-instruct
+      - accounts/fireworks/models/deepseek-v3
+      - accounts/fireworks/models/qwen2p5-coder-32b-instruct
+    health_check:
+      endpoint: /inference/v1/models
+      interval_seconds: 60
+      timeout_seconds: 10
+    metadata:
+      description: "Fireworks AI -- optimised inference with FireAttention"
+      speciality: "low latency with custom model optimisations"
+      supports_streaming: true
+      supports_function_calling: true
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # TIER 3: AGGREGATOR -- Multi-provider routing services
+  # ─────────────────────────────────────────────────────────────────────────
+  - name: openrouter
+    tier: AGGREGATOR
+    priority: 3
+    endpoint: https://openrouter.ai/api/v1
+    vault_path: secret/data/omni-quantum/providers/openrouter
+    cost_per_1k_tokens: 0.0003
+    max_context: 200000
+    rate_limit: 200
+    enabled: true
+    models:
+      - meta-llama/llama-3.3-70b-instruct
+      - meta-llama/llama-3.1-8b-instruct
+      - deepseek/deepseek-chat-v3-0324
+      - qwen/qwen-2.5-coder-32b-instruct
+      - mistralai/devstral-small-2505
+      - google/gemini-2.0-flash-exp:free
+    health_check:
+      endpoint: /api/v1/models
+      interval_seconds: 60
+      timeout_seconds: 10
+    metadata:
+      description: "OpenRouter -- aggregator with access to 200+ models"
+      speciality: "maximum model variety and automatic fallback"
+      supports_streaming: true
+      supports_function_calling: true
+
+  - name: aiml-api
+    tier: AGGREGATOR
+    priority: 3
+    endpoint: https://api.aimlapi.com/v1
+    vault_path: secret/data/omni-quantum/providers/aiml-api
+    cost_per_1k_tokens: 0.0003
+    max_context: 131072
+    rate_limit: 100
+    enabled: true
+    models:
+      - meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo
+      - meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo
+      - deepseek/deepseek-chat
+      - Qwen/Qwen2.5-Coder-32B-Instruct
+    health_check:
+      endpoint: /v1/models
+      interval_seconds: 60
+      timeout_seconds: 10
+    metadata:
+      description: "AI/ML API -- unified access to multiple inference providers"
+      speciality: "cost-effective aggregation with pay-per-use pricing"
+      supports_streaming: true
+      supports_function_calling: true
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # TIER 4: COMMUNITY -- Free/community-tier services
+  # ─────────────────────────────────────────────────────────────────────────
+  - name: huggingface
+    tier: COMMUNITY
+    priority: 4
+    endpoint: https://api-inference.huggingface.co/models
+    vault_path: secret/data/omni-quantum/providers/huggingface
+    cost_per_1k_tokens: 0.0
+    max_context: 32768
+    rate_limit: 10
+    enabled: true
+    models:
+      - meta-llama/Meta-Llama-3.1-8B-Instruct
+      - bigcode/starcoder2-15b
+      - Qwen/Qwen2.5-Coder-7B-Instruct
+    health_check:
+      endpoint: /api/models
+      interval_seconds: 120
+      timeout_seconds: 15
+    metadata:
+      description: "HuggingFace Inference API -- community tier"
+      speciality: "free access to open-source models with rate limits"
+      supports_streaming: true
+      supports_function_calling: false
+      note: "Rate limits are strict; use as last-resort fallback"
+
+  - name: google-ai-studio
+    tier: COMMUNITY
+    priority: 4
+    endpoint: https://generativelanguage.googleapis.com/v1beta
+    vault_path: secret/data/omni-quantum/providers/google-ai-studio
+    cost_per_1k_tokens: 0.0
+    max_context: 1048576
+    rate_limit: 15
+    enabled: true
+    models:
+      - gemini-2.0-flash
+      - gemini-1.5-flash
+      - gemini-1.5-pro
+    health_check:
+      endpoint: /v1beta/models
+      interval_seconds: 120
+      timeout_seconds: 15
+    metadata:
+      description: "Google AI Studio -- free tier with Gemini models"
+      speciality: "massive context window (1M tokens) for large codebases"
+      supports_streaming: true
+      supports_function_calling: true
+      note: "Free tier has daily quota limits"
+
+# ===========================================================================
+# Global routing configuration
+# ===========================================================================
+routing:
+  # Health scoring weights
+  health_weights:
+    success_rate: 0.4
+    latency_score: 0.3
+    availability: 0.2
+    cost_score: 0.1
+
+  # Provider is temporarily removed from routing if score drops below this
+  unhealthy_threshold: 0.3
+
+  # Maximum failover attempts across different providers
+  max_failover_attempts: 3
+
+  # Health check interval in seconds
+  health_check_interval_seconds: 60
+
+  # Failover triggers
+  failover_on:
+    - status_5xx
+    - timeout
+    - connection_error
+    - rate_limit_exceeded
+
+  # Model selection by complexity for local tier
+  local_model_selection:
+    critical:
+      - devstral-2
+      - deepseek-v3.2
+    high:
+      - devstral-2
+      - deepseek-v3.2
+    medium:
+      - qwen3-coder
+      - deepseek
+    low:
+      - devstral-small
+      - qwen3-coder
+
+  # Tier-level estimated latencies (ms)
+  tier_latency_estimates:
+    LOCAL: 500
+    HIGH_SPEED: 1000
+    AGGREGATOR: 2000
+    COMMUNITY: 5000

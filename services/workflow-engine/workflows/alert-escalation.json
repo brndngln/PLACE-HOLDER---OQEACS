@@ -1,0 +1,337 @@
+{
+  "name": "Alert Escalation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "alertmanager",
+        "responseMode": "onReceived",
+        "responseData": "allEntries"
+      },
+      "id": "trigger-alertmanager",
+      "name": "Alertmanager Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [240, 300],
+      "webhookId": "alert-escalation"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst alerts = body.alerts || [body];\nconst results = [];\nfor (const alert of alerts) {\n  const severity = (alert.labels?.severity || 'info').toLowerCase();\n  const alertname = alert.labels?.alertname || 'Unknown Alert';\n  const service = alert.labels?.service || alert.labels?.job || 'unknown';\n  const summary = alert.annotations?.summary || alert.annotations?.description || alertname;\n  const status = alert.status || 'firing';\n  const startsAt = alert.startsAt || new Date().toISOString();\n  const generatorURL = alert.generatorURL || '';\n  results.push({\n    json: {\n      severity,\n      alertname,\n      service,\n      summary,\n      status,\n      startsAt,\n      generatorURL,\n      isCritical: severity === 'critical',\n      isWarning: severity === 'warning',\n      isResolved: status === 'resolved'\n    }\n  });\n}\nreturn results;"
+      },
+      "id": "parse-alerts",
+      "name": "Parse Alerts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.isResolved }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "check-resolved",
+      "name": "Is Resolved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-webhook-router:8066/webhook/prometheus",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ alerts: [{ labels: { alertname: $json.alertname, severity: 'resolved', service: $json.service }, annotations: { summary: 'RESOLVED: ' + $json.summary }, status: 'resolved', startsAt: $json.startsAt }] }) }}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "post-resolution",
+      "name": "Post Resolution",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [900, 160]
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "http://omni-plane-web:3000/api/v1/workspaces/omni-quantum/projects/{{ $env.PLANE_PROJECT_ID }}/issues/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": { "timeout": 10000 }
+      },
+      "id": "close-plane-ticket",
+      "name": "Close Plane Ticket",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1120, 160],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.isCritical }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "check-critical",
+      "name": "Is Critical?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [900, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-webhook-router:8066/webhook/prometheus",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ alerts: [{ labels: { alertname: $json.alertname, severity: 'critical', service: $json.service }, annotations: { summary: $json.summary, runbook_url: $json.generatorURL }, startsAt: $json.startsAt, generatorURL: $json.generatorURL }] }) }}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "post-critical-alert",
+      "name": "Post Critical @channel",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1140, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-omi-bridge:9700/api/haptic",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ pattern: 'critical', message: 'CRITICAL: ' + $json.alertname + ' - ' + $json.service }) }}",
+        "options": { "timeout": 5000 }
+      },
+      "id": "omi-haptic-critical",
+      "name": "Omi Haptic (Critical)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1360, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-plane-web:3000/api/v1/workspaces/omni-quantum/projects/{{ $env.PLANE_PROJECT_ID }}/issues/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ name: 'INCIDENT: ' + $json.alertname + ' (' + $json.service + ')', description_html: '<p><strong>Severity:</strong> CRITICAL</p><p><strong>Service:</strong> ' + $json.service + '</p><p><strong>Summary:</strong> ' + $json.summary + '</p><p><strong>Started:</strong> ' + $json.startsAt + '</p>', priority: 0, state: 'triage' }) }}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "create-incident-ticket",
+      "name": "Create Plane Incident",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1580, 300]
+    },
+    {
+      "parameters": {
+        "amount": 15,
+        "unit": "minutes"
+      },
+      "id": "wait-15min",
+      "name": "Wait 15min",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1800, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://omni-prometheus:9093/api/v2/alerts",
+        "options": { "timeout": 10000 }
+      },
+      "id": "check-still-firing",
+      "name": "Check Still Firing",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [2020, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const alerts = $input.first().json || [];\nconst originalAlert = $('Parse Alerts').first().json.alertname;\nconst stillFiring = Array.isArray(alerts) && alerts.some(\n  a => a.labels?.alertname === originalAlert && a.status?.state === 'active'\n);\nreturn [{ json: { stillFiring, originalAlert } }];"
+      },
+      "id": "evaluate-escalation",
+      "name": "Still Unresolved?",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2240, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.stillFiring }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "check-escalate",
+      "name": "Escalate?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [2460, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-webhook-router:8066/webhook/prometheus",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ alerts: [{ labels: { alertname: 'ESCALATION: ' + $json.originalAlert, severity: 'critical', service: 'escalation-engine' }, annotations: { summary: 'UNRESOLVED after 15min — ' + $json.originalAlert + ' requires immediate attention' }, startsAt: new Date().toISOString() }] }) }}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "re-escalate",
+      "name": "Re-Escalate Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [2680, 240]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-webhook-router:8066/webhook/prometheus",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ alerts: [{ labels: { alertname: $json.alertname, severity: 'warning', service: $json.service }, annotations: { summary: $json.summary }, startsAt: $json.startsAt }] }) }}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "post-warning-alert",
+      "name": "Post Warning Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1140, 500]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-omi-bridge:9700/api/haptic",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ pattern: 'warning', message: 'Warning: ' + $json.alertname }) }}",
+        "options": { "timeout": 5000 }
+      },
+      "id": "omi-haptic-warning",
+      "name": "Omi Haptic (Warning)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1360, 500]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-webhook-router:8066/webhook/prometheus",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ alerts: [{ labels: { alertname: $json.alertname, severity: 'info', service: $json.service }, annotations: { summary: $json.summary }, startsAt: $json.startsAt }] }) }}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "post-info-alert",
+      "name": "Post Info Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1140, 660]
+    },
+    {
+      "parameters": {},
+      "id": "end-node",
+      "name": "End",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [2900, 400]
+    }
+  ],
+  "connections": {
+    "Alertmanager Webhook": {
+      "main": [[{ "node": "Parse Alerts", "type": "main", "index": 0 }]]
+    },
+    "Parse Alerts": {
+      "main": [[{ "node": "Is Resolved?", "type": "main", "index": 0 }]]
+    },
+    "Is Resolved?": {
+      "main": [
+        [{ "node": "Post Resolution", "type": "main", "index": 0 }],
+        [{ "node": "Is Critical?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Post Resolution": {
+      "main": [[{ "node": "Close Plane Ticket", "type": "main", "index": 0 }]]
+    },
+    "Close Plane Ticket": {
+      "main": [[{ "node": "End", "type": "main", "index": 0 }]]
+    },
+    "Is Critical?": {
+      "main": [
+        [{ "node": "Post Critical @channel", "type": "main", "index": 0 }],
+        [
+          { "node": "Post Warning Alert", "type": "main", "index": 0 },
+          { "node": "Post Info Alert", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Post Critical @channel": {
+      "main": [[{ "node": "Omi Haptic (Critical)", "type": "main", "index": 0 }]]
+    },
+    "Omi Haptic (Critical)": {
+      "main": [[{ "node": "Create Plane Incident", "type": "main", "index": 0 }]]
+    },
+    "Create Plane Incident": {
+      "main": [[{ "node": "Wait 15min", "type": "main", "index": 0 }]]
+    },
+    "Wait 15min": {
+      "main": [[{ "node": "Check Still Firing", "type": "main", "index": 0 }]]
+    },
+    "Check Still Firing": {
+      "main": [[{ "node": "Still Unresolved?", "type": "main", "index": 0 }]]
+    },
+    "Still Unresolved?": {
+      "main": [[{ "node": "Escalate?", "type": "main", "index": 0 }]]
+    },
+    "Escalate?": {
+      "main": [
+        [{ "node": "Re-Escalate Alert", "type": "main", "index": 0 }],
+        [{ "node": "End", "type": "main", "index": 0 }]
+      ]
+    },
+    "Re-Escalate Alert": {
+      "main": [[{ "node": "End", "type": "main", "index": 0 }]]
+    },
+    "Post Warning Alert": {
+      "main": [[{ "node": "Omi Haptic (Warning)", "type": "main", "index": 0 }]]
+    },
+    "Omi Haptic (Warning)": {
+      "main": [[{ "node": "End", "type": "main", "index": 0 }]]
+    },
+    "Post Info Alert": {
+      "main": [[{ "node": "End", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": [
+    { "name": "alerts" },
+    { "name": "escalation" },
+    { "name": "system-9" }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

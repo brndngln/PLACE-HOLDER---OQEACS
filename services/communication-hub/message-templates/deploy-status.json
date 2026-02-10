@@ -1,0 +1,51 @@
+{
+  "username": "cicdbot",
+  "icon_emoji": "🚀",
+  "attachments": [
+    {
+      "color": "{{status_color}}",
+      "title": "Deploy {{status}} — {{app_name}}",
+      "title_link": "{{deploy_link}}",
+      "text": "{{deploy_summary}}",
+      "fields": [
+        {
+          "short": true,
+          "title": "Application",
+          "value": "{{app_name}}"
+        },
+        {
+          "short": true,
+          "title": "Environment",
+          "value": "{{environment}}"
+        },
+        {
+          "short": true,
+          "title": "Version",
+          "value": "`{{version}}`"
+        },
+        {
+          "short": true,
+          "title": "Deploy Method",
+          "value": "{{deploy_method}}"
+        },
+        {
+          "short": true,
+          "title": "Status",
+          "value": "{{status}}"
+        },
+        {
+          "short": true,
+          "title": "Duration",
+          "value": "{{duration}}"
+        },
+        {
+          "short": false,
+          "title": "Rollback",
+          "value": "[Rollback to previous version]({{rollback_link}})"
+        }
+      ],
+      "footer": "Omni Quantum Deployments | Coolify + Woodpecker",
+      "footer_icon": "https://omni-quantum.internal/icons/deploy.png"
+    }
+  ]
+}

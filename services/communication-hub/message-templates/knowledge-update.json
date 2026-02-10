@@ -1,0 +1,46 @@
+{
+  "username": "aibot",
+  "icon_emoji": "📚",
+  "attachments": [
+    {
+      "color": "#0066FF",
+      "title": "Knowledge Base Update — {{source_name}}",
+      "title_link": "{{source_link}}",
+      "text": "{{summary}}",
+      "fields": [
+        {
+          "short": true,
+          "title": "Source",
+          "value": "{{source_name}}"
+        },
+        {
+          "short": true,
+          "title": "Documents Ingested",
+          "value": "{{docs_ingested}}"
+        },
+        {
+          "short": true,
+          "title": "Embeddings Created",
+          "value": "{{embeddings_created}}"
+        },
+        {
+          "short": true,
+          "title": "Staleness Score",
+          "value": "{{staleness_score}}%"
+        },
+        {
+          "short": true,
+          "title": "Processing Time",
+          "value": "{{processing_time}}"
+        },
+        {
+          "short": true,
+          "title": "Status",
+          "value": "{{status}}"
+        }
+      ],
+      "footer": "Omni Quantum Knowledge Pipeline | Knowledge Ingestor",
+      "footer_icon": "https://omni-quantum.internal/icons/knowledge.png"
+    }
+  ]
+}

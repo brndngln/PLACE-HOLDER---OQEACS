@@ -1,0 +1,531 @@
+# Dynamic Routing Configuration — Omni Quantum Gateway Sentinel
+# Complete routing for all web UIs and APIs across all systems
+
+http:
+  routers:
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Foundation Services
+    # ═══════════════════════════════════════════════════════════════════════════
+    gitea:
+      rule: "PathPrefix(`/git`)"
+      service: gitea
+      entryPoints:
+        - websecure
+      middlewares:
+        - protected-chain
+        - strip-git
+      tls:
+        certResolver: letsencrypt
+
+    grafana:
+      rule: "PathPrefix(`/grafana`)"
+      service: grafana
+      entryPoints:
+        - websecure
+      middlewares:
+        - protected-chain
+        - strip-grafana
+      tls:
+        certResolver: letsencrypt
+
+    prometheus:
+      rule: "PathPrefix(`/prometheus`)"
+      service: prometheus
+      entryPoints:
+        - websecure
+      middlewares:
+        - strict-chain
+        - strip-prometheus
+      tls:
+        certResolver: letsencrypt
+
+    vault:
+      rule: "PathPrefix(`/vault`)"
+      service: vault
+      entryPoints:
+        - websecure
+      middlewares:
+        - strict-chain
+        - strip-vault
+      tls:
+        certResolver: letsencrypt
+
+    minio-console:
+      rule: "PathPrefix(`/minio`)"
+      service: minio-console
+      entryPoints:
+        - websecure
+      middlewares:
+        - protected-chain
+        - strip-minio
+      tls:
+        certResolver: letsencrypt
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Security Services
+    # ═══════════════════════════════════════════════════════════════════════════
+    authentik:
+      rule: "PathPrefix(`/authentik`)"
+      service: authentik
+      entryPoints:
+        - websecure
+      middlewares:
+        - public-chain
+        - strip-authentik
+      tls:
+        certResolver: letsencrypt
+
+    crowdsec:
+      rule: "PathPrefix(`/crowdsec`)"
+      service: crowdsec
+      entryPoints:
+        - websecure
+      middlewares:
+        - strict-chain
+        - strip-crowdsec
+      tls:
+        certResolver: letsencrypt
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Communication Services
+    # ═══════════════════════════════════════════════════════════════════════════
+    mattermost:
+      rule: "PathPrefix(`/mattermost`)"
+      service: mattermost
+      entryPoints:
+        - websecure
+      middlewares:
+        - protected-chain
+        - strip-mattermost
+      tls:
+        certResolver: letsencrypt
+
+    n8n:
+      rule: "PathPrefix(`/n8n`)"
+      service: n8n
+      entryPoints:
+        - websecure
+      middlewares:
+        - protected-chain
+        - strip-n8n
+      tls:
+        certResolver: letsencrypt
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # AI Services
+    # ═══════════════════════════════════════════════════════════════════════════
+    litellm:
+      rule: "PathPrefix(`/litellm`)"
+      service: litellm
+      entryPoints:
+        - websecure
+      middlewares:
+        - api-chain
+        - strip-litellm
+      tls:
+        certResolver: letsencrypt
+
+    langfuse:
+      rule: "PathPrefix(`/langfuse`)"
+      service: langfuse
+      entryPoints:
+        - websecure
+      middlewares:
+        - protected-chain
+        - strip-langfuse
+      tls:
+        certResolver: letsencrypt
+
+    ollama:
+      rule: "PathPrefix(`/ollama`)"
+      service: ollama
+      entryPoints:
+        - websecure
+      middlewares:
+        - api-chain
+        - strip-ollama
+      tls:
+        certResolver: letsencrypt
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Pipeline Services
+    # ═══════════════════════════════════════════════════════════════════════════
+    woodpecker:
+      rule: "PathPrefix(`/woodpecker`)"
+      service: woodpecker
+      entryPoints:
+        - websecure
+      middlewares:
+        - protected-chain
+        - strip-woodpecker
+      tls:
+        certResolver: letsencrypt
+
+    code-scorer:
+      rule: "PathPrefix(`/code-scorer`)"
+      service: code-scorer
+      entryPoints:
+        - websecure
+      middlewares:
+        - protected-chain
+        - strip-code-scorer
+      tls:
+        certResolver: letsencrypt
+
+    sourcegraph:
+      rule: "PathPrefix(`/sourcegraph`)"
+      service: sourcegraph
+      entryPoints:
+        - websecure
+      middlewares:
+        - protected-chain
+        - strip-sourcegraph
+      tls:
+        certResolver: letsencrypt
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Knowledge Services
+    # ═══════════════════════════════════════════════════════════════════════════
+    wikijs:
+      rule: "PathPrefix(`/wiki`)"
+      service: wikijs
+      entryPoints:
+        - websecure
+      middlewares:
+        - protected-chain
+        - strip-wiki
+      tls:
+        certResolver: letsencrypt
+
+    qdrant:
+      rule: "PathPrefix(`/qdrant`)"
+      service: qdrant
+      entryPoints:
+        - websecure
+      middlewares:
+        - api-chain
+        - strip-qdrant
+      tls:
+        certResolver: letsencrypt
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Business Services
+    # ═══════════════════════════════════════════════════════════════════════════
+    plane:
+      rule: "PathPrefix(`/plane`)"
+      service: plane
+      entryPoints:
+        - websecure
+      middlewares:
+        - protected-chain
+        - strip-plane
+      tls:
+        certResolver: letsencrypt
+
+    superset:
+      rule: "PathPrefix(`/superset`)"
+      service: superset
+      entryPoints:
+        - websecure
+      middlewares:
+        - protected-chain
+        - strip-superset
+      tls:
+        certResolver: letsencrypt
+
+    calcom:
+      rule: "PathPrefix(`/cal`)"
+      service: calcom
+      entryPoints:
+        - websecure
+      middlewares:
+        - public-chain
+        - strip-cal
+      tls:
+        certResolver: letsencrypt
+
+    twenty:
+      rule: "PathPrefix(`/twenty`)"
+      service: twenty
+      entryPoints:
+        - websecure
+      middlewares:
+        - protected-chain
+        - strip-twenty
+      tls:
+        certResolver: letsencrypt
+
+    crater:
+      rule: "PathPrefix(`/crater`)"
+      service: crater
+      entryPoints:
+        - websecure
+      middlewares:
+        - protected-chain
+        - strip-crater
+      tls:
+        certResolver: letsencrypt
+
+    flowise:
+      rule: "PathPrefix(`/flowise`)"
+      service: flowise
+      entryPoints:
+        - websecure
+      middlewares:
+        - protected-chain
+        - strip-flowise
+      tls:
+        certResolver: letsencrypt
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Enhanced / Infrastructure Services
+    # ═══════════════════════════════════════════════════════════════════════════
+    thanos:
+      rule: "PathPrefix(`/thanos`)"
+      service: thanos
+      entryPoints:
+        - websecure
+      middlewares:
+        - strict-chain
+        - strip-thanos
+      tls:
+        certResolver: letsencrypt
+
+    uptime-kuma:
+      rule: "PathPrefix(`/uptime`)"
+      service: uptime-kuma
+      entryPoints:
+        - websecure
+      middlewares:
+        - protected-chain
+        - strip-uptime
+      tls:
+        certResolver: letsencrypt
+
+    portainer:
+      rule: "PathPrefix(`/portainer`)"
+      service: portainer
+      entryPoints:
+        - websecure
+      middlewares:
+        - strict-chain
+        - strip-portainer
+      tls:
+        certResolver: letsencrypt
+
+    coder:
+      rule: "PathPrefix(`/coder`)"
+      service: coder
+      entryPoints:
+        - websecure
+      middlewares:
+        - protected-chain
+        - strip-coder
+      tls:
+        certResolver: letsencrypt
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Orchestrator (System 37)
+    # ═══════════════════════════════════════════════════════════════════════════
+    orchestrator-dashboard:
+      rule: "Path(`/`) || PathPrefix(`/dashboard`)"
+      service: orchestrator
+      entryPoints:
+        - websecure
+      middlewares:
+        - protected-chain
+      tls:
+        certResolver: letsencrypt
+      priority: 1
+
+    orchestrator-api:
+      rule: "PathPrefix(`/api`)"
+      service: orchestrator
+      entryPoints:
+        - websecure
+      middlewares:
+        - api-chain
+      tls:
+        certResolver: letsencrypt
+      priority: 2
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Service Definitions — Backend URLs
+  # ═══════════════════════════════════════════════════════════════════════════
+  services:
+    # Foundation
+    gitea:
+      loadBalancer:
+        servers:
+          - url: "http://omni-gitea:3000"
+        passHostHeader: true
+
+    grafana:
+      loadBalancer:
+        servers:
+          - url: "http://omni-grafana:3000"
+        passHostHeader: true
+
+    prometheus:
+      loadBalancer:
+        servers:
+          - url: "http://omni-prometheus:9090"
+        passHostHeader: true
+
+    vault:
+      loadBalancer:
+        servers:
+          - url: "http://omni-vault:8200"
+        passHostHeader: true
+
+    minio-console:
+      loadBalancer:
+        servers:
+          - url: "http://omni-minio:9001"
+        passHostHeader: true
+
+    # Security
+    authentik:
+      loadBalancer:
+        servers:
+          - url: "http://omni-authentik:9000"
+        passHostHeader: true
+
+    crowdsec:
+      loadBalancer:
+        servers:
+          - url: "http://omni-crowdsec:8080"
+        passHostHeader: true
+
+    # Communication
+    mattermost:
+      loadBalancer:
+        servers:
+          - url: "http://omni-mattermost:8065"
+        passHostHeader: true
+
+    n8n:
+      loadBalancer:
+        servers:
+          - url: "http://omni-n8n:5678"
+        passHostHeader: true
+
+    # AI
+    litellm:
+      loadBalancer:
+        servers:
+          - url: "http://omni-litellm:4000"
+        passHostHeader: true
+
+    langfuse:
+      loadBalancer:
+        servers:
+          - url: "http://omni-langfuse:3000"
+        passHostHeader: true
+
+    ollama:
+      loadBalancer:
+        servers:
+          - url: "http://omni-ollama:11434"
+        passHostHeader: true
+
+    # Pipeline
+    woodpecker:
+      loadBalancer:
+        servers:
+          - url: "http://omni-woodpecker-server:8000"
+        passHostHeader: true
+
+    code-scorer:
+      loadBalancer:
+        servers:
+          - url: "http://omni-code-scorer:8080"
+        passHostHeader: true
+
+    sourcegraph:
+      loadBalancer:
+        servers:
+          - url: "http://omni-sourcegraph:7080"
+        passHostHeader: true
+
+    # Knowledge
+    wikijs:
+      loadBalancer:
+        servers:
+          - url: "http://omni-wikijs:3000"
+        passHostHeader: true
+
+    qdrant:
+      loadBalancer:
+        servers:
+          - url: "http://omni-qdrant:6333"
+        passHostHeader: true
+
+    # Business
+    plane:
+      loadBalancer:
+        servers:
+          - url: "http://omni-plane:3000"
+        passHostHeader: true
+
+    superset:
+      loadBalancer:
+        servers:
+          - url: "http://omni-superset:8088"
+        passHostHeader: true
+
+    calcom:
+      loadBalancer:
+        servers:
+          - url: "http://omni-calcom:3000"
+        passHostHeader: true
+
+    twenty:
+      loadBalancer:
+        servers:
+          - url: "http://omni-twenty:3000"
+        passHostHeader: true
+
+    crater:
+      loadBalancer:
+        servers:
+          - url: "http://omni-crater:80"
+        passHostHeader: true
+
+    flowise:
+      loadBalancer:
+        servers:
+          - url: "http://omni-flowise:3000"
+        passHostHeader: true
+
+    # Enhanced / Infrastructure
+    thanos:
+      loadBalancer:
+        servers:
+          - url: "http://omni-thanos-query:9090"
+        passHostHeader: true
+
+    uptime-kuma:
+      loadBalancer:
+        servers:
+          - url: "http://omni-uptime-kuma:3001"
+        passHostHeader: true
+
+    portainer:
+      loadBalancer:
+        servers:
+          - url: "http://omni-portainer:9000"
+        passHostHeader: true
+
+    coder:
+      loadBalancer:
+        servers:
+          - url: "http://omni-coder:7080"
+        passHostHeader: true
+
+    # Orchestrator
+    orchestrator:
+      loadBalancer:
+        servers:
+          - url: "http://omni-orchestrator:8080"
+        passHostHeader: true

@@ -1,0 +1,41 @@
+{
+  "username": "alertbot",
+  "icon_emoji": "🚨",
+  "attachments": [
+    {
+      "color": "#FF0000",
+      "title": "{{title}}",
+      "title_link": "{{dashboard_link}}",
+      "text": "{{message}}",
+      "fields": [
+        {
+          "short": true,
+          "title": "Service",
+          "value": "{{service}}"
+        },
+        {
+          "short": true,
+          "title": "Severity",
+          "value": "{{severity}}"
+        },
+        {
+          "short": true,
+          "title": "Source",
+          "value": "{{source}}"
+        },
+        {
+          "short": true,
+          "title": "Timestamp",
+          "value": "{{timestamp}}"
+        },
+        {
+          "short": false,
+          "title": "Recommended Action",
+          "value": "{{action}}"
+        }
+      ],
+      "footer": "Omni Quantum Alert System | System 10",
+      "footer_icon": "https://omni-quantum.internal/icons/alert.png"
+    }
+  ]
+}

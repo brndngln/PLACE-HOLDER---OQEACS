@@ -1,0 +1,359 @@
+{
+  "name": "Invoice Overdue Processor",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * *"
+            }
+          ]
+        }
+      },
+      "id": "trigger-daily-9am",
+      "name": "Daily 9 AM Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://omni-crater:80/api/v1/invoices",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "status", "value": "OVERDUE" },
+            { "name": "limit", "value": "100" }
+          ]
+        },
+        "options": { "timeout": 15000 }
+      },
+      "id": "query-crater",
+      "name": "Query Crater Overdue Invoices",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst invoices = response.invoices || response.data || response || [];\nconst now = new Date();\nconst results = [];\nlet totalOutstanding = 0;\nlet totalCount = 0;\n\nfor (const inv of (Array.isArray(invoices) ? invoices : [])) {\n  const dueDate = new Date(inv.due_date || inv.dueDate);\n  const daysOverdue = Math.floor((now - dueDate) / (1000 * 60 * 60 * 24));\n  if (daysOverdue < 1) continue;\n  \n  totalCount++;\n  const amount = parseFloat(inv.total || inv.amount || 0);\n  totalOutstanding += amount;\n  \n  let tier;\n  if (daysOverdue >= 14) tier = 'critical';\n  else if (daysOverdue >= 7) tier = 'urgent';\n  else if (daysOverdue >= 4) tier = 'firm';\n  else tier = 'gentle';\n  \n  results.push({\n    json: {\n      invoiceNumber: inv.invoice_number || inv.number || inv.id || 'N/A',\n      clientName: inv.customer?.name || inv.client_name || 'Unknown',\n      clientEmail: inv.customer?.email || inv.client_email || '',\n      amount: amount.toFixed(2),\n      currency: inv.currency || 'USD',\n      daysOverdue,\n      tier,\n      dueDate: inv.due_date || inv.dueDate,\n      invoiceId: inv.id || ''\n    }\n  });\n}\n\n// Add summary as the last item\nresults.push({\n  json: {\n    isSummary: true,\n    totalOutstanding: totalOutstanding.toFixed(2),\n    totalCount,\n    currency: 'USD',\n    timestamp: now.toISOString()\n  }\n});\n\nreturn results;"
+      },
+      "id": "categorize-invoices",
+      "name": "Categorize by Days Overdue",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.isSummary }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "is-summary",
+      "name": "Is Summary?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-webhook-router:8066/webhook/financial",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ alert_type: 'Daily Overdue Summary', client_name: 'All Clients', invoice_number: 'SUMMARY', currency: $json.currency, amount: $json.totalOutstanding, days_overdue: 0, action: 'Review all overdue invoices', summary: 'Daily Summary: ' + $json.totalCount + ' overdue invoice(s) totaling ' + $json.currency + ' ' + $json.totalOutstanding }) }}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "post-daily-summary",
+      "name": "Post Daily Summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1120, 160]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.tier }}",
+              "value2": "gentle",
+              "operation": "equals"
+            }
+          ]
+        }
+      },
+      "id": "check-gentle",
+      "name": "1-3 Days (Gentle)?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1120, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-listmonk:9000/api/tx",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ subscriber_email: $json.clientEmail, template_id: 2, data: { client_name: $json.clientName, invoice_number: $json.invoiceNumber, amount: $json.currency + ' ' + $json.amount, days_overdue: $json.daysOverdue, tone: 'gentle' }, content_type: 'html' }) }}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "send-gentle-reminder",
+      "name": "Send Gentle Reminder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1360, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.tier }}",
+              "value2": "firm",
+              "operation": "equals"
+            }
+          ]
+        }
+      },
+      "id": "check-firm",
+      "name": "4-7 Days (Firm)?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1360, 500]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-listmonk:9000/api/tx",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ subscriber_email: $json.clientEmail, template_id: 3, data: { client_name: $json.clientName, invoice_number: $json.invoiceNumber, amount: $json.currency + ' ' + $json.amount, days_overdue: $json.daysOverdue, tone: 'firm' }, content_type: 'html' }) }}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "send-firm-reminder",
+      "name": "Send Firm Reminder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1600, 440],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-webhook-router:8066/webhook/financial",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ alert_type: 'Invoice Overdue (Firm)', client_name: $json.clientName, invoice_number: $json.invoiceNumber, currency: $json.currency, amount: $json.amount, days_overdue: $json.daysOverdue, action: 'Follow up with client — firm reminder sent', summary: 'Invoice ' + $json.invoiceNumber + ' is ' + $json.daysOverdue + ' days overdue' }) }}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "post-firm-financial",
+      "name": "Post to #financial (Firm)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1820, 440],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.tier }}",
+              "value2": "urgent",
+              "operation": "equals"
+            }
+          ]
+        }
+      },
+      "id": "check-urgent",
+      "name": "7-14 Days (Urgent)?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1600, 620]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-webhook-router:8066/webhook/financial",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ alert_type: 'URGENT: Invoice Overdue', client_name: $json.clientName, invoice_number: $json.invoiceNumber, currency: $json.currency, amount: $json.amount, days_overdue: $json.daysOverdue, action: '@channel — URGENT follow-up required. Consider escalation.', summary: 'URGENT: Invoice ' + $json.invoiceNumber + ' is ' + $json.daysOverdue + ' days overdue (' + $json.currency + ' ' + $json.amount + ')' }) }}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "post-urgent-financial",
+      "name": "URGENT #financial @channel",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1820, 580]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-plane-web:3000/api/v1/workspaces/omni-quantum/projects/{{ $env.PLANE_PROJECT_ID }}/issues/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ name: 'Overdue Invoice: ' + $json.invoiceNumber + ' (' + $json.clientName + ')', description_html: '<p>Invoice ' + $json.invoiceNumber + ' is <strong>' + $json.daysOverdue + ' days overdue</strong>.</p><p>Amount: ' + $json.currency + ' ' + $json.amount + '</p><p>Client: ' + $json.clientName + '</p>', priority: 1, state: 'triage' }) }}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "create-urgent-ticket",
+      "name": "Create Plane Ticket",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [2040, 580],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-webhook-router:8066/webhook/financial",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ alert_type: 'CRITICAL: Invoice Severely Overdue', client_name: $json.clientName, invoice_number: $json.invoiceNumber, currency: $json.currency, amount: $json.amount, days_overdue: $json.daysOverdue, action: '@channel — FINAL NOTICE. Prepare collection proceedings. CRM flagged.', summary: 'CRITICAL: Invoice ' + $json.invoiceNumber + ' is ' + $json.daysOverdue + '+ days overdue. Final notice required.' }) }}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "post-critical-financial",
+      "name": "CRITICAL #financial",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1820, 740]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-listmonk:9000/api/tx",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ subscriber_email: $json.clientEmail, template_id: 4, data: { client_name: $json.clientName, invoice_number: $json.invoiceNumber, amount: $json.currency + ' ' + $json.amount, days_overdue: $json.daysOverdue, tone: 'final_notice' }, content_type: 'html' }) }}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "send-final-notice",
+      "name": "Send Final Notice",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [2040, 740],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "http://omni-twenty:3000/api/opportunities/{{ $json.invoiceId }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ stage: 'COLLECTIONS' }) }}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "flag-crm",
+      "name": "Flag CRM as Collections",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [2260, 740],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {},
+      "id": "end-node",
+      "name": "End",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [2480, 500]
+    }
+  ],
+  "connections": {
+    "Daily 9 AM Schedule": {
+      "main": [[{ "node": "Query Crater Overdue Invoices", "type": "main", "index": 0 }]]
+    },
+    "Query Crater Overdue Invoices": {
+      "main": [[{ "node": "Categorize by Days Overdue", "type": "main", "index": 0 }]]
+    },
+    "Categorize by Days Overdue": {
+      "main": [[{ "node": "Is Summary?", "type": "main", "index": 0 }]]
+    },
+    "Is Summary?": {
+      "main": [
+        [{ "node": "Post Daily Summary", "type": "main", "index": 0 }],
+        [{ "node": "1-3 Days (Gentle)?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Post Daily Summary": {
+      "main": [[{ "node": "End", "type": "main", "index": 0 }]]
+    },
+    "1-3 Days (Gentle)?": {
+      "main": [
+        [{ "node": "Send Gentle Reminder", "type": "main", "index": 0 }],
+        [{ "node": "4-7 Days (Firm)?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Send Gentle Reminder": {
+      "main": [[{ "node": "End", "type": "main", "index": 0 }]]
+    },
+    "4-7 Days (Firm)?": {
+      "main": [
+        [{ "node": "Send Firm Reminder", "type": "main", "index": 0 }],
+        [{ "node": "7-14 Days (Urgent)?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Send Firm Reminder": {
+      "main": [[{ "node": "Post to #financial (Firm)", "type": "main", "index": 0 }]]
+    },
+    "Post to #financial (Firm)": {
+      "main": [[{ "node": "End", "type": "main", "index": 0 }]]
+    },
+    "7-14 Days (Urgent)?": {
+      "main": [
+        [{ "node": "URGENT #financial @channel", "type": "main", "index": 0 }],
+        [{ "node": "CRITICAL #financial", "type": "main", "index": 0 }]
+      ]
+    },
+    "URGENT #financial @channel": {
+      "main": [[{ "node": "Create Plane Ticket", "type": "main", "index": 0 }]]
+    },
+    "Create Plane Ticket": {
+      "main": [[{ "node": "End", "type": "main", "index": 0 }]]
+    },
+    "CRITICAL #financial": {
+      "main": [[{ "node": "Send Final Notice", "type": "main", "index": 0 }]]
+    },
+    "Send Final Notice": {
+      "main": [[{ "node": "Flag CRM as Collections", "type": "main", "index": 0 }]]
+    },
+    "Flag CRM as Collections": {
+      "main": [[{ "node": "End", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": [
+    { "name": "financial" },
+    { "name": "invoicing" },
+    { "name": "system-9" }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

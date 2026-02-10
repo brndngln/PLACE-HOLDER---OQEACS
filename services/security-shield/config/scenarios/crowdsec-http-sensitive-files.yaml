@@ -1,0 +1,61 @@
+# ===========================================================================
+# CrowdSec Scenario: Sensitive File Probing
+# Omni Quantum — Security Shield
+#
+# Detects attempts to access sensitive files and directories:
+# .env, .git, wp-admin, config files, backup files, etc.
+# Threshold: 3 attempts in 1 minute → ban 24 hours
+# ===========================================================================
+
+type: leaky
+name: omni-quantum/http-sensitive-file-probe
+description: "Detect probing for sensitive files (.env, .git, wp-admin, config files, backup archives)"
+filter: >-
+  evt.Meta.http_path contains '/.env' ||
+  evt.Meta.http_path contains '/.git' ||
+  evt.Meta.http_path contains '/.svn' ||
+  evt.Meta.http_path contains '/.hg' ||
+  evt.Meta.http_path contains '/wp-admin' ||
+  evt.Meta.http_path contains '/wp-login' ||
+  evt.Meta.http_path contains '/wp-content' ||
+  evt.Meta.http_path contains '/xmlrpc.php' ||
+  evt.Meta.http_path contains '/phpmyadmin' ||
+  evt.Meta.http_path contains '/phpMyAdmin' ||
+  evt.Meta.http_path contains '/admin.php' ||
+  evt.Meta.http_path contains '/config.php' ||
+  evt.Meta.http_path contains '/config.yml' ||
+  evt.Meta.http_path contains '/config.json' ||
+  evt.Meta.http_path contains '/database.yml' ||
+  evt.Meta.http_path contains '/.htaccess' ||
+  evt.Meta.http_path contains '/.htpasswd' ||
+  evt.Meta.http_path contains '/backup' && (evt.Meta.http_path endsWith '.sql' || evt.Meta.http_path endsWith '.tar' || evt.Meta.http_path endsWith '.gz' || evt.Meta.http_path endsWith '.zip') ||
+  evt.Meta.http_path contains '/dump' && (evt.Meta.http_path endsWith '.sql' || evt.Meta.http_path endsWith '.json') ||
+  evt.Meta.http_path contains '/server-status' ||
+  evt.Meta.http_path contains '/server-info' ||
+  evt.Meta.http_path contains '/.DS_Store' ||
+  evt.Meta.http_path contains '/Thumbs.db' ||
+  evt.Meta.http_path contains '/id_rsa' ||
+  evt.Meta.http_path contains '/id_ed25519' ||
+  evt.Meta.http_path contains '/credentials' ||
+  evt.Meta.http_path contains '/secrets' ||
+  evt.Meta.http_path contains '/docker-compose' && evt.Meta.http_path endsWith '.yml'
+groupby: evt.Meta.source_ip
+capacity: 3
+leakspeed: 20s
+blackhole: 5m
+reprocess: false
+labels:
+  service: "http"
+  type: "probe"
+  confidence: 3
+  spoofable: 0
+  classification:
+    - "attack.T1083"
+    - "attack.T1590"
+  label: "Sensitive file probing"
+  behavior: "http:exploit"
+  remediation: true
+duration: 24h
+scope:
+  type: ip
+  expression: evt.Meta.source_ip

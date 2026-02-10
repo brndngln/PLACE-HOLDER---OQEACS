@@ -1,0 +1,56 @@
+{
+  "username": "aibot",
+  "icon_emoji": "🤖",
+  "attachments": [
+    {
+      "color": "{{score_color}}",
+      "title": "Code Review — {{task_id}}",
+      "title_link": "{{review_link}}",
+      "text": "Quality Gate: **{{gate_result}}**",
+      "fields": [
+        {
+          "short": true,
+          "title": "Quality Score",
+          "value": "**{{quality_score}}/10**"
+        },
+        {
+          "short": true,
+          "title": "Gate Result",
+          "value": "{{gate_result}}"
+        },
+        {
+          "short": true,
+          "title": "Correctness",
+          "value": "{{dim_correctness}}/10"
+        },
+        {
+          "short": true,
+          "title": "Maintainability",
+          "value": "{{dim_maintainability}}/10"
+        },
+        {
+          "short": true,
+          "title": "Security",
+          "value": "{{dim_security}}/10"
+        },
+        {
+          "short": true,
+          "title": "Performance",
+          "value": "{{dim_performance}}/10"
+        },
+        {
+          "short": true,
+          "title": "Test Coverage",
+          "value": "{{dim_test_coverage}}/10"
+        },
+        {
+          "short": true,
+          "title": "Documentation",
+          "value": "{{dim_documentation}}/10"
+        }
+      ],
+      "footer": "Omni Quantum Code Quality | Code Scorer + Gate Engine",
+      "footer_icon": "https://omni-quantum.internal/icons/review.png"
+    }
+  ]
+}

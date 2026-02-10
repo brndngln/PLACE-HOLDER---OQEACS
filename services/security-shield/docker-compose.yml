@@ -1,0 +1,124 @@
+# ===========================================================================
+# SYSTEM 25 — SECURITY SHIELD: CrowdSec IPS/IDS
+# Omni Quantum Elite AI Coding System — Security & Identity Layer
+#
+# CrowdSec agent (LAPI) + Traefik bouncer for crowd-sourced
+# intrusion prevention across all platform services.
+# ===========================================================================
+
+version: "3.8"
+
+services:
+  # ─────────────────────────────────────────────────────
+  # CrowdSec Agent — LAPI + log parsing + decision engine
+  # ─────────────────────────────────────────────────────
+  omni-crowdsec:
+    image: crowdsecurity/crowdsec:v1.6
+    container_name: omni-crowdsec
+    restart: unless-stopped
+    environment:
+      # Enrollment key for CrowdSec Console (optional)
+      ENROLL_KEY: ${CROWDSEC_ENROLL_KEY:-}
+      ENROLL_INSTANCE_NAME: omni-quantum-elite
+      ENROLL_TAGS: "omni-quantum,production"
+      # Collections to install on first boot
+      COLLECTIONS: >-
+        crowdsecurity/linux
+        crowdsecurity/traefik
+        crowdsecurity/http-cve
+        crowdsecurity/base-http-scenarios
+        crowdsecurity/whitelist-good-actors
+      # Agent registration
+      CUSTOM_HOSTNAME: omni-crowdsec
+      # Metrics
+      LEVEL_INFO: "true"
+    volumes:
+      # CrowdSec configuration
+      - ./config/acquis.yaml:/etc/crowdsec/acquis.yaml:ro
+      - ./config/scenarios:/etc/crowdsec/scenarios:ro
+      - ./config/notifications:/etc/crowdsec/notifications:ro
+      - ./config/whitelist.yaml:/etc/crowdsec/parsers/s02-enrich/omni-whitelist.yaml:ro
+      # Persistent data
+      - crowdsec-data:/var/lib/crowdsec/data
+      - crowdsec-config:/etc/crowdsec
+      # Log sources
+      - traefik-logs:/var/log/traefik:ro
+      - /var/log:/var/log/host:ro
+      # Docker socket for container log access
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - "8080:8080"   # LAPI
+      - "6060:6060"   # Prometheus metrics
+    healthcheck:
+      test: ["CMD", "cscli", "version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 128M
+    labels:
+      omni_quantum_component: crowdsec
+      omni_quantum_tier: high
+      omni_quantum_system: "25"
+      omni_quantum_stack: security
+    networks:
+      - omni-quantum-network
+
+  # ─────────────────────────────────────────────────────
+  # CrowdSec Traefik Bouncer — enforces decisions at
+  # the reverse proxy level, blocking banned IPs before
+  # requests reach any backend service
+  # ─────────────────────────────────────────────────────
+  omni-crowdsec-bouncer:
+    image: fbonalair/traefik-crowdsec-bouncer:latest
+    container_name: omni-crowdsec-bouncer
+    restart: unless-stopped
+    environment:
+      CROWDSEC_BOUNCER_API_KEY: ${CROWDSEC_BOUNCER_API_KEY}
+      CROWDSEC_AGENT_HOST: omni-crowdsec:8080
+      CROWDSEC_BOUNCER_SCHEME: http
+      GIN_MODE: release
+      # Ban page customization
+      CROWDSEC_BOUNCER_BAN_TEMPLATE_PATH: /etc/crowdsec-bouncer/ban.html
+    ports:
+      - "8078:8080"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/api/v1/ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    labels:
+      omni_quantum_component: crowdsec-bouncer
+      omni_quantum_tier: high
+      omni_quantum_system: "25"
+      omni_quantum_stack: security
+      # Traefik integration
+      traefik.enable: "true"
+      traefik.http.middlewares.crowdsec.forwardauth.address: "http://omni-crowdsec-bouncer:8080/api/v1/forwardAuth"
+      traefik.http.middlewares.crowdsec.forwardauth.trustForwardHeader: "true"
+    depends_on:
+      omni-crowdsec:
+        condition: service_healthy
+    networks:
+      - omni-quantum-network
+
+volumes:
+  crowdsec-data:
+    driver: local
+  crowdsec-config:
+    driver: local
+  traefik-logs:
+    external: true
+
+networks:
+  omni-quantum-network:
+    external: true

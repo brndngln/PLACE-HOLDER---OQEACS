@@ -1,0 +1,31 @@
+# ===========================================================================
+# CrowdSec Scenario: SSH Brute Force
+# Omni Quantum — Security Shield
+#
+# Detects SSH brute force login attempts.
+# Threshold: 5 failed attempts in 30 seconds → ban 24 hours
+# ===========================================================================
+
+type: leaky
+name: omni-quantum/ssh-bruteforce
+description: "Detect SSH brute force login attempts"
+filter: "evt.Meta.log_type == 'ssh_failed-auth'"
+groupby: evt.Meta.source_ip
+capacity: 5
+leakspeed: 6s
+blackhole: 2m
+reprocess: false
+labels:
+  service: "ssh"
+  type: "bruteforce"
+  confidence: 3
+  spoofable: 0
+  classification:
+    - "attack.T1110"
+  label: "SSH brute force"
+  behavior: "ssh:bruteforce"
+  remediation: true
+duration: 24h
+scope:
+  type: ip
+  expression: evt.Meta.source_ip

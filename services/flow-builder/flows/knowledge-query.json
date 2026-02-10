@@ -1,0 +1,163 @@
+{
+  "name": "Knowledge Query Engine",
+  "description": "Multi-source knowledge retrieval from Qdrant collections and Neo4j with synthesized citations",
+  "nodes": [
+    {
+      "id": "chatInput_0",
+      "type": "ChatInput",
+      "position": {"x": 100, "y": 350},
+      "data": {
+        "label": "Query Input",
+        "inputs": {},
+        "outputs": {
+          "output": "chatInput_0-output"
+        }
+      }
+    },
+    {
+      "id": "embedding_0",
+      "type": "OpenAIEmbedding",
+      "position": {"x": 350, "y": 50},
+      "data": {
+        "label": "Embeddings",
+        "inputs": {
+          "modelName": "text-embedding-ada-002",
+          "basePath": "http://omni-litellm:4000/v1",
+          "apiKey": "{{LITELLM_API_KEY}}"
+        },
+        "outputs": {
+          "output": "embedding_0-output"
+        }
+      }
+    },
+    {
+      "id": "qdrant_papers",
+      "type": "QdrantVectorStore",
+      "position": {"x": 350, "y": 200},
+      "data": {
+        "label": "Academic Papers",
+        "inputs": {
+          "qdrantServerUrl": "http://omni-qdrant:6333",
+          "collectionName": "academic_papers",
+          "topK": 5,
+          "embeddings": "{{embedding_0-output}}"
+        },
+        "outputs": {
+          "output": "qdrant_papers-output"
+        }
+      }
+    },
+    {
+      "id": "qdrant_codebases",
+      "type": "QdrantVectorStore",
+      "position": {"x": 350, "y": 350},
+      "data": {
+        "label": "Elite Codebases",
+        "inputs": {
+          "qdrantServerUrl": "http://omni-qdrant:6333",
+          "collectionName": "elite_codebases",
+          "topK": 5,
+          "embeddings": "{{embedding_0-output}}"
+        },
+        "outputs": {
+          "output": "qdrant_codebases-output"
+        }
+      }
+    },
+    {
+      "id": "qdrant_patterns",
+      "type": "QdrantVectorStore",
+      "position": {"x": 350, "y": 500},
+      "data": {
+        "label": "Design Patterns",
+        "inputs": {
+          "qdrantServerUrl": "http://omni-qdrant:6333",
+          "collectionName": "design_patterns",
+          "topK": 5,
+          "embeddings": "{{embedding_0-output}}"
+        },
+        "outputs": {
+          "output": "qdrant_patterns-output"
+        }
+      }
+    },
+    {
+      "id": "neo4j_0",
+      "type": "CustomAPI",
+      "position": {"x": 350, "y": 650},
+      "data": {
+        "label": "Neo4j Pattern Recommendations",
+        "inputs": {
+          "url": "http://omni-neo4j:7475/patterns/recommend",
+          "method": "POST",
+          "headers": {"Content-Type": "application/json"},
+          "body": "{\"query\": \"{{chatInput_0-output}}\"}"
+        },
+        "outputs": {
+          "output": "neo4j_0-output"
+        }
+      }
+    },
+    {
+      "id": "llm_0",
+      "type": "ChatOpenAI",
+      "position": {"x": 700, "y": 50},
+      "data": {
+        "label": "LLM",
+        "inputs": {
+          "modelName": "gpt-4",
+          "basePath": "http://omni-litellm:4000/v1",
+          "apiKey": "{{LITELLM_API_KEY}}",
+          "temperature": 0.2,
+          "maxTokens": 4096
+        },
+        "outputs": {
+          "output": "llm_0-output"
+        }
+      }
+    },
+    {
+      "id": "chain_0",
+      "type": "LLMChain",
+      "position": {"x": 700, "y": 350},
+      "data": {
+        "label": "Knowledge Synthesis Chain",
+        "inputs": {
+          "model": "{{llm_0-output}}",
+          "prompt": "You are an advanced knowledge synthesis engine for the Omni Quantum Elite platform. Synthesize information from multiple sources to answer the user's query.\n\nAcademic Papers:\n{academic_papers}\n\nElite Codebases:\n{elite_codebases}\n\nDesign Patterns:\n{design_patterns}\n\nNeo4j Graph Recommendations:\n{neo4j_recommendations}\n\nUser Query: {input}\n\nProvide a comprehensive answer that:\n1. Synthesizes insights from all available sources\n2. Cites specific sources using [Source: collection_name/document_id] format\n3. Highlights relevant design patterns and their applicability\n4. Notes any conflicting information between sources\n5. Suggests related topics for further exploration",
+          "academic_papers": "{{qdrant_papers-output}}",
+          "elite_codebases": "{{qdrant_codebases-output}}",
+          "design_patterns": "{{qdrant_patterns-output}}",
+          "neo4j_recommendations": "{{neo4j_0-output}}"
+        },
+        "outputs": {
+          "output": "chain_0-output"
+        }
+      }
+    },
+    {
+      "id": "output_0",
+      "type": "ChatOutput",
+      "position": {"x": 1000, "y": 350},
+      "data": {
+        "label": "Answer Output",
+        "inputs": {
+          "text": "{{chain_0-output}}"
+        }
+      }
+    }
+  ],
+  "edges": [
+    {"source": "chatInput_0", "target": "chain_0", "sourceHandle": "chatInput_0-output", "targetHandle": "input"},
+    {"source": "chatInput_0", "target": "neo4j_0", "sourceHandle": "chatInput_0-output", "targetHandle": "body"},
+    {"source": "embedding_0", "target": "qdrant_papers", "sourceHandle": "embedding_0-output", "targetHandle": "embeddings"},
+    {"source": "embedding_0", "target": "qdrant_codebases", "sourceHandle": "embedding_0-output", "targetHandle": "embeddings"},
+    {"source": "embedding_0", "target": "qdrant_patterns", "sourceHandle": "embedding_0-output", "targetHandle": "embeddings"},
+    {"source": "qdrant_papers", "target": "chain_0", "sourceHandle": "qdrant_papers-output", "targetHandle": "academic_papers"},
+    {"source": "qdrant_codebases", "target": "chain_0", "sourceHandle": "qdrant_codebases-output", "targetHandle": "elite_codebases"},
+    {"source": "qdrant_patterns", "target": "chain_0", "sourceHandle": "qdrant_patterns-output", "targetHandle": "design_patterns"},
+    {"source": "neo4j_0", "target": "chain_0", "sourceHandle": "neo4j_0-output", "targetHandle": "neo4j_recommendations"},
+    {"source": "llm_0", "target": "chain_0", "sourceHandle": "llm_0-output", "targetHandle": "model"},
+    {"source": "chain_0", "target": "output_0", "sourceHandle": "chain_0-output", "targetHandle": "text"}
+  ]
+}

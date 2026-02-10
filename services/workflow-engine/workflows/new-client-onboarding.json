@@ -1,0 +1,201 @@
+{
+  "name": "New Client Onboarding",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "client-onboarding",
+        "responseMode": "onReceived",
+        "responseData": "allEntries"
+      },
+      "id": "trigger-onboarding",
+      "name": "Client Intake Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [240, 300],
+      "webhookId": "client-onboarding"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nreturn [{\n  json: {\n    clientName: body.name || body.client_name || 'Unknown',\n    email: body.email || '',\n    company: body.company || '',\n    projectName: body.project || body.project_name || '',\n    budget: body.budget || 0,\n    currency: body.currency || 'USD',\n    notes: body.notes || '',\n    source: body.source || 'intake-form',\n    timestamp: new Date().toISOString(),\n    errors: []\n  }\n}];"
+      },
+      "id": "parse-client-info",
+      "name": "Parse Client Info",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-twenty:3000/api/people",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ name: { firstName: $json.clientName.split(' ')[0] || $json.clientName, lastName: $json.clientName.split(' ').slice(1).join(' ') || '' }, emails: { primaryEmail: $json.email }, company: { name: $json.company }, phones: {} }) }}",
+        "options": { "timeout": 15000 }
+      },
+      "id": "create-crm-contact",
+      "name": "Create Twenty CRM Contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [700, 200],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-twenty:3000/api/opportunities",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ name: $('Parse Client Info').first().json.projectName || $('Parse Client Info').first().json.company + ' Project', amount: { amount: $('Parse Client Info').first().json.budget, currencyCode: $('Parse Client Info').first().json.currency }, stage: 'NEW', closeDate: new Date(Date.now() + 30*24*60*60*1000).toISOString() }) }}",
+        "options": { "timeout": 15000 }
+      },
+      "id": "create-crm-deal",
+      "name": "Create Twenty CRM Deal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [940, 200],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-plane-web:3000/api/v1/workspaces/omni-quantum/projects/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ name: ($('Parse Client Info').first().json.company || 'Client') + ' — ' + ($('Parse Client Info').first().json.projectName || 'New Project'), description: 'Client: ' + $('Parse Client Info').first().json.clientName + '\\nEmail: ' + $('Parse Client Info').first().json.email + '\\nBudget: ' + $('Parse Client Info').first().json.currency + ' ' + $('Parse Client Info').first().json.budget + '\\nNotes: ' + $('Parse Client Info').first().json.notes, network: 2 }) }}",
+        "options": { "timeout": 15000 }
+      },
+      "id": "create-plane-project",
+      "name": "Create Plane Project",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [700, 400],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-calcom:3000/api/v1/booking-references",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ title: 'Kickoff — ' + ($('Parse Client Info').first().json.company || $('Parse Client Info').first().json.clientName), slug: 'kickoff-' + ($('Parse Client Info').first().json.company || 'client').toLowerCase().replace(/[^a-z0-9]/g, '-'), length: 60 }) }}",
+        "options": { "timeout": 15000 }
+      },
+      "id": "create-calcom-booking",
+      "name": "Create Cal.com Booking Link",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [940, 400],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-listmonk:9000/api/tx",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ subscriber_email: $('Parse Client Info').first().json.email, template_id: 1, data: { client_name: $('Parse Client Info').first().json.clientName, company: $('Parse Client Info').first().json.company, project: $('Parse Client Info').first().json.projectName }, content_type: 'html' }) }}",
+        "options": { "timeout": 15000 }
+      },
+      "id": "send-welcome-email",
+      "name": "Send Welcome Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [700, 600],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const clientInfo = $('Parse Client Info').first().json;\nconst errors = [];\n\n// Check each step for errors\nconst steps = [\n  { name: 'CRM Contact', node: 'Create Twenty CRM Contact' },\n  { name: 'CRM Deal', node: 'Create Twenty CRM Deal' },\n  { name: 'Plane Project', node: 'Create Plane Project' },\n  { name: 'Cal.com Booking', node: 'Create Cal.com Booking Link' },\n  { name: 'Welcome Email', node: 'Send Welcome Email' }\n];\n\nfor (const step of steps) {\n  try {\n    const result = $(step.node).first();\n    if (result?.json?.error || result?.json?.$error) {\n      errors.push(step.name + ': ' + (result.json.error || result.json.$error?.message || 'failed'));\n    }\n  } catch (e) {\n    // Node may not have executed\n  }\n}\n\nreturn [{ json: { ...clientInfo, errors, hasErrors: errors.length > 0 } }];"
+      },
+      "id": "collect-results",
+      "name": "Collect Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1180, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-webhook-router:8066/webhook/knowledge",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ source_name: 'Client Onboarding', docs_ingested: 1, embeddings_created: 0, staleness_score: 0, processing_time: 'N/A', status: $json.hasErrors ? 'partial' : 'complete', summary: '🎉 New client: ' + $json.company + ' (' + $json.clientName + ')' + ($json.hasErrors ? ' — Some steps need manual follow-up: ' + $json.errors.join(', ') : ' — All onboarding steps completed!') }) }}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "post-general-notification",
+      "name": "Post to #general",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1400, 400]
+    },
+    {
+      "parameters": {},
+      "id": "end-node",
+      "name": "End",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1620, 400]
+    }
+  ],
+  "connections": {
+    "Client Intake Webhook": {
+      "main": [[{ "node": "Parse Client Info", "type": "main", "index": 0 }]]
+    },
+    "Parse Client Info": {
+      "main": [
+        [
+          { "node": "Create Twenty CRM Contact", "type": "main", "index": 0 },
+          { "node": "Create Plane Project", "type": "main", "index": 0 },
+          { "node": "Send Welcome Email", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Create Twenty CRM Contact": {
+      "main": [[{ "node": "Create Twenty CRM Deal", "type": "main", "index": 0 }]]
+    },
+    "Create Twenty CRM Deal": {
+      "main": [[{ "node": "Collect Results", "type": "main", "index": 0 }]]
+    },
+    "Create Plane Project": {
+      "main": [[{ "node": "Create Cal.com Booking Link", "type": "main", "index": 0 }]]
+    },
+    "Create Cal.com Booking Link": {
+      "main": [[{ "node": "Collect Results", "type": "main", "index": 0 }]]
+    },
+    "Send Welcome Email": {
+      "main": [[{ "node": "Collect Results", "type": "main", "index": 0 }]]
+    },
+    "Collect Results": {
+      "main": [[{ "node": "Post to #general", "type": "main", "index": 0 }]]
+    },
+    "Post to #general": {
+      "main": [[{ "node": "End", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": [
+    { "name": "onboarding" },
+    { "name": "crm" },
+    { "name": "system-9" }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

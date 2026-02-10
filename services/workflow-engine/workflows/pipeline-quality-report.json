@@ -1,0 +1,155 @@
+{
+  "name": "Pipeline Quality Report",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 18 * * *"
+            }
+          ]
+        }
+      },
+      "id": "trigger-daily-6pm",
+      "name": "Daily 6 PM Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://omni-code-scorer:9200/api/scores/today",
+        "options": { "timeout": 15000 }
+      },
+      "id": "query-code-scorer",
+      "name": "Query Code Scorer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [480, 160],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://omni-gate-engine:9210/api/gates/today",
+        "options": { "timeout": 15000 }
+      },
+      "id": "query-gate-engine",
+      "name": "Query Gate Engine",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [480, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://omni-woodpecker-server:8000/api/repos?page=1&per_page=50",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": { "timeout": 15000 }
+      },
+      "id": "query-woodpecker",
+      "name": "Query Woodpecker",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [480, 440],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://omni-langfuse:3000/api/public/metrics/daily",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": { "timeout": 15000 }
+      },
+      "id": "query-langfuse",
+      "name": "Query Langfuse",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [480, 580],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Collect all data from parallel queries\nconst codeScorer = $('Query Code Scorer').first()?.json || {};\nconst gateEngine = $('Query Gate Engine').first()?.json || {};\nconst woodpecker = $('Query Woodpecker').first()?.json || {};\nconst langfuse = $('Query Langfuse').first()?.json || {};\n\n// Code Scorer stats\nconst tasksCompleted = codeScorer.tasks_completed || codeScorer.total || 0;\nconst avgScore = codeScorer.average_score || codeScorer.avg_quality || 0;\nconst highestScore = codeScorer.highest || 0;\nconst lowestScore = codeScorer.lowest || 0;\n\n// Gate Engine stats\nconst totalGates = gateEngine.total || 0;\nconst gatesPassed = gateEngine.passed || 0;\nconst gatePassRate = totalGates > 0 ? ((gatesPassed / totalGates) * 100).toFixed(1) : 'N/A';\n\n// Woodpecker stats\nconst repos = Array.isArray(woodpecker) ? woodpecker : (woodpecker.data || []);\nlet totalBuilds = 0;\nlet successBuilds = 0;\nfor (const repo of repos) {\n  totalBuilds += (repo.last_pipeline_count || 0);\n  successBuilds += (repo.last_pipeline_success || 0);\n}\nconst buildSuccessRate = totalBuilds > 0 ? ((successBuilds / totalBuilds) * 100).toFixed(1) : 'N/A';\n\n// Langfuse stats\nconst llmCost = langfuse.total_cost || langfuse.cost || 0;\nconst totalTokens = langfuse.total_tokens || 0;\nconst topModel = langfuse.top_model || 'N/A';\nconst traceCount = langfuse.trace_count || 0;\n\nconst today = new Date().toISOString().split('T')[0];\n\nconst report = `### :bar_chart: Daily Pipeline Quality Report — ${today}\\n\\n` +\n  `| Metric | Value |\\n` +\n  `|--------|-------|\\n` +\n  `| Tasks Completed | ${tasksCompleted} |\\n` +\n  `| Avg Quality Score | ${typeof avgScore === 'number' ? avgScore.toFixed(1) : avgScore}/10 |\\n` +\n  `| Highest / Lowest | ${highestScore}/10 / ${lowestScore}/10 |\\n` +\n  `| Gate Pass Rate | ${gatePassRate}% (${gatesPassed}/${totalGates}) |\\n` +\n  `| Build Success Rate | ${buildSuccessRate}% |\\n` +\n  `| LLM Traces | ${traceCount} |\\n` +\n  `| LLM Cost Today | $${typeof llmCost === 'number' ? llmCost.toFixed(2) : llmCost} |\\n` +\n  `| Total Tokens | ${totalTokens.toLocaleString()} |\\n` +\n  `| Top Model | ${topModel} |\\n`;\n\nreturn [{ json: { report, date: today } }];"
+      },
+      "id": "compile-report",
+      "name": "Compile Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [740, 360]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-webhook-router:8066/webhook/knowledge",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ source_name: 'Daily Quality Report', docs_ingested: 0, embeddings_created: 0, staleness_score: 0, processing_time: 'N/A', status: 'complete', summary: $json.report }) }}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "post-report",
+      "name": "Post Report to #general",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [980, 360]
+    },
+    {
+      "parameters": {},
+      "id": "end-node",
+      "name": "End",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1200, 360]
+    }
+  ],
+  "connections": {
+    "Daily 6 PM Schedule": {
+      "main": [
+        [
+          { "node": "Query Code Scorer", "type": "main", "index": 0 },
+          { "node": "Query Gate Engine", "type": "main", "index": 0 },
+          { "node": "Query Woodpecker", "type": "main", "index": 0 },
+          { "node": "Query Langfuse", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Query Code Scorer": {
+      "main": [[{ "node": "Compile Report", "type": "main", "index": 0 }]]
+    },
+    "Query Gate Engine": {
+      "main": [[{ "node": "Compile Report", "type": "main", "index": 0 }]]
+    },
+    "Query Woodpecker": {
+      "main": [[{ "node": "Compile Report", "type": "main", "index": 0 }]]
+    },
+    "Query Langfuse": {
+      "main": [[{ "node": "Compile Report", "type": "main", "index": 0 }]]
+    },
+    "Compile Report": {
+      "main": [[{ "node": "Post Report to #general", "type": "main", "index": 0 }]]
+    },
+    "Post Report to #general": {
+      "main": [[{ "node": "End", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": [
+    { "name": "reporting" },
+    { "name": "quality" },
+    { "name": "system-9" }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

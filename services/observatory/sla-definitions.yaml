@@ -1,0 +1,453 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# OMNI-QUANTUM-ELITE — System 5: OBSERVATORY
+# Service Level Agreement (SLA) Definitions
+# ═══════════════════════════════════════════════════════════════════════════════
+# Three tiers of service availability guarantees:
+#   - CRITICAL: 99.9% uptime (max 43 min/month downtime)
+#   - HIGH:     99.5% uptime (max 3.6 hours/month downtime)
+#   - STANDARD: 99.0% uptime (max 7.3 hours/month downtime)
+#
+# Measurement: rolling 30-day window via Prometheus up{} metric
+# Alerting:    Prometheus alert rules trigger on SLA breach
+# Reporting:   Grafana System Health dashboard tracks compliance
+# ═══════════════════════════════════════════════════════════════════════════════
+
+sla_definitions:
+  # ═══════════════════════════════════════════════════════════════
+  # CRITICAL TIER — 99.9% Uptime
+  # ═══════════════════════════════════════════════════════════════
+  # These services form the backbone of the platform. Any downtime
+  # directly impacts all dependent services and users. Requires
+  # immediate response (< 5 min acknowledgment, < 15 min mitigation).
+  critical:
+    target_uptime: 99.9
+    max_monthly_downtime_minutes: 43
+    max_monthly_downtime_hours: 0.72
+    response_time_minutes: 5
+    mitigation_time_minutes: 15
+    resolution_time_hours: 4
+    alert_channels:
+      - pagerduty
+      - mattermost-critical
+      - sms
+    escalation_policy:
+      level_1_minutes: 5
+      level_2_minutes: 15
+      level_3_minutes: 30
+    monitoring:
+      scrape_interval: 15s
+      health_check_interval: 10s
+      alert_for_duration: 1m
+    services:
+      - name: vault
+        description: HashiCorp Vault secrets management
+        port: 8200
+        health_endpoint: /v1/sys/health
+        dependencies: []
+        impact: "All services lose access to secrets, TLS certificates, and database credentials"
+
+      - name: postgresql
+        description: Primary PostgreSQL database
+        port: 5432
+        health_endpoint: null
+        dependencies: []
+        impact: "All stateful services lose data persistence"
+
+      - name: redis
+        description: Redis cache and session store
+        port: 6379
+        health_endpoint: null
+        dependencies: []
+        impact: "Session loss, cache miss storms, rate limiting failure"
+
+      - name: traefik
+        description: Traefik reverse proxy and TLS termination
+        port: 8082
+        health_endpoint: /ping
+        dependencies: []
+        impact: "All HTTP/HTTPS traffic routing fails"
+
+      - name: litellm
+        description: LiteLLM unified LLM gateway
+        port: 4000
+        health_endpoint: /health
+        dependencies:
+          - vault
+          - redis
+          - postgresql
+        impact: "All AI/LLM operations halt across the entire pipeline"
+
+      - name: gitea
+        description: Gitea source code management
+        port: 3000
+        health_endpoint: /api/v1/version
+        dependencies:
+          - postgresql
+          - redis
+        impact: "Source code access, webhooks, and CI triggers fail"
+
+      - name: minio
+        description: MinIO S3-compatible object storage
+        port: 9000
+        health_endpoint: /minio/health/live
+        dependencies: []
+        impact: "Backup storage, artifact storage, and file uploads fail"
+
+      - name: orchestrator
+        description: Pipeline task orchestrator
+        port: 8185
+        health_endpoint: /health
+        dependencies:
+          - postgresql
+          - redis
+          - litellm
+        impact: "All pipeline task scheduling and execution halts"
+
+      - name: token-infinity
+        description: Token accounting and metering service
+        port: 8186
+        health_endpoint: /health
+        dependencies:
+          - postgresql
+          - redis
+        impact: "Token usage tracking, billing accuracy, and budget enforcement fail"
+
+      - name: prometheus
+        description: Prometheus metrics collection
+        port: 9090
+        health_endpoint: /-/healthy
+        dependencies: []
+        impact: "All monitoring, alerting, and SLA tracking becomes blind"
+
+  # ═══════════════════════════════════════════════════════════════
+  # HIGH TIER — 99.5% Uptime
+  # ═══════════════════════════════════════════════════════════════
+  # These services are important for daily operations but have
+  # some tolerance for brief outages. Requires response within
+  # 15 minutes and mitigation within 1 hour.
+  high:
+    target_uptime: 99.5
+    max_monthly_downtime_minutes: 216
+    max_monthly_downtime_hours: 3.6
+    response_time_minutes: 15
+    mitigation_time_minutes: 60
+    resolution_time_hours: 8
+    alert_channels:
+      - mattermost-alerts
+      - email
+    escalation_policy:
+      level_1_minutes: 15
+      level_2_minutes: 60
+      level_3_minutes: 120
+    monitoring:
+      scrape_interval: 30s
+      health_check_interval: 30s
+      alert_for_duration: 5m
+    services:
+      - name: authentik
+        description: Authentik identity provider and SSO
+        port: 9000
+        health_endpoint: /-/health/live/
+        dependencies:
+          - postgresql
+          - redis
+        impact: "New authentication flows fail; existing sessions may persist"
+
+      - name: langfuse
+        description: Langfuse LLM observability platform
+        port: 3000
+        health_endpoint: /api/public/health
+        dependencies:
+          - postgresql
+        impact: "LLM tracing and analytics data collection stops"
+
+      - name: qdrant
+        description: Qdrant vector database
+        port: 6333
+        health_endpoint: /healthz
+        dependencies: []
+        impact: "Vector search, RAG, and semantic queries fail"
+
+      - name: ollama
+        description: Ollama local LLM inference
+        port: 11434
+        health_endpoint: /api/version
+        dependencies: []
+        impact: "Local model inference falls back to external APIs (cost increase)"
+
+      - name: code-scorer
+        description: AI code quality scoring service
+        port: 8350
+        health_endpoint: /health
+        dependencies:
+          - litellm
+          - langfuse
+        impact: "Code quality assessment stops; pipeline continues without scores"
+
+      - name: gate-engine
+        description: Quality gate decision engine
+        port: 8351
+        health_endpoint: /health
+        dependencies:
+          - postgresql
+          - code-scorer
+        impact: "Quality gates cannot make pass/fail decisions"
+
+      - name: context-compiler
+        description: Code context assembly service
+        port: 8353
+        health_endpoint: /health
+        dependencies:
+          - gitea
+          - qdrant
+        impact: "Pipeline cannot compile code context for AI review"
+
+      - name: woodpecker
+        description: Woodpecker CI/CD server
+        port: 8000
+        health_endpoint: /healthz
+        dependencies:
+          - gitea
+          - postgresql
+        impact: "CI/CD pipelines stop; builds and deployments halt"
+
+      - name: thanos-query
+        description: Thanos long-term metrics query
+        port: 9091
+        health_endpoint: /-/healthy
+        dependencies:
+          - prometheus
+          - minio
+        impact: "Long-term metric queries fail; recent data still available via Prometheus"
+
+      - name: log-pattern-detector
+        description: AI log anomaly detection
+        port: 8184
+        health_endpoint: /health
+        dependencies:
+          - loki
+          - litellm
+        impact: "Automated log anomaly detection stops"
+
+      - name: uptime-kuma
+        description: Uptime monitoring
+        port: 3001
+        health_endpoint: /api/status-page/heartbeat
+        dependencies: []
+        impact: "External uptime monitoring and status page go offline"
+
+      - name: backup-orchestrator
+        description: Backup scheduling and management
+        port: 8000
+        health_endpoint: /health
+        dependencies:
+          - postgresql
+          - minio
+          - vault
+        impact: "Scheduled backups stop; existing backups remain intact"
+
+      - name: secret-rotation
+        description: Automated secret rotation service
+        port: 8189
+        health_endpoint: /health
+        dependencies:
+          - vault
+          - postgresql
+        impact: "Automatic secret rotation stops; secrets remain valid until manual rotation"
+
+      - name: grafana
+        description: Grafana dashboards and visualization
+        port: 3000
+        health_endpoint: /api/health
+        dependencies:
+          - prometheus
+          - postgresql
+        impact: "Dashboard viewing fails; data collection continues"
+
+      - name: loki
+        description: Loki log aggregation
+        port: 3100
+        health_endpoint: /ready
+        dependencies:
+          - minio
+        impact: "Log ingestion and querying fails; logs may be lost during downtime"
+
+      - name: budget-guardian
+        description: LLM budget enforcement
+        port: 8187
+        health_endpoint: /health
+        dependencies:
+          - postgresql
+          - token-infinity
+        impact: "Budget enforcement relaxes; spending limits not enforced"
+
+  # ═══════════════════════════════════════════════════════════════
+  # STANDARD TIER — 99.0% Uptime
+  # ═══════════════════════════════════════════════════════════════
+  # These services enhance the platform but are not required for
+  # core operations. Extended outages are tolerable. Requires
+  # response within 1 hour and resolution within 24 hours.
+  standard:
+    target_uptime: 99.0
+    max_monthly_downtime_minutes: 438
+    max_monthly_downtime_hours: 7.3
+    response_time_minutes: 60
+    mitigation_time_minutes: 240
+    resolution_time_hours: 24
+    alert_channels:
+      - mattermost-general
+      - email
+    escalation_policy:
+      level_1_minutes: 60
+      level_2_minutes: 240
+      level_3_minutes: 480
+    monitoring:
+      scrape_interval: 60s
+      health_check_interval: 60s
+      alert_for_duration: 15m
+    services:
+      - name: revenue-tracker
+        description: Revenue analytics and reporting
+        port: 8188
+        health_endpoint: /health
+        dependencies:
+          - postgresql
+        impact: "Revenue reporting stops; actual revenue collection unaffected"
+
+      - name: crater
+        description: Crater invoicing platform
+        port: 8080
+        health_endpoint: /health
+        dependencies:
+          - postgresql
+        impact: "Invoice creation/sending paused; existing invoices remain accessible"
+
+      - name: twenty-crm
+        description: Twenty CRM platform
+        port: 3000
+        health_endpoint: /api/health
+        dependencies:
+          - postgresql
+          - redis
+        impact: "CRM access unavailable; customer data safe in database"
+
+      - name: superset
+        description: Apache Superset analytics
+        port: 8088
+        health_endpoint: /health
+        dependencies:
+          - postgresql
+          - redis
+        impact: "Business analytics dashboards and reports unavailable"
+
+      - name: mattermost
+        description: Mattermost team messaging
+        port: 8065
+        health_endpoint: /api/v4/system/ping
+        dependencies:
+          - postgresql
+        impact: "Team communication disrupted; alerts routed to backup channels"
+
+      - name: n8n
+        description: n8n workflow automation
+        port: 5678
+        health_endpoint: /healthz
+        dependencies:
+          - postgresql
+        impact: "Automated workflows pause; manual operations continue"
+
+      - name: wikijs
+        description: Wiki.js documentation platform
+        port: 3000
+        health_endpoint: /healthz
+        dependencies:
+          - postgresql
+        impact: "Documentation inaccessible; knowledge base offline"
+
+      - name: flowise
+        description: Flowise AI workflow builder
+        port: 3000
+        health_endpoint: /api/v1/ping
+        dependencies:
+          - postgresql
+          - qdrant
+          - litellm
+        impact: "AI workflow builder unavailable; existing deployed workflows may continue"
+
+      - name: node-exporter
+        description: Prometheus node metrics exporter
+        port: 9100
+        health_endpoint: /metrics
+        dependencies: []
+        impact: "Host-level metrics collection stops; container metrics still available"
+
+      - name: cadvisor
+        description: Container metrics exporter
+        port: 8080
+        health_endpoint: /healthz
+        dependencies: []
+        impact: "Container-level resource metrics unavailable"
+
+      - name: thanos-sidecar
+        description: Thanos metrics sidecar
+        port: 10902
+        health_endpoint: /-/healthy
+        dependencies:
+          - prometheus
+          - minio
+        impact: "Long-term metric shipping stops; Prometheus retains recent data"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# SLA MEASUREMENT AND REPORTING
+# ═══════════════════════════════════════════════════════════════════════════════
+measurement:
+  method: "Prometheus up{} metric sampled at scrape_interval"
+  window: "Rolling 30-day period"
+  calculation: "avg_over_time(up[30d]) * 100"
+  exclusions:
+    - "Scheduled maintenance windows (announced 48h in advance)"
+    - "Force majeure events (documented post-incident)"
+  reporting:
+    dashboard: "omni-system-health"
+    frequency: "Real-time with 30-day rolling calculation"
+    stakeholder_report: "Monthly SLA compliance summary"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# INCIDENT RESPONSE MATRIX
+# ═══════════════════════════════════════════════════════════════════════════════
+incident_response:
+  severity_levels:
+    sev1:
+      description: "Critical tier service down or data loss imminent"
+      response_time: "5 minutes"
+      communication: "Immediate stakeholder notification"
+      postmortem: "Required within 48 hours"
+    sev2:
+      description: "High tier service degraded or down"
+      response_time: "15 minutes"
+      communication: "Team channel notification"
+      postmortem: "Required within 1 week"
+    sev3:
+      description: "Standard tier service issue"
+      response_time: "1 hour"
+      communication: "Ticket created"
+      postmortem: "Optional, at team discretion"
+    sev4:
+      description: "Minor issue, no user impact"
+      response_time: "Next business day"
+      communication: "Ticket created"
+      postmortem: "Not required"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MAINTENANCE WINDOWS
+# ═══════════════════════════════════════════════════════════════════════════════
+maintenance:
+  scheduled:
+    preferred_window: "Sunday 02:00-06:00 UTC"
+    advance_notice_hours: 48
+    max_duration_hours: 4
+    approval_required: true
+  emergency:
+    max_duration_hours: 2
+    notification: "Immediate via all alert channels"
+    postmortem_required: true

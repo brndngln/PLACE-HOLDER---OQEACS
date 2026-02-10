@@ -1,0 +1,205 @@
+{
+  "name": "Backup Failure Recovery",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "backup-failure",
+        "responseMode": "onReceived",
+        "responseData": "allEntries"
+      },
+      "id": "trigger-backup-failure",
+      "name": "Backup Failure Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [240, 300],
+      "webhookId": "backup-failure-recovery"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nreturn [{\n  json: {\n    service: body.service || body.backup_target || 'unknown',\n    error: body.error || body.message || 'Unknown failure',\n    backupType: body.backup_type || 'full',\n    timestamp: body.timestamp || new Date().toISOString(),\n    retryEndpoint: body.retry_endpoint || 'http://omni-backup:8000/api/backup/trigger',\n    backupId: body.backup_id || ''\n  }\n}];"
+      },
+      "id": "parse-failure",
+      "name": "Parse Failure Details",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "amount": 5,
+        "unit": "minutes"
+      },
+      "id": "wait-5min",
+      "name": "Wait 5 Minutes",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Parse Failure Details').first().json.retryEndpoint }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ service: $('Parse Failure Details').first().json.service, backup_type: $('Parse Failure Details').first().json.backupType, retry: true }) }}",
+        "options": {
+          "timeout": 120000,
+          "allowUnauthorizedCerts": false
+        }
+      },
+      "id": "retry-backup",
+      "name": "Retry Backup",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [900, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst statusCode = $input.first().json.$response?.statusCode || 200;\nconst success = statusCode >= 200 && statusCode < 300 && !response.error;\nreturn [{ json: { success, statusCode, response: JSON.stringify(response).substring(0, 500) } }];"
+      },
+      "id": "check-retry-result",
+      "name": "Check Retry Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.success }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "retry-success",
+      "name": "Retry Successful?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-webhook-router:8066/webhook/backup",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ status: 'recovered', service: $('Parse Failure Details').first().json.service, message: 'Backup retry succeeded after initial failure', timestamp: new Date().toISOString() }) }}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "post-recovery",
+      "name": "Post Recovery to #alerts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1560, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-webhook-router:8066/webhook/backup",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ status: 'failed', service: $('Parse Failure Details').first().json.service, error: 'Backup retry also failed. Original error: ' + $('Parse Failure Details').first().json.error + '. Retry result: ' + $json.response, timestamp: new Date().toISOString() }) }}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "post-critical-failure",
+      "name": "CRITICAL Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1560, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-omi-bridge:9700/api/haptic",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ pattern: 'critical', message: 'Backup FAILED permanently: ' + $('Parse Failure Details').first().json.service }) }}",
+        "options": { "timeout": 5000 }
+      },
+      "id": "omi-haptic-backup",
+      "name": "Omi Haptic (Critical)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1780, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://omni-plane-web:3000/api/v1/workspaces/omni-quantum/projects/{{ $env.PLANE_PROJECT_ID }}/issues/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ name: 'BACKUP FAILURE: ' + $('Parse Failure Details').first().json.service, description_html: '<h3>Backup Failure — Manual Recovery Required</h3><p><strong>Service:</strong> ' + $('Parse Failure Details').first().json.service + '</p><p><strong>Error:</strong> ' + $('Parse Failure Details').first().json.error + '</p><p><strong>Backup Type:</strong> ' + $('Parse Failure Details').first().json.backupType + '</p><h4>Recovery Steps</h4><ol><li>Check disk space on backup target</li><li>Verify network connectivity to storage backend</li><li>Review service logs: <code>docker logs omni-backup</code></li><li>Manually trigger backup: <code>curl -X POST http://omni-backup:8000/api/backup/trigger</code></li><li>If persistent, check MinIO/S3 bucket health</li></ol>', priority: 0, state: 'triage' }) }}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "create-plane-ticket",
+      "name": "Create Plane Ticket",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [2000, 400]
+    },
+    {
+      "parameters": {},
+      "id": "end-node",
+      "name": "End",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [2200, 300]
+    }
+  ],
+  "connections": {
+    "Backup Failure Webhook": {
+      "main": [[{ "node": "Parse Failure Details", "type": "main", "index": 0 }]]
+    },
+    "Parse Failure Details": {
+      "main": [[{ "node": "Wait 5 Minutes", "type": "main", "index": 0 }]]
+    },
+    "Wait 5 Minutes": {
+      "main": [[{ "node": "Retry Backup", "type": "main", "index": 0 }]]
+    },
+    "Retry Backup": {
+      "main": [[{ "node": "Check Retry Result", "type": "main", "index": 0 }]]
+    },
+    "Check Retry Result": {
+      "main": [[{ "node": "Retry Successful?", "type": "main", "index": 0 }]]
+    },
+    "Retry Successful?": {
+      "main": [
+        [{ "node": "Post Recovery to #alerts", "type": "main", "index": 0 }],
+        [{ "node": "CRITICAL Alert", "type": "main", "index": 0 }]
+      ]
+    },
+    "Post Recovery to #alerts": {
+      "main": [[{ "node": "End", "type": "main", "index": 0 }]]
+    },
+    "CRITICAL Alert": {
+      "main": [[{ "node": "Omi Haptic (Critical)", "type": "main", "index": 0 }]]
+    },
+    "Omi Haptic (Critical)": {
+      "main": [[{ "node": "Create Plane Ticket", "type": "main", "index": 0 }]]
+    },
+    "Create Plane Ticket": {
+      "main": [[{ "node": "End", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": [
+    { "name": "backup" },
+    { "name": "recovery" },
+    { "name": "system-9" }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

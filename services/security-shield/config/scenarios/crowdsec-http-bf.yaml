@@ -1,0 +1,39 @@
+# ===========================================================================
+# CrowdSec Scenario: HTTP Brute Force on Login Endpoints
+# Omni Quantum — Security Shield
+#
+# Detects rapid login attempts against any web service login page.
+# Threshold: 10 attempts in 30 seconds → ban 4 hours
+# ===========================================================================
+
+type: leaky
+name: omni-quantum/http-login-bruteforce
+description: "Detect brute force attempts on login endpoints across all Omni Quantum services"
+filter: >-
+  evt.Meta.http_status in ['401', '403'] ||
+  (evt.Meta.http_path contains '/login' && evt.Meta.http_status == '200' && evt.Parsed.body contains 'invalid') ||
+  evt.Meta.http_path contains '/api/v3/core/tokens/' ||
+  evt.Meta.http_path contains '/user/login' ||
+  evt.Meta.http_path contains '/api/v4/users/login' ||
+  evt.Meta.http_path contains '/auth' ||
+  evt.Meta.http_path contains '/oauth/token' ||
+  evt.Meta.http_path contains '/signin'
+groupby: evt.Meta.source_ip
+capacity: 10
+leakspeed: 3s
+blackhole: 5m
+reprocess: false
+labels:
+  service: "http"
+  type: "bruteforce"
+  confidence: 3
+  spoofable: 0
+  classification:
+    - "attack.T1110"
+  label: "HTTP login brute force"
+  behavior: "http:bruteforce"
+  remediation: true
+duration: 4h
+scope:
+  type: ip
+  expression: evt.Meta.source_ip

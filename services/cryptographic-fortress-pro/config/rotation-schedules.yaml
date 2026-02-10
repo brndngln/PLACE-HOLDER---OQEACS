@@ -1,0 +1,544 @@
+# ===========================================================================
+# SYSTEM 33 — CRYPTOGRAPHIC FORTRESS PRO: Rotation Schedules
+# Omni Quantum Elite AI Coding System — Security & Identity Layer
+#
+# Complete rotation configuration for ALL 37+ services.
+# Each secret has: vault path, rotation interval, generation params,
+# service restart method, health check, and notification settings.
+# ===========================================================================
+
+# ─────────────────────────────────────────────────────────────────────────
+# Global Settings
+# ─────────────────────────────────────────────────────────────────────────
+global:
+  vault_addr: "${VAULT_ADDR:-http://omni-vault:8200}"
+  vault_mount: "secret"
+  mattermost_webhook: "${MATTERMOST_WEBHOOK_URL}"
+  mattermost_channel: "#security-alerts"
+  prometheus_pushgateway: "http://omni-prometheus:9091"
+  notification_on_success: digest    # "immediate" or "digest" (daily summary)
+  notification_on_failure: immediate
+  health_check_timeout: 30           # seconds
+  health_check_retries: 3
+  rollback_on_failure: true
+  dry_run: false
+
+# ─────────────────────────────────────────────────────────────────────────
+# HIGH SENSITIVITY — 30-day rotation
+# Database passwords, cache passwords, storage keys, critical secrets
+# ─────────────────────────────────────────────────────────────────────────
+high_sensitivity:
+  rotation_interval_days: 30
+  secrets:
+
+    # ── PostgreSQL Database Passwords ──
+    - name: postgres-main-password
+      vault_path: "database/postgres/main"
+      vault_key: "password"
+      type: password
+      length: 32
+      charset: "alphanumeric_special"
+      service: omni-postgres
+      restart_method: docker_restart
+      health_check: "pg_isready -h omni-postgres -U ${POSTGRES_USER}"
+      dependent_services:
+        - omni-authentik
+        - omni-gitea
+        - omni-mattermost
+        - omni-grafana
+        - omni-langfuse
+        - omni-n8n
+        - omni-wikijs
+        - omni-nocodb
+        - omni-plane
+        - omni-superset
+        - omni-woodpecker-server
+        - omni-litellm
+
+    - name: postgres-authentik-password
+      vault_path: "database/postgres/authentik"
+      vault_key: "password"
+      type: password
+      length: 32
+      charset: "alphanumeric_special"
+      service: omni-authentik-db
+      restart_method: docker_restart
+      health_check: "pg_isready -h omni-authentik-db -U authentik"
+      dependent_services:
+        - omni-authentik
+        - omni-authentik-worker
+
+    - name: postgres-langfuse-password
+      vault_path: "database/postgres/langfuse"
+      vault_key: "password"
+      type: password
+      length: 32
+      charset: "alphanumeric_special"
+      service: omni-langfuse
+      restart_method: env_reload
+      health_check: "curl -sf http://omni-langfuse:3000/api/public/health"
+
+    - name: postgres-gitea-password
+      vault_path: "database/postgres/gitea"
+      vault_key: "password"
+      type: password
+      length: 32
+      charset: "alphanumeric_special"
+      service: omni-gitea
+      restart_method: docker_restart
+      health_check: "curl -sf http://omni-gitea:3000/api/v1/version"
+
+    - name: postgres-mattermost-password
+      vault_path: "database/postgres/mattermost"
+      vault_key: "password"
+      type: password
+      length: 32
+      charset: "alphanumeric_special"
+      service: omni-mattermost
+      restart_method: docker_restart
+      health_check: "curl -sf http://omni-mattermost:8065/api/v4/system/ping"
+
+    - name: postgres-grafana-password
+      vault_path: "database/postgres/grafana"
+      vault_key: "password"
+      type: password
+      length: 32
+      charset: "alphanumeric_special"
+      service: omni-grafana
+      restart_method: docker_restart
+      health_check: "curl -sf http://omni-grafana:3000/api/health"
+
+    - name: postgres-n8n-password
+      vault_path: "database/postgres/n8n"
+      vault_key: "password"
+      type: password
+      length: 32
+      charset: "alphanumeric_special"
+      service: omni-n8n
+      restart_method: docker_restart
+      health_check: "curl -sf http://omni-n8n:5678/healthz"
+
+    - name: postgres-wikijs-password
+      vault_path: "database/postgres/wikijs"
+      vault_key: "password"
+      type: password
+      length: 32
+      charset: "alphanumeric_special"
+      service: omni-wikijs
+      restart_method: docker_restart
+      health_check: "curl -sf http://omni-wikijs:3000/healthz"
+
+    - name: postgres-nocodb-password
+      vault_path: "database/postgres/nocodb"
+      vault_key: "password"
+      type: password
+      length: 32
+      charset: "alphanumeric_special"
+      service: omni-nocodb
+      restart_method: docker_restart
+      health_check: "curl -sf http://omni-nocodb:8080/api/v1/health"
+
+    - name: postgres-plane-password
+      vault_path: "database/postgres/plane"
+      vault_key: "password"
+      type: password
+      length: 32
+      charset: "alphanumeric_special"
+      service: omni-plane-api
+      restart_method: docker_restart
+      health_check: "curl -sf http://omni-plane-api:8000/api/health"
+
+    - name: postgres-superset-password
+      vault_path: "database/postgres/superset"
+      vault_key: "password"
+      type: password
+      length: 32
+      charset: "alphanumeric_special"
+      service: omni-superset
+      restart_method: docker_restart
+      health_check: "curl -sf http://omni-superset:8088/health"
+
+    - name: postgres-woodpecker-password
+      vault_path: "database/postgres/woodpecker"
+      vault_key: "password"
+      type: password
+      length: 32
+      charset: "alphanumeric_special"
+      service: omni-woodpecker-server
+      restart_method: docker_restart
+      health_check: "curl -sf http://omni-woodpecker-server:8000/healthz"
+
+    - name: postgres-litellm-password
+      vault_path: "database/postgres/litellm"
+      vault_key: "password"
+      type: password
+      length: 32
+      charset: "alphanumeric_special"
+      service: omni-litellm
+      restart_method: docker_restart
+      health_check: "curl -sf http://omni-litellm:4000/health"
+
+    - name: postgres-coolify-password
+      vault_path: "database/postgres/coolify"
+      vault_key: "password"
+      type: password
+      length: 32
+      charset: "alphanumeric_special"
+      service: omni-coolify
+      restart_method: docker_restart
+      health_check: "curl -sf http://omni-coolify:8000/api/health"
+
+    - name: postgres-calcom-password
+      vault_path: "database/postgres/calcom"
+      vault_key: "password"
+      type: password
+      length: 32
+      charset: "alphanumeric_special"
+      service: omni-calcom
+      restart_method: docker_restart
+      health_check: "curl -sf http://omni-calcom:3000/api/health"
+
+    - name: postgres-uptime-kuma-password
+      vault_path: "database/postgres/uptime-kuma"
+      vault_key: "password"
+      type: password
+      length: 32
+      charset: "alphanumeric_special"
+      service: omni-uptime-kuma
+      restart_method: docker_restart
+      health_check: "curl -sf http://omni-uptime-kuma:3001/api/status-page/heartbeat"
+
+    - name: postgres-appsmith-password
+      vault_path: "database/postgres/appsmith"
+      vault_key: "password"
+      type: password
+      length: 32
+      charset: "alphanumeric_special"
+      service: omni-appsmith
+      restart_method: docker_restart
+      health_check: "curl -sf http://omni-appsmith:8080/api/v1/health"
+
+    - name: postgres-knowledge-password
+      vault_path: "database/postgres/knowledge"
+      vault_key: "password"
+      type: password
+      length: 32
+      charset: "alphanumeric_special"
+      service: omni-knowledge-ingest
+      restart_method: docker_restart
+      health_check: "curl -sf http://omni-knowledge-ingest:8000/health"
+
+    - name: postgres-flowise-password
+      vault_path: "database/postgres/flowise"
+      vault_key: "password"
+      type: password
+      length: 32
+      charset: "alphanumeric_special"
+      service: omni-flowise
+      restart_method: docker_restart
+      health_check: "curl -sf http://omni-flowise:3000"
+
+    # ── Redis Password ──
+    - name: redis-main-password
+      vault_path: "cache/redis/main"
+      vault_key: "password"
+      type: password
+      length: 48
+      charset: "alphanumeric"
+      service: omni-redis
+      restart_method: redis_config_set
+      health_check: "redis-cli -h omni-redis ping"
+      dependent_services:
+        - omni-mattermost
+        - omni-n8n
+        - omni-plane
+        - omni-semantic-cache
+
+    - name: redis-authentik-password
+      vault_path: "cache/redis/authentik"
+      vault_key: "password"
+      type: password
+      length: 48
+      charset: "alphanumeric"
+      service: omni-authentik-redis
+      restart_method: redis_config_set
+      health_check: "redis-cli -h omni-authentik-redis ping"
+      dependent_services:
+        - omni-authentik
+        - omni-authentik-worker
+
+    # ── MinIO Access Keys ──
+    - name: minio-access-keys
+      vault_path: "storage/minio"
+      vault_key: "access_key,secret_key"
+      type: access_key_pair
+      access_key_length: 20
+      secret_key_length: 40
+      charset: "alphanumeric"
+      service: omni-minio
+      restart_method: minio_rotate_credentials
+      health_check: "curl -sf http://omni-minio:9000/minio/health/live"
+      dependent_services:
+        - omni-loki
+        - omni-thanos-store
+        - omni-backup-restic
+
+    # ── Authentik Secret Key ──
+    - name: authentik-secret-key
+      vault_path: "identity/authentik"
+      vault_key: "secret_key"
+      type: hex_token
+      length: 64
+      service: omni-authentik
+      restart_method: docker_restart
+      health_check: "curl -sf http://omni-authentik:9000/-/health/live/"
+      dependent_services:
+        - omni-authentik-worker
+
+# ─────────────────────────────────────────────────────────────────────────
+# MEDIUM SENSITIVITY — 90-day rotation
+# API tokens, webhook secrets, OAuth client secrets
+# ─────────────────────────────────────────────────────────────────────────
+medium_sensitivity:
+  rotation_interval_days: 90
+  secrets:
+
+    - name: gitea-admin-password
+      vault_path: "services/gitea"
+      vault_key: "admin_password"
+      type: password
+      length: 24
+      charset: "alphanumeric_special"
+      service: omni-gitea
+      restart_method: api_update
+      health_check: "curl -sf http://omni-gitea:3000/api/v1/version"
+
+    - name: gitea-webhook-secret
+      vault_path: "services/gitea"
+      vault_key: "webhook_secret"
+      type: hex_token
+      length: 32
+      service: omni-gitea
+      restart_method: none
+      health_check: "curl -sf http://omni-gitea:3000/api/v1/version"
+
+    - name: mattermost-bot-tokens
+      vault_path: "services/mattermost"
+      vault_key: "bot_token"
+      type: token
+      length: 48
+      charset: "alphanumeric"
+      service: omni-mattermost
+      restart_method: api_update
+      health_check: "curl -sf http://omni-mattermost:8065/api/v4/system/ping"
+
+    - name: litellm-master-key
+      vault_path: "ai/litellm"
+      vault_key: "master_key"
+      type: token
+      length: 48
+      charset: "alphanumeric"
+      service: omni-litellm
+      restart_method: docker_restart
+      health_check: "curl -sf http://omni-litellm:4000/health"
+
+    - name: litellm-openai-key
+      vault_path: "ai/litellm/providers"
+      vault_key: "openai_api_key"
+      type: external
+      rotation_method: manual
+      alert_before_expiry_days: 14
+      service: omni-litellm
+
+    - name: litellm-anthropic-key
+      vault_path: "ai/litellm/providers"
+      vault_key: "anthropic_api_key"
+      type: external
+      rotation_method: manual
+      alert_before_expiry_days: 14
+      service: omni-litellm
+
+    - name: n8n-encryption-key
+      vault_path: "services/n8n"
+      vault_key: "encryption_key"
+      type: hex_token
+      length: 32
+      service: omni-n8n
+      restart_method: docker_restart
+      health_check: "curl -sf http://omni-n8n:5678/healthz"
+
+    - name: woodpecker-agent-secret
+      vault_path: "services/woodpecker"
+      vault_key: "agent_secret"
+      type: hex_token
+      length: 32
+      service: omni-woodpecker-server
+      restart_method: docker_restart
+      health_check: "curl -sf http://omni-woodpecker-server:8000/healthz"
+      dependent_services:
+        - omni-woodpecker-agent
+
+    - name: crowdsec-bouncer-api-key
+      vault_path: "crowdsec/bouncer"
+      vault_key: "api_key"
+      type: token
+      length: 48
+      charset: "alphanumeric"
+      service: omni-crowdsec
+      restart_method: crowdsec_bouncer_rotate
+      health_check: "docker exec omni-crowdsec cscli version"
+      dependent_services:
+        - omni-crowdsec-bouncer
+
+    - name: langfuse-project-keys
+      vault_path: "langfuse/projects/omni-pipeline"
+      vault_key: "public_key,secret_key"
+      type: external
+      rotation_method: langfuse_api
+      service: omni-langfuse
+      health_check: "curl -sf http://omni-langfuse:3000/api/public/health"
+
+    # ── All OAuth Client Secrets (generated by Authentik) ──
+    - name: oauth-client-secrets
+      vault_path: "authentik/clients/*"
+      vault_key: "client_secret"
+      type: oauth_secret
+      length: 64
+      charset: "alphanumeric"
+      service: omni-authentik
+      restart_method: authentik_provider_update
+      health_check: "curl -sf http://omni-authentik:9000/-/health/live/"
+      note: "Rotated via Authentik API — updates provider + stores in Vault"
+
+# ─────────────────────────────────────────────────────────────────────────
+# LOW SENSITIVITY — 180-day rotation
+# Admin passwords for web UIs, non-critical API keys
+# ─────────────────────────────────────────────────────────────────────────
+low_sensitivity:
+  rotation_interval_days: 180
+  secrets:
+
+    - name: grafana-admin-password
+      vault_path: "services/grafana"
+      vault_key: "admin_password"
+      type: password
+      length: 20
+      charset: "alphanumeric_special"
+      service: omni-grafana
+      restart_method: api_update
+      health_check: "curl -sf http://omni-grafana:3000/api/health"
+
+    - name: portainer-admin-password
+      vault_path: "services/portainer"
+      vault_key: "admin_password"
+      type: password
+      length: 20
+      charset: "alphanumeric_special"
+      service: omni-portainer
+      restart_method: api_update
+      health_check: "curl -sf http://omni-portainer:9000/api/system/status"
+
+    - name: superset-secret-key
+      vault_path: "services/superset"
+      vault_key: "secret_key"
+      type: hex_token
+      length: 48
+      service: omni-superset
+      restart_method: docker_restart
+      health_check: "curl -sf http://omni-superset:8088/health"
+
+    - name: wikijs-admin-password
+      vault_path: "services/wikijs"
+      vault_key: "admin_password"
+      type: password
+      length: 20
+      charset: "alphanumeric_special"
+      service: omni-wikijs
+      restart_method: api_update
+      health_check: "curl -sf http://omni-wikijs:3000/healthz"
+
+    - name: calcom-encryption-key
+      vault_path: "services/calcom"
+      vault_key: "encryption_key"
+      type: hex_token
+      length: 32
+      service: omni-calcom
+      restart_method: docker_restart
+      health_check: "curl -sf http://omni-calcom:3000/api/health"
+
+    - name: flowise-api-key
+      vault_path: "services/flowise"
+      vault_key: "api_key"
+      type: token
+      length: 32
+      charset: "alphanumeric"
+      service: omni-flowise
+      restart_method: docker_restart
+      health_check: "curl -sf http://omni-flowise:3000"
+
+# ─────────────────────────────────────────────────────────────────────────
+# TLS CERTIFICATES — auto-renew 30 days before expiry
+# ─────────────────────────────────────────────────────────────────────────
+tls_certificates:
+  check_interval_hours: 12
+  renew_before_expiry_days: 30
+  certificates:
+
+    - name: mtls-inter-service
+      source: vault_pki
+      vault_pki_path: "pki_int/issue/omni-quantum"
+      common_name: "*.omni-quantum.internal"
+      ttl: "720h"
+      services:
+        - omni-traefik
+        - omni-vault
+        - omni-postgres
+      health_check: "openssl s_client -connect omni-traefik:443 -servername omni-quantum.internal < /dev/null 2>/dev/null | openssl x509 -noout -checkend 2592000"
+
+    - name: letsencrypt-public
+      source: traefik_acme
+      monitor_only: true
+      domains:
+        - "*.omni-quantum.internal"
+      alert_before_expiry_days: 14
+      note: "Managed by Traefik ACME — we only monitor expiry"
+
+    - name: vault-server-cert
+      source: vault_pki
+      vault_pki_path: "pki_int/issue/omni-quantum"
+      common_name: "omni-vault.omni-quantum.internal"
+      ttl: "720h"
+      services:
+        - omni-vault
+      health_check: "curl -sf http://omni-vault:8200/v1/sys/health"
+
+# ─────────────────────────────────────────────────────────────────────────
+# NEVER ROTATE — monitor only
+# ─────────────────────────────────────────────────────────────────────────
+never_rotate:
+  secrets:
+
+    - name: vault-unseal-keys
+      vault_path: "sys/unseal-keys"
+      monitor: true
+      alert_if_accessed: true
+      note: "Vault unseal keys require manual ceremony with key holders. Never auto-rotate."
+
+    - name: restic-repository-password
+      vault_path: "backup/restic"
+      vault_key: "repository_password"
+      monitor: true
+      alert_if_accessed: true
+      note: "Changing this would invalidate ALL backup archives. Never auto-rotate."
+
+    - name: vault-root-token
+      vault_path: "sys/root-token"
+      monitor: true
+      alert_if_accessed: true
+      note: "Root token should be revoked after initial setup. Monitor for unexpected use."
+
+    - name: age-encryption-key
+      vault_path: "sops/age-key"
+      vault_key: "private_key"
+      monitor: true
+      note: "SOPS encryption key — changing would require re-encrypting all SOPS-managed files."

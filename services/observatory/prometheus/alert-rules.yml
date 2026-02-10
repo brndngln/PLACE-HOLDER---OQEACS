@@ -1,0 +1,795 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# OMNI-QUANTUM-ELITE — System 5: OBSERVATORY
+# Prometheus Alert Rules
+# ═══════════════════════════════════════════════════════════════════════════════
+# Alert categories:
+#   - Infrastructure: CPU, memory, disk, container health
+#   - Application: HTTP errors, latency, health checks
+#   - Pipeline: Gate failures, queue depth, quality scores
+#   - Security: Vault, certificates, authentication, rotation
+#   - Backup: Job status, schedule compliance, restore verification
+#   - Financial: Invoice status, LLM budget, cost anomalies
+#   - Business: SLA compliance across tiers
+# ═══════════════════════════════════════════════════════════════════════════════
+
+groups:
+  # ═══════════════════════════════════════════════════════════════
+  # INFRASTRUCTURE ALERTS
+  # ═══════════════════════════════════════════════════════════════
+  - name: infrastructure_alerts
+    interval: 30s
+    rules:
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          tier: infrastructure
+          team: platform
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is {{ printf \"%.1f\" $value }}% for more than 5 minutes."
+          runbook_url: "https://wiki.omni-quantum.internal/runbooks/high-cpu"
+          dashboard_url: "https://grafana.omni-quantum.internal/d/infra-overview"
+
+      - alert: CriticalCPUUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 95
+        for: 2m
+        labels:
+          severity: critical
+          tier: infrastructure
+          team: platform
+        annotations:
+          summary: "Critical CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is {{ printf \"%.1f\" $value }}% for more than 2 minutes. Immediate action required."
+          runbook_url: "https://wiki.omni-quantum.internal/runbooks/critical-cpu"
+
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          tier: infrastructure
+          team: platform
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is {{ printf \"%.1f\" $value }}% for more than 5 minutes."
+          runbook_url: "https://wiki.omni-quantum.internal/runbooks/high-memory"
+
+      - alert: CriticalMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 95
+        for: 2m
+        labels:
+          severity: critical
+          tier: infrastructure
+          team: platform
+        annotations:
+          summary: "Critical memory usage on {{ $labels.instance }}"
+          description: "Memory usage is {{ printf \"%.1f\" $value }}%. OOM kill risk is imminent."
+
+      - alert: HighDiskUsage
+        expr: (1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          tier: infrastructure
+          team: platform
+        annotations:
+          summary: "High disk usage on {{ $labels.instance }}"
+          description: "Disk usage on {{ $labels.mountpoint }} is {{ printf \"%.1f\" $value }}%."
+          runbook_url: "https://wiki.omni-quantum.internal/runbooks/high-disk"
+
+      - alert: CriticalDiskUsage
+        expr: (1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) * 100 > 90
+        for: 2m
+        labels:
+          severity: critical
+          tier: infrastructure
+          team: platform
+        annotations:
+          summary: "Critical disk usage on {{ $labels.instance }}"
+          description: "Disk usage on {{ $labels.mountpoint }} is {{ printf \"%.1f\" $value }}%. Disk full imminent."
+
+      - alert: DiskWillFillIn24Hours
+        expr: predict_linear(node_filesystem_avail_bytes{mountpoint="/"}[6h], 24 * 3600) < 0
+        for: 30m
+        labels:
+          severity: warning
+          tier: infrastructure
+          team: platform
+        annotations:
+          summary: "Disk on {{ $labels.instance }} predicted to fill within 24 hours"
+          description: "Based on current growth rate, disk {{ $labels.mountpoint }} will be full within 24 hours."
+
+      - alert: ContainerRestarting
+        expr: increase(kube_pod_container_status_restarts_total[15m]) > 3
+        for: 0m
+        labels:
+          severity: warning
+          tier: infrastructure
+          team: platform
+        annotations:
+          summary: "Container {{ $labels.container }} restarting frequently"
+          description: "Container {{ $labels.container }} in pod {{ $labels.pod }} has restarted {{ printf \"%.0f\" $value }} times in the last 15 minutes."
+
+      - alert: CriticalContainerDown
+        expr: up{omni_tier="critical"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          tier: infrastructure
+          team: platform
+          escalate: "true"
+        annotations:
+          summary: "Critical service {{ $labels.omni_service }} is DOWN"
+          description: "Critical-tier service {{ $labels.omni_service }} ({{ $labels.instance }}) has been unreachable for more than 1 minute."
+          runbook_url: "https://wiki.omni-quantum.internal/runbooks/service-down"
+
+      - alert: HighTierContainerDown
+        expr: up{omni_tier="high"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          tier: infrastructure
+          team: platform
+        annotations:
+          summary: "High-tier service {{ $labels.omni_service }} is DOWN"
+          description: "High-tier service {{ $labels.omni_service }} ({{ $labels.instance }}) has been unreachable for more than 5 minutes."
+
+      - alert: StandardContainerDown
+        expr: up{omni_tier="standard"} == 0
+        for: 15m
+        labels:
+          severity: info
+          tier: infrastructure
+          team: platform
+        annotations:
+          summary: "Standard-tier service {{ $labels.omni_service }} is DOWN"
+          description: "Standard-tier service {{ $labels.omni_service }} ({{ $labels.instance }}) has been unreachable for more than 15 minutes."
+
+      - alert: HighNetworkTraffic
+        expr: rate(node_network_receive_bytes_total{device!="lo"}[5m]) > 100 * 1024 * 1024
+        for: 10m
+        labels:
+          severity: warning
+          tier: infrastructure
+          team: platform
+        annotations:
+          summary: "High network receive traffic on {{ $labels.instance }}"
+          description: "Network receive rate on {{ $labels.device }} is {{ humanize $value }}/s."
+
+      - alert: PostgreSQLConnectionsHigh
+        expr: pg_stat_activity_count > 100
+        for: 5m
+        labels:
+          severity: warning
+          tier: infrastructure
+          team: platform
+        annotations:
+          summary: "High PostgreSQL connection count"
+          description: "PostgreSQL active connections: {{ $value }}. Maximum is typically 200."
+
+      - alert: RedisMemoryHigh
+        expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          tier: infrastructure
+          team: platform
+        annotations:
+          summary: "Redis memory usage is high"
+          description: "Redis memory usage is {{ printf \"%.1f\" $value }}% of max configured memory."
+
+  # ═══════════════════════════════════════════════════════════════
+  # APPLICATION ALERTS
+  # ═══════════════════════════════════════════════════════════════
+  - name: application_alerts
+    interval: 30s
+    rules:
+      - alert: HighHTTP5xxRate
+        expr: |
+          (
+            sum by(omni_service) (rate(http_requests_total{status=~"5.."}[5m]))
+            /
+            sum by(omni_service) (rate(http_requests_total[5m]))
+          ) * 100 > 5
+        for: 5m
+        labels:
+          severity: warning
+          tier: application
+          team: backend
+        annotations:
+          summary: "High 5xx error rate for {{ $labels.omni_service }}"
+          description: "Service {{ $labels.omni_service }} has a {{ printf \"%.1f\" $value }}% 5xx error rate over the last 5 minutes."
+          runbook_url: "https://wiki.omni-quantum.internal/runbooks/high-error-rate"
+
+      - alert: CriticalHTTP5xxRate
+        expr: |
+          (
+            sum by(omni_service) (rate(http_requests_total{status=~"5.."}[5m]))
+            /
+            sum by(omni_service) (rate(http_requests_total[5m]))
+          ) * 100 > 20
+        for: 2m
+        labels:
+          severity: critical
+          tier: application
+          team: backend
+          escalate: "true"
+        annotations:
+          summary: "Critical 5xx error rate for {{ $labels.omni_service }}"
+          description: "Service {{ $labels.omni_service }} has a {{ printf \"%.1f\" $value }}% 5xx error rate. Service may be failing."
+
+      - alert: HighLatencyP95
+        expr: histogram_quantile(0.95, sum by(le, omni_service) (rate(http_request_duration_seconds_bucket[5m]))) > 2
+        for: 5m
+        labels:
+          severity: warning
+          tier: application
+          team: backend
+        annotations:
+          summary: "High p95 latency for {{ $labels.omni_service }}"
+          description: "95th percentile latency for {{ $labels.omni_service }} is {{ printf \"%.2f\" $value }}s (threshold: 2s)."
+
+      - alert: CriticalLatencyP99
+        expr: histogram_quantile(0.99, sum by(le, omni_service) (rate(http_request_duration_seconds_bucket[5m]))) > 5
+        for: 5m
+        labels:
+          severity: critical
+          tier: application
+          team: backend
+        annotations:
+          summary: "Critical p99 latency for {{ $labels.omni_service }}"
+          description: "99th percentile latency for {{ $labels.omni_service }} is {{ printf \"%.2f\" $value }}s (threshold: 5s)."
+
+      - alert: HealthCheckFailing
+        expr: probe_success == 0
+        for: 30s
+        labels:
+          severity: critical
+          tier: application
+          team: platform
+        annotations:
+          summary: "Health check failing for {{ $labels.instance }}"
+          description: "Health check probe for {{ $labels.instance }} has been failing for more than 30 seconds."
+
+      - alert: SlowHealthCheck
+        expr: probe_duration_seconds > 5
+        for: 2m
+        labels:
+          severity: warning
+          tier: application
+          team: platform
+        annotations:
+          summary: "Slow health check for {{ $labels.instance }}"
+          description: "Health check probe for {{ $labels.instance }} is taking {{ printf \"%.2f\" $value }}s (threshold: 5s)."
+
+      - alert: HighRequestRate
+        expr: sum by(omni_service) (rate(http_requests_total[5m])) > 1000
+        for: 10m
+        labels:
+          severity: info
+          tier: application
+          team: backend
+        annotations:
+          summary: "Unusually high request rate for {{ $labels.omni_service }}"
+          description: "Request rate for {{ $labels.omni_service }} is {{ printf \"%.0f\" $value }} req/s."
+
+  # ═══════════════════════════════════════════════════════════════
+  # PIPELINE ALERTS
+  # ═══════════════════════════════════════════════════════════════
+  - name: pipeline_alerts
+    interval: 30s
+    rules:
+      - alert: GateFailRateHigh
+        expr: |
+          (
+            sum(rate(omni_gate_decisions_total{decision="fail"}[30m]))
+            /
+            sum(rate(omni_gate_decisions_total[30m]))
+          ) * 100 > 20
+        for: 10m
+        labels:
+          severity: warning
+          tier: pipeline
+          team: ai-platform
+        annotations:
+          summary: "Gate failure rate is above 20%"
+          description: "Quality gate failure rate is {{ printf \"%.1f\" $value }}% over the last 30 minutes. Code quality may be degrading."
+          runbook_url: "https://wiki.omni-quantum.internal/runbooks/gate-failures"
+
+      - alert: GateFailRateCritical
+        expr: |
+          (
+            sum(rate(omni_gate_decisions_total{decision="fail"}[15m]))
+            /
+            sum(rate(omni_gate_decisions_total[15m]))
+          ) * 100 > 50
+        for: 5m
+        labels:
+          severity: critical
+          tier: pipeline
+          team: ai-platform
+        annotations:
+          summary: "Gate failure rate is critically high (>50%)"
+          description: "Quality gate failure rate is {{ printf \"%.1f\" $value }}%. Pipeline may be broken."
+
+      - alert: PipelineQueueBacklog
+        expr: omni_pipeline_queue_depth > 10
+        for: 10m
+        labels:
+          severity: warning
+          tier: pipeline
+          team: ai-platform
+        annotations:
+          summary: "Pipeline queue backlog detected"
+          description: "Pipeline queue depth is {{ printf \"%.0f\" $value }} items. Processing may be stalled."
+
+      - alert: PipelineQueueCritical
+        expr: omni_pipeline_queue_depth > 50
+        for: 5m
+        labels:
+          severity: critical
+          tier: pipeline
+          team: ai-platform
+        annotations:
+          summary: "Critical pipeline queue backlog"
+          description: "Pipeline queue depth is {{ printf \"%.0f\" $value }} items. Immediate investigation required."
+
+      - alert: LowQualityScore24h
+        expr: avg_over_time(omni_code_quality_score[24h]) < 7
+        for: 1h
+        labels:
+          severity: warning
+          tier: pipeline
+          team: ai-platform
+        annotations:
+          summary: "Average code quality score below 7.0 over 24 hours"
+          description: "Rolling 24h average quality score is {{ printf \"%.2f\" $value }}. Review scoring criteria and model performance."
+
+      - alert: PipelineStageTimeout
+        expr: omni_pipeline_stage_duration_seconds > 300
+        for: 5m
+        labels:
+          severity: warning
+          tier: pipeline
+          team: ai-platform
+        annotations:
+          summary: "Pipeline stage {{ $labels.stage }} is timing out"
+          description: "Stage {{ $labels.stage }} has been running for {{ printf \"%.0f\" $value }}s (threshold: 300s)."
+
+      - alert: PipelineThroughputDrop
+        expr: |
+          sum(rate(omni_pipeline_tasks_completed_total[1h]))
+          <
+          sum(rate(omni_pipeline_tasks_completed_total[24h])) * 0.5
+        for: 30m
+        labels:
+          severity: warning
+          tier: pipeline
+          team: ai-platform
+        annotations:
+          summary: "Pipeline throughput dropped by more than 50%"
+          description: "Current throughput is significantly lower than the 24h average."
+
+      - alert: ContextCompilerErrors
+        expr: rate(omni_context_compiler_errors_total[10m]) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          tier: pipeline
+          team: ai-platform
+        annotations:
+          summary: "Context compiler errors detected"
+          description: "Context compiler error rate is {{ printf \"%.2f\" $value }}/s."
+
+      - alert: WoodpeckerBuildFailures
+        expr: |
+          (
+            sum(rate(woodpecker_build_total{status="failure"}[1h]))
+            /
+            sum(rate(woodpecker_build_total[1h]))
+          ) * 100 > 30
+        for: 30m
+        labels:
+          severity: warning
+          tier: pipeline
+          team: ai-platform
+        annotations:
+          summary: "High CI/CD build failure rate"
+          description: "Build failure rate is {{ printf \"%.1f\" $value }}% over the last hour."
+
+  # ═══════════════════════════════════════════════════════════════
+  # SECURITY ALERTS
+  # ═══════════════════════════════════════════════════════════════
+  - name: security_alerts
+    interval: 15s
+    rules:
+      - alert: VaultSealed
+        expr: vault_core_unsealed == 0
+        for: 0m
+        labels:
+          severity: critical
+          tier: security
+          team: security
+          escalate: "true"
+        annotations:
+          summary: "Vault is SEALED"
+          description: "HashiCorp Vault is sealed and cannot serve secrets. All dependent services are affected. Immediate unseal required."
+          runbook_url: "https://wiki.omni-quantum.internal/runbooks/vault-sealed"
+
+      - alert: VaultLeadershipLost
+        expr: vault_core_active == 0
+        for: 1m
+        labels:
+          severity: critical
+          tier: security
+          team: security
+        annotations:
+          summary: "Vault has no active leader"
+          description: "Vault cluster has no active leader node. Failover may be in progress."
+
+      - alert: CertificateExpiringCritical
+        expr: (probe_ssl_earliest_cert_expiry - time()) / 86400 < 7
+        for: 0m
+        labels:
+          severity: critical
+          tier: security
+          team: security
+          escalate: "true"
+        annotations:
+          summary: "TLS certificate expiring in < 7 days for {{ $labels.instance }}"
+          description: "Certificate for {{ $labels.instance }} expires in {{ printf \"%.1f\" $value }} days."
+          runbook_url: "https://wiki.omni-quantum.internal/runbooks/cert-renewal"
+
+      - alert: CertificateExpiringWarning
+        expr: (probe_ssl_earliest_cert_expiry - time()) / 86400 < 30
+        for: 0m
+        labels:
+          severity: warning
+          tier: security
+          team: security
+        annotations:
+          summary: "TLS certificate expiring in < 30 days for {{ $labels.instance }}"
+          description: "Certificate for {{ $labels.instance }} expires in {{ printf \"%.1f\" $value }} days."
+
+      - alert: HighAuthFailureRate
+        expr: sum by(omni_service) (rate(omni_auth_failures_total[5m])) > 10
+        for: 5m
+        labels:
+          severity: warning
+          tier: security
+          team: security
+        annotations:
+          summary: "High authentication failure rate for {{ $labels.omni_service }}"
+          description: "Auth failure rate is {{ printf \"%.1f\" $value }}/s for {{ $labels.omni_service }}. Possible brute-force attack."
+          runbook_url: "https://wiki.omni-quantum.internal/runbooks/auth-failures"
+
+      - alert: CriticalAuthFailureRate
+        expr: sum by(omni_service) (rate(omni_auth_failures_total[5m])) > 50
+        for: 2m
+        labels:
+          severity: critical
+          tier: security
+          team: security
+          escalate: "true"
+        annotations:
+          summary: "Critical authentication failure rate for {{ $labels.omni_service }}"
+          description: "Auth failure rate is {{ printf \"%.1f\" $value }}/s. Active attack likely."
+
+      - alert: SecretRotationOverdue
+        expr: omni_secret_rotation_age_seconds > omni_secret_rotation_max_age_seconds
+        for: 0m
+        labels:
+          severity: warning
+          tier: security
+          team: security
+        annotations:
+          summary: "Secret rotation overdue for {{ $labels.secret_name }}"
+          description: "Secret {{ $labels.secret_name }} has exceeded its maximum rotation age. Current age: {{ printf \"%.0f\" $value }}s."
+          runbook_url: "https://wiki.omni-quantum.internal/runbooks/secret-rotation"
+
+      - alert: SecretRotationCriticallyOverdue
+        expr: omni_secret_rotation_age_seconds > omni_secret_rotation_max_age_seconds * 2
+        for: 0m
+        labels:
+          severity: critical
+          tier: security
+          team: security
+          escalate: "true"
+        annotations:
+          summary: "Secret rotation critically overdue for {{ $labels.secret_name }}"
+          description: "Secret {{ $labels.secret_name }} is more than 2x past its rotation deadline."
+
+      - alert: SecretRotationFailed
+        expr: omni_secret_rotation_last_status != 1
+        for: 5m
+        labels:
+          severity: critical
+          tier: security
+          team: security
+        annotations:
+          summary: "Secret rotation failed for {{ $labels.secret_name }}"
+          description: "The last rotation attempt for {{ $labels.secret_name }} did not succeed."
+
+      - alert: AuthentikDown
+        expr: up{omni_service="authentik"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          tier: security
+          team: security
+          escalate: "true"
+        annotations:
+          summary: "Authentik identity provider is DOWN"
+          description: "Authentik SSO is unreachable. All authentication flows are affected."
+
+  # ═══════════════════════════════════════════════════════════════
+  # BACKUP ALERTS
+  # ═══════════════════════════════════════════════════════════════
+  - name: backup_alerts
+    interval: 60s
+    rules:
+      - alert: BackupJobFailed
+        expr: omni_backup_last_status{} != 1
+        for: 0m
+        labels:
+          severity: critical
+          tier: backup
+          team: platform
+        annotations:
+          summary: "Backup job failed for {{ $labels.backup_target }}"
+          description: "The most recent backup for {{ $labels.backup_target }} did not complete successfully."
+          runbook_url: "https://wiki.omni-quantum.internal/runbooks/backup-failure"
+
+      - alert: BackupOverdue
+        expr: (time() - omni_backup_last_success_timestamp_seconds) > (omni_backup_schedule_interval_seconds * 1.5)
+        for: 0m
+        labels:
+          severity: warning
+          tier: backup
+          team: platform
+        annotations:
+          summary: "Backup overdue for {{ $labels.backup_target }}"
+          description: "Last successful backup for {{ $labels.backup_target }} was {{ humanizeDuration $value }} ago."
+
+      - alert: BackupCriticallyOverdue
+        expr: (time() - omni_backup_last_success_timestamp_seconds) > (omni_backup_schedule_interval_seconds * 3)
+        for: 0m
+        labels:
+          severity: critical
+          tier: backup
+          team: platform
+          escalate: "true"
+        annotations:
+          summary: "Backup critically overdue for {{ $labels.backup_target }}"
+          description: "Last successful backup for {{ $labels.backup_target }} was {{ humanizeDuration $value }} ago. Data loss risk is elevated."
+
+      - alert: BackupRestoreVerifyFailed
+        expr: omni_backup_restore_verify_status != 1
+        for: 0m
+        labels:
+          severity: critical
+          tier: backup
+          team: platform
+          escalate: "true"
+        annotations:
+          summary: "Backup restore verification failed for {{ $labels.backup_target }}"
+          description: "Restore verification for {{ $labels.backup_target }} failed. Backup integrity cannot be confirmed."
+          runbook_url: "https://wiki.omni-quantum.internal/runbooks/backup-verify"
+
+      - alert: BackupSizeShrunk
+        expr: |
+          omni_backup_size_bytes
+          <
+          omni_backup_size_bytes offset 1d * 0.5
+        for: 0m
+        labels:
+          severity: warning
+          tier: backup
+          team: platform
+        annotations:
+          summary: "Backup size decreased significantly for {{ $labels.backup_target }}"
+          description: "Backup for {{ $labels.backup_target }} is less than 50% of yesterday's size. Possible data loss or misconfiguration."
+
+      - alert: BackupStorageHigh
+        expr: omni_backup_storage_used_bytes / omni_backup_storage_total_bytes * 100 > 80
+        for: 0m
+        labels:
+          severity: warning
+          tier: backup
+          team: platform
+        annotations:
+          summary: "Backup storage usage is high"
+          description: "Backup storage usage is {{ printf \"%.1f\" $value }}%. Consider pruning old backups or expanding storage."
+
+  # ═══════════════════════════════════════════════════════════════
+  # FINANCIAL ALERTS
+  # ═══════════════════════════════════════════════════════════════
+  - name: financial_alerts
+    interval: 60s
+    rules:
+      - alert: InvoiceOverdue7Days
+        expr: omni_invoice_overdue_days > 7
+        for: 0m
+        labels:
+          severity: warning
+          tier: financial
+          team: finance
+        annotations:
+          summary: "Invoice {{ $labels.invoice_id }} overdue by more than 7 days"
+          description: "Invoice {{ $labels.invoice_id }} for client {{ $labels.client_name }} is {{ printf \"%.0f\" $value }} days overdue."
+
+      - alert: InvoiceOverdue30Days
+        expr: omni_invoice_overdue_days > 30
+        for: 0m
+        labels:
+          severity: critical
+          tier: financial
+          team: finance
+          escalate: "true"
+        annotations:
+          summary: "Invoice {{ $labels.invoice_id }} overdue by more than 30 days"
+          description: "Invoice {{ $labels.invoice_id }} for client {{ $labels.client_name }} is {{ printf \"%.0f\" $value }} days overdue. Escalation required."
+
+      - alert: LLMBudgetExceeded
+        expr: omni_llm_cost_current_month_usd > omni_llm_budget_monthly_usd
+        for: 0m
+        labels:
+          severity: critical
+          tier: financial
+          team: finance
+          escalate: "true"
+        annotations:
+          summary: "Monthly LLM budget has been EXCEEDED"
+          description: "Current month LLM spend is ${{ printf \"%.2f\" $value }} which exceeds the allocated budget."
+          runbook_url: "https://wiki.omni-quantum.internal/runbooks/llm-budget"
+
+      - alert: LLMBudget80Percent
+        expr: omni_llm_cost_current_month_usd > omni_llm_budget_monthly_usd * 0.8
+        for: 0m
+        labels:
+          severity: warning
+          tier: financial
+          team: finance
+        annotations:
+          summary: "LLM budget at 80% for the current month"
+          description: "Current month LLM spend is ${{ printf \"%.2f\" $value }}, which is over 80% of the monthly budget."
+
+      - alert: LLMCostSpike
+        expr: |
+          sum(rate(omni_llm_cost_usd_total[1h]))
+          >
+          sum(rate(omni_llm_cost_usd_total[24h])) * 3
+        for: 30m
+        labels:
+          severity: warning
+          tier: financial
+          team: finance
+        annotations:
+          summary: "LLM cost spike detected"
+          description: "Current hourly LLM cost rate is 3x the 24h average. Possible runaway process or abuse."
+
+      - alert: RevenueDropped
+        expr: |
+          sum(omni_revenue_daily_usd)
+          <
+          sum(omni_revenue_daily_usd offset 7d) * 0.5
+        for: 0m
+        labels:
+          severity: warning
+          tier: financial
+          team: finance
+        annotations:
+          summary: "Daily revenue dropped more than 50% compared to last week"
+          description: "Today's revenue is significantly lower than the same day last week."
+
+      - alert: TokenAccountingDrift
+        expr: abs(omni_token_accounting_drift_percent) > 5
+        for: 10m
+        labels:
+          severity: warning
+          tier: financial
+          team: finance
+        annotations:
+          summary: "Token accounting drift detected"
+          description: "Token accounting shows a {{ printf \"%.1f\" $value }}% drift between tracked and actual usage."
+
+  # ═══════════════════════════════════════════════════════════════
+  # BUSINESS SLA ALERTS
+  # ═══════════════════════════════════════════════════════════════
+  - name: business_sla_alerts
+    interval: 60s
+    rules:
+      - alert: CriticalServiceSLABreach
+        expr: |
+          (
+            1 - (
+              sum by(omni_service) (increase(omni_service_downtime_seconds_total{omni_tier="critical"}[30d]))
+              /
+              (30 * 24 * 3600)
+            )
+          ) * 100 < 99.9
+        for: 0m
+        labels:
+          severity: critical
+          tier: business
+          team: platform
+          escalate: "true"
+        annotations:
+          summary: "Critical-tier SLA breach for {{ $labels.omni_service }}"
+          description: "Service {{ $labels.omni_service }} rolling 30-day uptime is {{ printf \"%.3f\" $value }}%, which is below the 99.9% SLA target."
+          runbook_url: "https://wiki.omni-quantum.internal/runbooks/sla-breach"
+
+      - alert: HighTierServiceSLABreach
+        expr: |
+          (
+            1 - (
+              sum by(omni_service) (increase(omni_service_downtime_seconds_total{omni_tier="high"}[30d]))
+              /
+              (30 * 24 * 3600)
+            )
+          ) * 100 < 99.5
+        for: 0m
+        labels:
+          severity: warning
+          tier: business
+          team: platform
+        annotations:
+          summary: "High-tier SLA breach for {{ $labels.omni_service }}"
+          description: "Service {{ $labels.omni_service }} rolling 30-day uptime is {{ printf \"%.3f\" $value }}%, which is below the 99.5% SLA target."
+
+      - alert: StandardTierServiceSLABreach
+        expr: |
+          (
+            1 - (
+              sum by(omni_service) (increase(omni_service_downtime_seconds_total{omni_tier="standard"}[30d]))
+              /
+              (30 * 24 * 3600)
+            )
+          ) * 100 < 99.0
+        for: 0m
+        labels:
+          severity: info
+          tier: business
+          team: platform
+        annotations:
+          summary: "Standard-tier SLA breach for {{ $labels.omni_service }}"
+          description: "Service {{ $labels.omni_service }} rolling 30-day uptime is {{ printf \"%.3f\" $value }}%, which is below the 99.0% SLA target."
+
+      - alert: SLABudgetBurningFast
+        expr: |
+          (
+            sum by(omni_service) (rate(omni_service_downtime_seconds_total{omni_tier="critical"}[1h])) * 3600
+          ) > 0.043
+        for: 10m
+        labels:
+          severity: warning
+          tier: business
+          team: platform
+        annotations:
+          summary: "SLA error budget burning fast for {{ $labels.omni_service }}"
+          description: "At the current rate, {{ $labels.omni_service }} will exhaust its monthly SLA error budget before month end."
+
+      - alert: MultipleServicesDown
+        expr: count(up == 0) > 3
+        for: 2m
+        labels:
+          severity: critical
+          tier: business
+          team: platform
+          escalate: "true"
+        annotations:
+          summary: "Multiple services are down simultaneously"
+          description: "{{ printf \"%.0f\" $value }} services are currently unreachable. Potential systemic failure."
+
+      - alert: UptimeKumaAlertFiring
+        expr: monitor_status{monitor_type="http"} == 0
+        for: 1m
+        labels:
+          severity: warning
+          tier: business
+          team: platform
+        annotations:
+          summary: "Uptime monitor failing: {{ $labels.monitor_name }}"
+          description: "Uptime Kuma monitor '{{ $labels.monitor_name }}' has been failing for more than 1 minute."

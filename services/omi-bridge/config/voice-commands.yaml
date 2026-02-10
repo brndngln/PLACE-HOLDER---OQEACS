@@ -1,0 +1,157 @@
+# SYSTEM 28 — OMI WEARABLE BRIDGE: Voice Command Configuration
+# Omni Quantum Elite AI Coding System
+#
+# Each intent maps to an Orchestrator API endpoint with example
+# phrases the LLM uses for classification.
+
+commands:
+  check_status:
+    description: "Get overall system status overview"
+    examples:
+      - "status"
+      - "how's everything"
+      - "system status"
+      - "are we good"
+      - "system overview"
+      - "how are things"
+    handler: orchestrator.overview
+    orchestrator_path: "/api/services"
+    method: GET
+    params: []
+    confirm: false
+
+  restart_service:
+    description: "Restart a specific service container"
+    examples:
+      - "restart gitea"
+      - "reboot vault"
+      - "restart the database"
+      - "restart mattermost"
+      - "restart {service}"
+    handler: orchestrator.restart
+    orchestrator_path: "/api/services/{service_name}/restart"
+    method: POST
+    params:
+      - name: service_name
+        type: string
+        required: true
+        description: "Name of the service to restart"
+    confirm: false
+
+  trigger_backup:
+    description: "Trigger a backup operation"
+    examples:
+      - "backup everything"
+      - "run backup"
+      - "backup the database"
+      - "start backup"
+      - "trigger backup"
+    handler: orchestrator.backup
+    orchestrator_path: "/api/backup/trigger"
+    method: POST
+    params: []
+    confirm: false
+
+  deploy_app:
+    description: "Deploy an application to production"
+    examples:
+      - "deploy my app"
+      - "push to production"
+      - "ship it"
+      - "deploy the frontend"
+      - "deploy {app}"
+    handler: orchestrator.deploy
+    orchestrator_path: "/api/deploy/{app_name}"
+    method: POST
+    params:
+      - name: app_name
+        type: string
+        required: true
+        description: "Name of the application to deploy"
+    confirm: true
+
+  get_build_status:
+    description: "Check CI/CD pipeline status"
+    examples:
+      - "build status"
+      - "how's the build"
+      - "pipeline status"
+      - "are there any builds running"
+      - "CI status"
+    handler: orchestrator.pipeline_status
+    orchestrator_path: "/api/pipeline/status"
+    method: GET
+    params: []
+    confirm: false
+
+  get_costs:
+    description: "Check today's LLM and infrastructure costs"
+    examples:
+      - "costs today"
+      - "how much have we spent"
+      - "token usage"
+      - "what are the costs"
+      - "spending report"
+    handler: orchestrator.costs
+    orchestrator_path: "/api/costs/today"
+    method: GET
+    params: []
+    confirm: false
+
+  get_health:
+    description: "Check health of a specific service"
+    examples:
+      - "health check vault"
+      - "is gitea healthy"
+      - "check mattermost health"
+      - "is the database up"
+      - "health of {service}"
+    handler: orchestrator.health
+    orchestrator_path: "/api/services/{service_name}/health"
+    method: GET
+    params:
+      - name: service_name
+        type: string
+        required: true
+        description: "Name of the service to health-check"
+    confirm: false
+
+  list_services:
+    description: "List all running services and containers"
+    examples:
+      - "how many containers"
+      - "list services"
+      - "what's running"
+      - "show all services"
+      - "container count"
+    handler: orchestrator.list_services
+    orchestrator_path: "/api/services"
+    method: GET
+    params: []
+    confirm: false
+
+  search_knowledge:
+    description: "Search the knowledge base"
+    examples:
+      - "search for deployment docs"
+      - "find information about authentication"
+      - "knowledge search"
+      - "look up {query}"
+    handler: orchestrator.knowledge_search
+    orchestrator_path: "/api/knowledge/search"
+    method: GET
+    params:
+      - name: query
+        type: string
+        required: true
+        description: "Search query text"
+    confirm: false
+
+# Haptic feedback patterns for voice command results
+haptic_feedback:
+  success: "info"
+  error: "warning"
+  deploy_confirm: "warning"
+  deploy_success: "deploy-success"
+  restart_success: "build-complete"
+  critical_alert: "critical"

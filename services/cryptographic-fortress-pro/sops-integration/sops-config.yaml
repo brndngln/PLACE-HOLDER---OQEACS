@@ -1,0 +1,58 @@
+# ===========================================================================
+# SYSTEM 33 — CRYPTOGRAPHIC FORTRESS PRO: SOPS Configuration
+# Omni Quantum Elite AI Coding System — Security & Identity Layer
+#
+# Mozilla SOPS configuration for encrypting secrets at rest.
+# Uses Age encryption (simpler than GPG, no expiry issues).
+# The Age private key is stored in Vault at secret/data/sops/age-key.
+# ===========================================================================
+
+# ───────────────────────────────────────────────────────────────────────
+# Age Key Recipients
+# Age is a modern, simple encryption tool. No key servers, no expiry.
+# Public key is safe to commit. Private key is in Vault only.
+# ───────────────────────────────────────────────────────────────────────
+creation_rules:
+
+  # ── .env files: encrypt ALL values ──
+  # These files contain only secrets — encrypt everything.
+  - path_regex: \.env$
+    age: "${SOPS_AGE_RECIPIENTS}"
+    encrypted_regex: ".*"
+
+  - path_regex: \.env\..*$
+    age: "${SOPS_AGE_RECIPIENTS}"
+    encrypted_regex: ".*"
+
+  # ── YAML config files: encrypt only secret-bearing fields ──
+  # Selectively encrypt fields matching common secret patterns.
+  - path_regex: config/.*\.ya?ml$
+    age: "${SOPS_AGE_RECIPIENTS}"
+    encrypted_regex: "(password|secret|key|token|api_key|access_key|secret_key|private_key|credentials|connection_string|dsn|database_url|redis_url|smtp_password|webhook_url|encryption_key|master_key|salt|hmac)"
+
+  # ── JSON config files: same selective encryption ──
+  - path_regex: config/.*\.json$
+    age: "${SOPS_AGE_RECIPIENTS}"
+    encrypted_regex: "(password|secret|key|token|api_key|access_key|secret_key|private_key|credentials|connection_string|dsn|database_url|redis_url|smtp_password|webhook_url|encryption_key|master_key|salt|hmac)"
+
+  # ── Terraform variable files ──
+  - path_regex: \.tfvars$
+    age: "${SOPS_AGE_RECIPIENTS}"
+    encrypted_regex: "(password|secret|key|token|api_key|access_key|secret_key)"
+
+  # ── Vault policy files: encrypt sensitive expressions ──
+  - path_regex: vault/.*\.hcl$
+    age: "${SOPS_AGE_RECIPIENTS}"
+    encrypted_regex: "(password|secret|token)"
+
+# ───────────────────────────────────────────────────────────────────────
+# Files to NEVER encrypt (excluded from SOPS processing)
+# ───────────────────────────────────────────────────────────────────────
+# These are handled by the encrypt.sh/decrypt.sh scripts via --ignore flags:
+#   - docker-compose.yml / docker-compose.*.yml
+#   - README.md / *.md
+#   - *.sh (shell scripts)
+#   - Makefile
+#   - .gitignore
+#   - *.json (Grafana dashboards — no secrets in dashboard JSON)
+#   - Dockerfile / Dockerfile.*

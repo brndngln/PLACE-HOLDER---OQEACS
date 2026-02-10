@@ -1,0 +1,169 @@
+# ===========================================================================
+# SYSTEM 16 -- AI CODER ALPHA: OpenHands Configuration
+# Omni Quantum Elite AI Coding System -- AI Coding Agent Layer
+#
+# Complete configuration for the OpenHands-based AI coding agent.
+# All secrets are resolved at runtime from HashiCorp Vault (KV v2).
+# ===========================================================================
+
+llm:
+  provider: litellm
+  base_url: "http://omni-litellm:4000/v1"
+  model: "devstral-2:123b"
+  api_key_vault_path: "secret/data/litellm/api-key"
+  api_key: "from_vault"
+  max_tokens: 16384
+  temperature: 0.1
+  timeout: 120
+  top_p: 0.95
+  retry:
+    max_attempts: 3
+    backoff_base: 2.0
+    backoff_max: 30.0
+  fallback_models:
+    - "deepseek-v3.2"
+    - "qwen3-coder-30b"
+
+sandbox:
+  type: docker
+  docker_network: omni-quantum-network
+  base_image: "python:3.12-slim"
+  available_images:
+    python: "python:3.12-slim"
+    node: "node:22-slim"
+    go: "golang:1.23-bookworm"
+    rust: "rust:1.82-slim-bookworm"
+    fullstack: "omni-quantum/fullstack:latest"
+  max_runtime_seconds: 600
+  max_memory_mb: 2048
+  enable_networking: true
+  workspace_mount: "/workspace"
+  docker_socket: "/var/run/docker.sock"
+  security:
+    read_only_root: false
+    no_new_privileges: true
+    drop_capabilities:
+      - NET_RAW
+      - SYS_ADMIN
+    allowed_ports:
+      - 3000
+      - 5000
+      - 8000
+      - 8080
+
+workspace:
+  base_dir: "/opt/openhands/workspaces"
+  cleanup_after_hours: 24
+  max_concurrent: 5
+  max_workspace_size_mb: 1024
+  preserve_on_failure: true
+  git:
+    user_name: "OpenHands AI"
+    user_email: "openhands@omni-quantum.local"
+    auto_commit: true
+    commit_prefix: "[openhands]"
+
+integrations:
+  gitea:
+    url: "http://omni-gitea:3000"
+    api_token_vault_path: "secret/data/gitea/openhands-token"
+    org: "omni-quantum"
+    default_branch: "main"
+    pr_labels:
+      - "ai-generated"
+      - "openhands"
+    pr_reviewers:
+      - "quantum-lead"
+    webhook_secret_vault_path: "secret/data/gitea/webhook-secret"
+    clone_protocol: "http"
+
+  langfuse:
+    url: "http://omni-langfuse:3000"
+    project: "omni-openhands"
+    public_key_vault_path: "secret/data/langfuse/openhands-public-key"
+    secret_key_vault_path: "secret/data/langfuse/openhands-secret-key"
+    trace_sample_rate: 1.0
+    flush_interval_seconds: 5
+
+  mattermost:
+    webhook_url_vault_path: "secret/data/mattermost/webhook-url"
+    channels:
+      builds: "#builds"
+      reviews: "#reviews"
+      alerts: "#alerts"
+    bot_name: "OpenHands AI"
+    bot_icon: ":robot:"
+
+  token_infinity:
+    context_compile_url: "http://omni-token-infinity:9600"
+    provider_routing_url: "http://omni-token-infinity:9601"
+    timeout: 60
+
+  code_scorer:
+    url: "http://omni-code-scorer"
+    dimensions: 10
+    min_auto_approve_score: 8.0
+    min_revision_score: 6.0
+    timeout: 30
+
+  gate_engine:
+    url: "http://omni-gate-engine"
+    checks:
+      - lint
+      - security
+      - complexity
+      - coverage
+    timeout: 60
+
+  qdrant:
+    url: "http://omni-qdrant:6333"
+    collection: "openhands-artifacts"
+    embedding_dimension: 1536
+
+  vault:
+    url: "http://omni-vault:8200"
+    auth_method: "token"
+    token_env: "VAULT_TOKEN"
+    secrets_prefix: "secret/data"
+
+  omi_bridge:
+    url: "http://omni-omi-bridge:9700"
+    haptic_on_complete: true
+    haptic_on_failure: true
+
+task_defaults:
+  max_spec_revisions: 2
+  max_coding_iterations: 3
+  max_test_fix_iterations: 2
+  min_coverage_pct: 80
+  auto_approve_threshold: 8.0
+  human_review_threshold: 6.0
+  timeout_minutes: 30
+
+logging:
+  level: "INFO"
+  format: "json"
+  include_trace_id: true
+  structlog:
+    processors:
+      - merge_contextvars
+      - add_log_level
+      - timestamper_iso
+      - json_renderer
+
+metrics:
+  enabled: true
+  port: 9090
+  path: "/metrics"
+  prefix: "openhands"
+
+server:
+  task_orchestrator:
+    host: "0.0.0.0"
+    port: 3001
+  gitea_webhook_handler:
+    host: "0.0.0.0"
+    port: 3002
+  openhands_core:
+    host: "0.0.0.0"
+    port: 3000

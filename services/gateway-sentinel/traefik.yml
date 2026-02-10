@@ -1,0 +1,67 @@
+# Traefik Static Configuration — Omni Quantum Gateway Sentinel
+# System 34 — Reverse proxy, TLS termination, and routing for all services
+
+api:
+  dashboard: true
+  insecure: false
+
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+  websecure:
+    address: ":443"
+    http:
+      tls:
+        certResolver: letsencrypt
+  dashboard:
+    address: ":8080"
+  metrics:
+    address: ":8082"
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    network: omni-quantum-network
+    watch: true
+    exposedByDefault: false
+  file:
+    directory: /etc/traefik/dynamic/
+    watch: true
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: ${ACME_EMAIL}
+      storage: /etc/traefik/acme.json
+      httpChallenge:
+        entryPoint: web
+
+metrics:
+  prometheus:
+    entryPoint: metrics
+    addEntryPointsLabels: true
+    addRoutersLabels: true
+    addServicesLabels: true
+
+accessLog:
+  filePath: /var/log/traefik/access.log
+  format: json
+  bufferingSize: 100
+  fields:
+    defaultMode: keep
+    headers:
+      defaultMode: drop
+
+log:
+  level: INFO
+  format: json
+
+ping:
+  entryPoint: web
+
+experimental: {}

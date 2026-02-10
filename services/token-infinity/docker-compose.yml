@@ -1,0 +1,146 @@
+# ===========================================================================
+# SYSTEM 27 -- Token Infinity: Intelligent LLM Routing & Context Management
+# Omni Quantum Elite AI Coding System
+#
+# Services:
+#   omni-context-manager   -- Context assembly engine (port 9600)
+#   omni-provider-router   -- LLM provider routing with health scoring (port 9601)
+#
+# Both services attach to the shared omni-quantum-network.
+# ===========================================================================
+
+version: "3.8"
+
+services:
+  # ─────────────────────────────────────────────────────────────────────────
+  # Context Manager -- Intelligent context assembly engine
+  # Compiles optimal prompts by retrieving and prioritising code, patterns,
+  # feedback, and architecture context from Qdrant and Gitea within target
+  # model token budgets.
+  # ─────────────────────────────────────────────────────────────────────────
+  omni-context-manager:
+    build:
+      context: .
+      dockerfile: context-manager/Dockerfile
+    container_name: omni-context-manager
+    restart: unless-stopped
+    ports:
+      - "9600:9600"
+    environment:
+      QDRANT_URL: ${QDRANT_URL:-http://omni-qdrant:6333}
+      LITELLM_URL: ${LITELLM_URL:-http://omni-litellm:4000}
+      OLLAMA_MANAGER_URL: ${OLLAMA_MANAGER_URL:-http://omni-model-manager:11435}
+      LANGFUSE_URL: ${LANGFUSE_URL:-http://omni-langfuse:3000}
+      VAULT_URL: ${VAULT_URL:-http://omni-vault:8200}
+      GITEA_URL: ${GITEA_URL:-http://omni-gitea:3000}
+      MATTERMOST_WEBHOOK_URL: ${MATTERMOST_WEBHOOK_URL:-http://omni-mattermost-webhook:8066}
+      LOG_FORMAT: ${LOG_FORMAT:-json}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    volumes:
+      - ./config/provider-registry.yaml:/app/config/provider-registry.yaml:ro
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+    depends_on:
+      omni-qdrant:
+        condition: service_healthy
+      omni-litellm:
+        condition: service_healthy
+      omni-ollama:
+        condition: service_healthy
+      omni-langfuse:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:9600/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+    labels:
+      omni.quantum.component: "context-manager"
+      omni.quantum.tier: "critical"
+      omni.quantum.system: "27"
+      omni.quantum.stack: "token-infinity"
+      traefik.enable: "true"
+      traefik.http.routers.context-manager.rule: "Host(`context.omni-quantum.internal`)"
+      traefik.http.routers.context-manager.entrypoints: "websecure"
+      traefik.http.routers.context-manager.tls: "true"
+      traefik.http.services.context-manager.loadbalancer.server.port: "9600"
+    networks:
+      - omni-quantum-network
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Provider Router -- Intelligent LLM provider routing
+  # Routes requests to the optimal provider based on health scoring,
+  # tier-based selection, latency requirements, and failover chains.
+  # ─────────────────────────────────────────────────────────────────────────
+  omni-provider-router:
+    build:
+      context: .
+      dockerfile: provider-router/Dockerfile
+    container_name: omni-provider-router
+    restart: unless-stopped
+    ports:
+      - "9601:9601"
+    environment:
+      QDRANT_URL: ${QDRANT_URL:-http://omni-qdrant:6333}
+      LITELLM_URL: ${LITELLM_URL:-http://omni-litellm:4000}
+      OLLAMA_MANAGER_URL: ${OLLAMA_MANAGER_URL:-http://omni-model-manager:11435}
+      LANGFUSE_URL: ${LANGFUSE_URL:-http://omni-langfuse:3000}
+      VAULT_URL: ${VAULT_URL:-http://omni-vault:8200}
+      MATTERMOST_WEBHOOK_URL: ${MATTERMOST_WEBHOOK_URL:-http://omni-mattermost-webhook:8066}
+      PROVIDER_REGISTRY_PATH: /app/config/provider-registry.yaml
+      LOG_FORMAT: ${LOG_FORMAT:-json}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    volumes:
+      - ./config/provider-registry.yaml:/app/config/provider-registry.yaml:ro
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    depends_on:
+      omni-qdrant:
+        condition: service_healthy
+      omni-litellm:
+        condition: service_healthy
+      omni-ollama:
+        condition: service_healthy
+      omni-langfuse:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:9601/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+    labels:
+      omni.quantum.component: "provider-router"
+      omni.quantum.tier: "critical"
+      omni.quantum.system: "27"
+      omni.quantum.stack: "token-infinity"
+      traefik.enable: "true"
+      traefik.http.routers.provider-router.rule: "Host(`router.omni-quantum.internal`)"
+      traefik.http.routers.provider-router.entrypoints: "websecure"
+      traefik.http.routers.provider-router.tls: "true"
+      traefik.http.services.provider-router.loadbalancer.server.port: "9601"
+    networks:
+      - omni-quantum-network
+
+networks:
+  omni-quantum-network:
+    external: true

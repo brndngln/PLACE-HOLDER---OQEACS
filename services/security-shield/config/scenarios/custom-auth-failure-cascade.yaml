@@ -1,0 +1,46 @@
+# ===========================================================================
+# CrowdSec Scenario: Authentication Failure Cascade
+# Omni Quantum — Security Shield
+#
+# Detects a single IP failing authentication across multiple different
+# services within the platform. This pattern indicates credential
+# stuffing or lateral movement attempts.
+# Threshold: 5 different services in 5 minutes → ban 4 hours
+# ===========================================================================
+
+type: leaky
+name: omni-quantum/auth-failure-cascade
+description: "Detect failed authentication across multiple services from the same IP (credential stuffing / lateral movement)"
+filter: >-
+  evt.Meta.http_status in ['401', '403'] &&
+  (
+    evt.Meta.http_path contains '/login' ||
+    evt.Meta.http_path contains '/auth' ||
+    evt.Meta.http_path contains '/signin' ||
+    evt.Meta.http_path contains '/oauth' ||
+    evt.Meta.http_path contains '/api/v3/core/tokens/' ||
+    evt.Meta.http_path contains '/user/login' ||
+    evt.Meta.http_path contains '/api/v4/users/login' ||
+    evt.Meta.http_path contains '/v1/auth' ||
+    evt.Meta.http_path contains '/api/auth'
+  )
+distinct: evt.Meta.service
+groupby: evt.Meta.source_ip
+capacity: 5
+leakspeed: 60s
+blackhole: 5m
+reprocess: false
+labels:
+  service: "http"
+  type: "credential_stuffing"
+  confidence: 3
+  spoofable: 0
+  classification:
+    - "attack.T1110.004"
+  label: "Cross-service authentication failure cascade"
+  behavior: "http:bruteforce"
+  remediation: true
+duration: 4h
+scope:
+  type: ip
+  expression: evt.Meta.source_ip
