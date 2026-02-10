@@ -1,0 +1,74 @@
+version: "3.9"
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "50m"
+    max-file: "5"
+
+x-labels: &default-labels
+  omni.quantum.tier: standard
+  omni.quantum.critical: "false"
+
+services:
+  formbricks:
+    image: formbricks/formbricks:latest
+    container_name: omni-formbricks
+    ports:
+      - "3010:3000"
+    environment:
+      WEBAPP_URL: http://omni-formbricks:3000
+      DATABASE_URL: postgresql://formbricks:${FORMBRICKS_DB_PASSWORD}@omni-formbricks-postgres:5432/formbricks
+      NEXTAUTH_SECRET: ${FORMBRICKS_NEXTAUTH_SECRET}
+      NEXTAUTH_URL: http://omni-formbricks:3000
+      MAIL_FROM: ${FORMBRICKS_MAIL_FROM:-noreply@omni.local}
+      SMTP_HOST: omni-listmonk
+      SMTP_PORT: 9000
+      ENCRYPTION_KEY: ${FORMBRICKS_ENCRYPTION_KEY}
+    depends_on:
+      formbricks-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3000/api/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 8
+      start_period: 45s
+    mem_limit: 512m
+    restart: unless-stopped
+    logging: *default-logging
+    labels:
+      <<: *default-labels
+      omni.quantum.component: feedback-forms
+    networks:
+      - omni-quantum-network
+
+  formbricks-postgres:
+    image: postgres:16-alpine
+    container_name: omni-formbricks-postgres
+    environment:
+      POSTGRES_DB: formbricks
+      POSTGRES_USER: formbricks
+      POSTGRES_PASSWORD: ${FORMBRICKS_DB_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U formbricks -d formbricks"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+    mem_limit: 256m
+    restart: unless-stopped
+    logging: *default-logging
+    labels:
+      <<: *default-labels
+      omni.quantum.component: feedback-forms-postgres
+    volumes:
+      - formbricks-postgres-data:/var/lib/postgresql/data
+    networks:
+      - omni-quantum-network
+
+volumes:
+  formbricks-postgres-data:
+
+networks:
+  omni-quantum-network:
+    external: true

@@ -1,0 +1,17 @@
+name: Token Infinity
+target: http://omni-token-infinity:9600
+warmup_requests: 50
+benchmark_duration_seconds: 60
+concurrent_users: 5
+scenarios:
+  - name: context-compilation
+    method: POST
+    path: /context/compile
+    body: { task_description: "Build a REST API endpoint", task_type: "feature-build", complexity: "medium" }
+    expected_status: 200
+    thresholds: { p95_latency_ms: 2000, min_rps: 5 }
+  - name: model-recommendation
+    method: GET
+    path: /models/recommend?complexity=medium&task_type=feature-build
+    expected_status: 200
+    thresholds: { p95_latency_ms: 50, min_rps: 100 }

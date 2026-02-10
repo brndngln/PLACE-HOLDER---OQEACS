@@ -1,0 +1,21 @@
+name: Master Orchestrator
+target: http://omni-orchestrator:9500
+warmup_requests: 100
+benchmark_duration_seconds: 60
+concurrent_users: 10
+scenarios:
+  - name: list-services
+    method: GET
+    path: /api/services
+    expected_status: 200
+    thresholds: { p95_latency_ms: 100, min_rps: 50 }
+  - name: get-service-health
+    method: GET
+    path: /api/services/omni-vault/health
+    expected_status: 200
+    thresholds: { p95_latency_ms: 200, min_rps: 30 }
+  - name: pipeline-status
+    method: GET
+    path: /api/pipeline/status
+    expected_status: 200
+    thresholds: { p95_latency_ms: 150, min_rps: 40 }

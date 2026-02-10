@@ -1,0 +1,89 @@
+version: "3.9"
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "50m"
+    max-file: "5"
+
+x-labels: &default-labels
+  omni.quantum.tier: standard
+  omni.quantum.critical: "false"
+
+services:
+  kong:
+    image: kong:3.8
+    container_name: omni-kong
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: omni-kong-postgres
+      KONG_PG_DATABASE: kong
+      KONG_PG_USER: kong
+      KONG_PG_PASSWORD: ${KONG_PG_PASSWORD}
+      KONG_PROXY_LISTEN: 0.0.0.0:8000, 0.0.0.0:8443 ssl
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001, 0.0.0.0:8444 ssl
+      KONG_STATUS_LISTEN: 0.0.0.0:8100
+      KONG_NGINX_WORKER_PROCESSES: auto
+      KONG_LOG_LEVEL: info
+      KONG_PLUGINS: bundled,prometheus
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+      - "8444:8444"
+    depends_on:
+      kong-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8100/status"]
+      interval: 20s
+      timeout: 10s
+      retries: 6
+      start_period: 40s
+    mem_limit: 512m
+    restart: unless-stopped
+    logging: *default-logging
+    labels:
+      <<: *default-labels
+      omni.quantum.component: kong
+    volumes:
+      - kong-prefix:/kong_prefix/
+      - kong-tmp:/tmp
+      - ./developer-portal:/developer-portal:ro
+    networks:
+      - omni-quantum-network
+
+  kong-postgres:
+    image: postgres:16-alpine
+    container_name: omni-kong-postgres
+    environment:
+      POSTGRES_DB: kong
+      POSTGRES_USER: kong
+      POSTGRES_PASSWORD: ${KONG_PG_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kong -d kong"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+    mem_limit: 256m
+    restart: unless-stopped
+    logging: *default-logging
+    labels:
+      <<: *default-labels
+      omni.quantum.component: kong-postgres
+    volumes:
+      - kong-postgres-data:/var/lib/postgresql/data
+    networks:
+      - omni-quantum-network
+
+volumes:
+  kong-prefix:
+  kong-tmp:
+  kong-postgres-data:
+
+networks:
+  omni-quantum-network:
+    external: true

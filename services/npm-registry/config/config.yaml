@@ -1,0 +1,35 @@
+storage: /verdaccio/storage
+auth:
+  htpasswd:
+    file: /verdaccio/conf/htpasswd
+    max_users: 100
+uplinks:
+  npmjs:
+    url: https://registry.npmjs.org/
+    cache: true
+    timeout: 30s
+    maxage: 60m
+packages:
+  '@omni/*':
+    access: $authenticated
+    publish: $authenticated
+    unpublish: $authenticated
+  '**':
+    access: $all
+    proxy: npmjs
+middlewares:
+  audit:
+    enabled: true
+server:
+  keepAliveTimeout: 60
+web:
+  enable: true
+  title: Omni Quantum NPM Registry
+publish:
+  allow_offline: true
+log:
+  type: stdout
+  format: pretty
+  level: info
+experiments:
+  token: true

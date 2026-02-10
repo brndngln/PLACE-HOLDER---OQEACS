@@ -1,0 +1,140 @@
+openapi: 3.0.3
+info:
+  title: Omni Quantum Client API Gateway
+  version: 1.0.0
+  description: Public API surface routed via Kong.
+servers:
+  - url: https://api.omni.local
+security:
+  - ApiKeyAuth: []
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    Error:
+      type: object
+      properties:
+        code: { type: string }
+        message: { type: string }
+    Project:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        status: { type: string }
+        quality_score: { type: number }
+    Deliverable:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        download_url: { type: string }
+paths:
+  /api/v1/projects:
+    get:
+      summary: List projects for authenticated client
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/Project' } }
+                  page: { type: integer }
+                  total: { type: integer }
+        '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '429': { description: Rate limited }
+  /api/v1/projects/{id}:
+    get:
+      summary: Get project details
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Project' } } } }
+        '404': { description: Not found }
+  /api/v1/projects/{id}/deliverables:
+    get:
+      summary: List deliverables
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Deliverable' }
+  /api/v1/projects/{id}/feedback:
+    post:
+      summary: Submit feedback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deliverable_id: { type: string }
+                rating: { type: integer, minimum: 1, maximum: 5 }
+                comment: { type: string }
+      responses:
+        '202': { description: Accepted }
+  /api/v1/chat:
+    post:
+      summary: Send chat message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message: { type: string }
+      responses:
+        '200': { description: OK }
+  /api/v1/schedule/available:
+    get:
+      summary: Get available slots
+      responses:
+        '200': { description: OK }
+  /api/v1/schedule/book:
+    post:
+      summary: Book meeting
+      responses:
+        '201': { description: Created }
+  /api/v1/status:
+    get:
+      summary: Platform status
+      responses:
+        '200': { description: OK }
+  /api/v1/webhooks/stripe:
+    post:
+      summary: Stripe webhook
+      security: []
+      responses:
+        '202': { description: Accepted }
+  /api/v1/webhooks/github:
+    post:
+      summary: GitHub webhook
+      security: []
+      responses:
+        '202': { description: Accepted }

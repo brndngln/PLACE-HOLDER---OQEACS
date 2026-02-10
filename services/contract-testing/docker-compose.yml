@@ -1,0 +1,96 @@
+version: "3.9"
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "50m"
+    max-file: "5"
+
+x-labels: &default-labels
+  omni.quantum.tier: standard
+  omni.quantum.critical: "false"
+
+services:
+  pact-broker:
+    image: pactfoundation/pact-broker:latest
+    container_name: omni-pact-broker
+    ports:
+      - "9292:9292"
+    environment:
+      PACT_BROKER_DATABASE_URL: postgres://pact:${PACT_BROKER_DB_PASSWORD}@omni-pact-postgres:5432/pact
+      PACT_BROKER_BASIC_AUTH_USERNAME: ${PACT_BROKER_BASIC_AUTH_USERNAME}
+      PACT_BROKER_BASIC_AUTH_PASSWORD: ${PACT_BROKER_BASIC_AUTH_PASSWORD}
+      PACT_BROKER_ALLOW_PUBLIC_READ: "false"
+      PACT_BROKER_BASE_URL: http://omni-pact-broker:9292
+    depends_on:
+      pact-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:9292/diagnostic/status/heartbeat"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 25s
+    mem_limit: 256m
+    restart: unless-stopped
+    logging: *default-logging
+    labels:
+      <<: *default-labels
+      omni.quantum.component: pact-broker
+    networks:
+      - omni-quantum-network
+
+  pact-postgres:
+    image: postgres:16-alpine
+    container_name: omni-pact-postgres
+    environment:
+      POSTGRES_DB: pact
+      POSTGRES_USER: pact
+      POSTGRES_PASSWORD: ${PACT_BROKER_DB_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pact -d pact"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    mem_limit: 256m
+    restart: unless-stopped
+    logging: *default-logging
+    labels:
+      <<: *default-labels
+      omni.quantum.component: pact-postgres
+    volumes:
+      - pact-postgres-data:/var/lib/postgresql/data
+    networks:
+      - omni-quantum-network
+
+  contract-generator:
+    build: ./contract-generator
+    container_name: omni-contract-generator
+    ports:
+      - "9293:9293"
+    environment:
+      PACT_BROKER_URL: http://omni-pact-broker:9292
+      PACT_BROKER_USERNAME: ${PACT_BROKER_BASIC_AUTH_USERNAME}
+      PACT_BROKER_PASSWORD: ${PACT_BROKER_BASIC_AUTH_PASSWORD}
+      LANGFUSE_URL: http://omni-langfuse:3000
+      AUDIT_LOGGER_URL: http://omni-audit-logger:9550
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:9293/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+    mem_limit: 256m
+    restart: unless-stopped
+    logging: *default-logging
+    labels:
+      <<: *default-labels
+      omni.quantum.component: contract-generator
+    networks:
+      - omni-quantum-network
+
+volumes:
+  pact-postgres-data:
+
+networks:
+  omni-quantum-network:
+    external: true
