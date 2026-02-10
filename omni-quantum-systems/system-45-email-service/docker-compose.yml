@@ -1,0 +1,83 @@
+version: "3.9"
+
+x-default-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "50m"
+    max-file: "5"
+
+x-default-labels: &default-labels
+  omni.quantum.tier: standard
+  omni.quantum.critical: "false"
+
+services:
+  listmonk:
+    image: listmonk/listmonk:latest
+    container_name: omni-listmonk
+    command: ["./listmonk", "--config", "/listmonk/config.toml"]
+    ports:
+      - "9000:9000"
+    environment:
+      LISTMONK_app__address: 0.0.0.0:9000
+      LISTMONK_db__host: omni-listmonk-postgres
+      LISTMONK_db__port: "5432"
+      LISTMONK_db__database: listmonk
+      LISTMONK_db__user: "{{ vault://secret/data/listmonk#db_user }}"
+      LISTMONK_db__password: "{{ vault://secret/data/listmonk#db_password }}"
+      LISTMONK_admin_username: "{{ vault://secret/data/listmonk#admin_username }}"
+      LISTMONK_admin_password: "{{ vault://secret/data/listmonk#admin_password }}"
+      LISTMONK_SMTP_HOST: omni-mailhog
+      LISTMONK_SMTP_PORT: "1025"
+      LISTMONK_SMTP_USER: "{{ vault://secret/data/smtp#username }}"
+      LISTMONK_SMTP_PASSWORD: "{{ vault://secret/data/smtp#password }}"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9000/api/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    mem_limit: 256m
+    restart: unless-stopped
+    logging: *default-logging
+    labels:
+      <<: *default-labels
+      omni.quantum.component: listmonk
+    depends_on:
+      listmonk-postgres:
+        condition: service_healthy
+    volumes:
+      - listmonk-data:/listmonk/uploads
+      - ./config/listmonk-config.toml:/listmonk/config.toml:ro
+    networks:
+      - omni-quantum-network
+
+  listmonk-postgres:
+    image: postgres:16-alpine
+    container_name: omni-listmonk-postgres
+    environment:
+      POSTGRES_DB: listmonk
+      POSTGRES_USER: "{{ vault://secret/data/listmonk#db_user }}"
+      POSTGRES_PASSWORD: "{{ vault://secret/data/listmonk#db_password }}"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U {{ vault://secret/data/listmonk#db_user }} -d listmonk"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    mem_limit: 256m
+    restart: unless-stopped
+    logging: *default-logging
+    labels:
+      <<: *default-labels
+      omni.quantum.component: listmonk-postgres
+    volumes:
+      - listmonk-postgres-data:/var/lib/postgresql/data
+    networks:
+      - omni-quantum-network
+
+volumes:
+  listmonk-data:
+  listmonk-postgres-data:
+
+networks:
+  omni-quantum-network:
+    external: true
