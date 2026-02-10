@@ -1,0 +1,61 @@
+### Create OpenHands Task
+POST http://omni-openhands-orchestrator:3001/tasks
+Content-Type: application/json
+
+{
+  "task_type": "feature-build",
+  "description": "Build a dashboard component showing real-time metrics from Prometheus",
+  "repository": "omni-quantum/client-project",
+  "branch": "feature/metrics-dashboard",
+  "target_language": "typescript",
+  "framework": "nextjs",
+  "complexity": "medium"
+}
+
+### List Tasks
+GET http://omni-openhands-orchestrator:3001/tasks
+
+### Task Status
+GET http://omni-openhands-orchestrator:3001/tasks/{{task_id}}
+
+### Approve Task
+POST http://omni-openhands-orchestrator:3001/tasks/{{task_id}}/approve
+
+### Reject Task
+POST http://omni-openhands-orchestrator:3001/tasks/{{task_id}}/reject
+Content-Type: application/json
+
+{"feedback": "Missing input validation on the POST endpoint. Add Pydantic models with field validators."}
+
+### Create SWE-Agent Bug Fix
+POST http://omni-swe-agent-handler:8001/tasks
+Content-Type: application/json
+
+{
+  "task_type": "bug-fix",
+  "repository": "omni-quantum/client-project",
+  "description": "API returns 500 on empty request body instead of 422 validation error",
+  "reproduction_steps": ["POST /api/users with empty body", "Observe 500 instead of 422"],
+  "expected_behavior": "Return 422 with validation error details",
+  "severity": "high"
+}
+
+### Token Infinity — Compile Context
+POST http://omni-token-infinity:9600/context/compile
+Content-Type: application/json
+
+{
+  "task_id": "test-context",
+  "task_description": "Build a circuit breaker for database connections",
+  "task_type": "feature-build",
+  "complexity": "medium"
+}
+
+### Token Infinity — Recommend Model
+GET http://omni-token-infinity:9600/models/recommend?complexity=high&task_type=feature-build
+
+### Provider Router — Route Request
+POST http://omni-token-infinity-router:9601/route
+Content-Type: application/json
+
+{"complexity": "high", "task_type": "code-generation", "max_latency_ms": 5000, "required_context_length": 64000}

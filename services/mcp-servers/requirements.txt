@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+httpx
+pydantic
+structlog
+prometheus-client
+sse-starlette
+tenacity
