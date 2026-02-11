@@ -18,7 +18,7 @@ def wire(impact_analyzer: ImpactAnalyzer) -> None:
 
 
 @router.post("/impact", response_model=ImpactReport)
-def analyze_impact(request: ImpactAnalysisRequest) -> ImpactReport:
+async def analyze_impact(request: ImpactAnalysisRequest) -> ImpactReport:
     if _impact_analyzer is None:
         raise HTTPException(status_code=503, detail="Impact analyzer unavailable")
     if not request.repo_id:
@@ -32,7 +32,7 @@ def analyze_impact(request: ImpactAnalysisRequest) -> ImpactReport:
 
 
 @router.get("/entities/{entity_id}/dependents", response_model=list[AffectedEntity])
-def get_dependents(entity_id: str, repo_id: str = Query(...)) -> list[AffectedEntity]:
+async def get_dependents(entity_id: str, repo_id: str = Query(...)) -> list[AffectedEntity]:
     if _impact_analyzer is None:
         raise HTTPException(status_code=503, detail="Impact analyzer unavailable")
     return _impact_analyzer.get_dependents(repo_id, entity_id)

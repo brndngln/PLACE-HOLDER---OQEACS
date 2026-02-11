@@ -5,7 +5,7 @@ from __future__ import annotations
 from unittest.mock import AsyncMock
 
 import pytest
-from fastapi.testclient import TestClient
+from httpx import ASGITransport, AsyncClient
 
 from src.config import Settings
 from src.models import ExecutionRequest, TestCase
@@ -87,8 +87,17 @@ def sample_test_cases() -> list[TestCase]:
 
 
 @pytest.fixture()
-def client() -> TestClient:
-    """Return a FastAPI TestClient (synchronous)."""
+async def async_client() -> AsyncClient:
+    """Return an async HTTP client bound to the FastAPI app."""
     from src.main import app
 
-    return TestClient(app)
+    async with app.router.lifespan_context(app):
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            yield client
+
+
+@pytest.fixture()
+def anyio_backend() -> str:
+    """Constrain AnyIO tests to asyncio backend for subprocess compatibility."""
+    return "asyncio"

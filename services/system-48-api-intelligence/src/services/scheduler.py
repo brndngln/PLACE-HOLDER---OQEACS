@@ -6,8 +6,42 @@ from datetime import datetime
 
 import httpx
 import structlog
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.interval import IntervalTrigger
+try:
+    from apscheduler.schedulers.asyncio import AsyncIOScheduler
+    from apscheduler.triggers.interval import IntervalTrigger
+except ImportError:  # pragma: no cover - exercised in offline test envs
+    class IntervalTrigger:  # type: ignore[no-redef]
+        def __init__(self, **kwargs: int) -> None:
+            self.kwargs = kwargs
+
+    class AsyncIOScheduler:  # type: ignore[no-redef]
+        def __init__(self) -> None:
+            self._jobs: dict[str, dict[str, object]] = {}
+
+        def add_job(
+            self,
+            func,
+            trigger: IntervalTrigger,
+            *,
+            id: str,
+            name: str,
+            replace_existing: bool = True,
+            max_instances: int = 1,
+        ) -> None:
+            if not replace_existing and id in self._jobs:
+                return
+            self._jobs[id] = {
+                "func": func,
+                "trigger": trigger,
+                "name": name,
+                "max_instances": max_instances,
+            }
+
+        def start(self) -> None:
+            return
+
+        def shutdown(self, wait: bool = False) -> None:
+            return
 
 from src.config import settings
 from src.services.registry_scanner import RegistryScanner

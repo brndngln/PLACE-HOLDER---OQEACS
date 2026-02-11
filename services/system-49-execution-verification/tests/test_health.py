@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-from fastapi.testclient import TestClient
+import pytest
+from httpx import AsyncClient
 
 
-def test_health_returns_200(client: TestClient) -> None:
+@pytest.mark.anyio
+async def test_health_returns_200(async_client: AsyncClient) -> None:
     """GET /health should return 200 with status=healthy."""
-    resp = client.get("/health")
+    resp = await async_client.get("/health")
     assert resp.status_code == 200
     body = resp.json()
     assert body["status"] == "healthy"
@@ -15,9 +17,10 @@ def test_health_returns_200(client: TestClient) -> None:
     assert body["version"] == "1.0.0"
 
 
-def test_metrics_returns_prometheus_format(client: TestClient) -> None:
+@pytest.mark.anyio
+async def test_metrics_returns_prometheus_format(async_client: AsyncClient) -> None:
     """GET /metrics should return Prometheus text format."""
-    resp = client.get("/metrics")
+    resp = await async_client.get("/metrics")
     assert resp.status_code == 200
     assert "text/plain" in resp.headers.get("content-type", "") or "openmetrics" in resp.headers.get("content-type", "")
     # Should contain at least one metric family

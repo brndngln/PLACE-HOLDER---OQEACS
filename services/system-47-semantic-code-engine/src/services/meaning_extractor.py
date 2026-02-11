@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 
 import httpx
@@ -102,6 +103,9 @@ class MeaningExtractor:
         return "High complexity; consider decomposition"
 
     def _llm_enrich(self, *, code: str, language: str, context: str) -> dict[str, object] | None:
+        enable_llm = os.getenv("ENABLE_LLM_ENRICHMENT", "false").strip().lower()
+        if enable_llm not in {"1", "true", "yes", "on"}:
+            return None
         prompt = (
             "Return strict JSON with keys summary,purpose,side_effects,invariants,implicit_contracts. "
             f"Analyze this {language} code with context '{context}':\n```{language}\n{code[:3500]}\n```"

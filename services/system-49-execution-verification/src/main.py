@@ -5,7 +5,6 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-import redis.asyncio as aioredis
 import structlog
 from fastapi import FastAPI
 from prometheus_client import (
@@ -22,6 +21,11 @@ from src.routers import verify as verify_router
 from src.services.sandbox import SandboxExecutor
 from src.services.test_runner import TestRunner
 from src.services.verifier import VerificationLoop
+
+try:
+    import redis.asyncio as aioredis
+except ImportError:  # pragma: no cover - exercised in offline test envs
+    aioredis = None  # type: ignore[assignment]
 
 logger = structlog.get_logger()
 settings = Settings()
@@ -44,14 +48,17 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info("starting", service=settings.SERVICE_NAME, port=settings.SERVICE_PORT)
 
     # -- Redis connection --------------------------------------------------
-    redis_client: aioredis.Redis | None = None
-    try:
-        redis_client = aioredis.from_url(settings.REDIS_URL, decode_responses=True)
-        await redis_client.ping()
-        logger.info("redis_connected")
-    except Exception as exc:
-        logger.warning("redis_connection_failed", error=str(exc))
-        redis_client = None
+    redis_client = None
+    if aioredis is None:
+        logger.warning("redis_module_unavailable")
+    else:
+        try:
+            redis_client = aioredis.from_url(settings.REDIS_URL, decode_responses=True)
+            await redis_client.ping()
+            logger.info("redis_connected")
+        except Exception as exc:
+            logger.warning("redis_connection_failed", error=str(exc))
+            redis_client = None
 
     # -- Service wiring ----------------------------------------------------
     sandbox = SandboxExecutor(settings=settings)

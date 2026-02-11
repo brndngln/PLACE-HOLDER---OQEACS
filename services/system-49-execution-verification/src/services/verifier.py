@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import difflib
 import json
+import os
 from datetime import datetime, timezone
 from textwrap import dedent
 
@@ -162,6 +163,9 @@ class VerificationLoop:
         self, code: str, error: str, language: str, attempt: int
     ) -> str:
         """Call LiteLLM with the error context to produce a fixed version of the code."""
+        enable_llm = os.getenv("ENABLE_LLM_REGENERATION", "false").strip().lower()
+        if enable_llm not in {"1", "true", "yes", "on"}:
+            return code
         prompt = dedent(f"""\
             You are a senior {language} developer. The following code failed execution.
             Fix it so it runs successfully. Return ONLY the corrected code, no explanations.

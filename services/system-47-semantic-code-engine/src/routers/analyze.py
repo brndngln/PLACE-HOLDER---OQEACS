@@ -57,7 +57,7 @@ async def get_graph(repo_id: str) -> GraphSummary:
 
 
 @router.post("/meaning", response_model=CodeMeaning)
-def code_meaning(request: CodeMeaningRequest) -> CodeMeaning:
+async def code_meaning(request: CodeMeaningRequest) -> CodeMeaning:
     if _meaning_extractor is None:
         raise HTTPException(status_code=503, detail="Meaning extractor unavailable")
     return _meaning_extractor.extract_meaning(

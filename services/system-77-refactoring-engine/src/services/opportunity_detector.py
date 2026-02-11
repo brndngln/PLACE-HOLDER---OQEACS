@@ -29,6 +29,9 @@ class OpportunityDetector:
 
     @staticmethod
     def _detect_duplication(lines: list[str]) -> bool:
+        normalized_lines = [line.strip() for line in lines if line.strip()]
+        if len(normalized_lines) != len(set(normalized_lines)):
+            return True
         chunks = ["\n".join(lines[i : i + 3]).strip() for i in range(max(0, len(lines) - 2))]
         non_empty = [c for c in chunks if c]
         return len(non_empty) != len(set(non_empty))

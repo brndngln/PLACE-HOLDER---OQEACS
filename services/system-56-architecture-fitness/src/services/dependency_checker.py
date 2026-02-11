@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import re
 
-import networkx as nx
-
 from src.models import CircularDependency, DependencyRule, Violation
 
 
@@ -18,12 +16,43 @@ class DependencyChecker:
         return violations
 
     def detect_circular_dependencies(self, imports_map: dict[str, list[str]]) -> list[CircularDependency]:
-        graph = nx.DiGraph()
-        for src, deps in imports_map.items():
-            for dep in deps:
-                graph.add_edge(src, dep)
-        cycles = []
-        for cycle in nx.simple_cycles(graph):
-            if len(cycle) > 1:
-                cycles.append(CircularDependency(cycle=cycle))
+        cycles: list[CircularDependency] = []
+        seen: set[tuple[str, ...]] = set()
+        path: list[str] = []
+        in_path: set[str] = set()
+        visited: set[str] = set()
+
+        def normalize_cycle(cycle: list[str]) -> tuple[str, ...]:
+            variants: list[tuple[str, ...]] = []
+            for i in range(len(cycle)):
+                rotated = tuple(cycle[i:] + cycle[:i])
+                reversed_rotated = tuple(list(reversed(cycle[i:] + cycle[:i])))
+                variants.append(rotated)
+                variants.append(reversed_rotated)
+            return min(variants)
+
+        def dfs(node: str) -> None:
+            visited.add(node)
+            path.append(node)
+            in_path.add(node)
+
+            for dep in imports_map.get(node, []):
+                if dep in in_path:
+                    start = path.index(dep)
+                    cycle_nodes = path[start:].copy()
+                    if len(cycle_nodes) > 1:
+                        signature = normalize_cycle(cycle_nodes)
+                        if signature not in seen:
+                            seen.add(signature)
+                            cycles.append(CircularDependency(cycle=list(signature)))
+                elif dep not in visited:
+                    dfs(dep)
+
+            in_path.remove(node)
+            path.pop()
+
+        for node in imports_map:
+            if node not in visited:
+                dfs(node)
+
         return cycles

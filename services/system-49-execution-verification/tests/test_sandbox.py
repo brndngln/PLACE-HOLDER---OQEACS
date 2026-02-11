@@ -22,7 +22,7 @@ def executor() -> SandboxExecutor:
 # Test 1: Execute simple Python code
 # ------------------------------------------------------------------
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_execute_simple_python(executor: SandboxExecutor) -> None:
     """Simple Python code should execute successfully and capture stdout."""
     result = await executor.execute(
@@ -38,7 +38,7 @@ async def test_execute_simple_python(executor: SandboxExecutor) -> None:
 # Test 2: Handle syntax error
 # ------------------------------------------------------------------
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_handle_syntax_error(executor: SandboxExecutor) -> None:
     """Code with a syntax error should fail with a non-zero exit code."""
     result = await executor.execute(
@@ -54,7 +54,7 @@ async def test_handle_syntax_error(executor: SandboxExecutor) -> None:
 # Test 3: Timeout handling
 # ------------------------------------------------------------------
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_timeout_handling(executor: SandboxExecutor) -> None:
     """Code that runs longer than the timeout should be killed."""
     result = await executor.execute(
@@ -71,7 +71,7 @@ async def test_timeout_handling(executor: SandboxExecutor) -> None:
 # Test 4: Memory limit (best-effort via ulimit)
 # ------------------------------------------------------------------
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_memory_limit(executor: SandboxExecutor) -> None:
     """Code that tries to allocate massive memory should fail or be limited."""
     # Attempt to allocate ~500MB while limit is 128MB
@@ -91,7 +91,7 @@ async def test_memory_limit(executor: SandboxExecutor) -> None:
 # Test 5: Capture stdout correctly
 # ------------------------------------------------------------------
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_capture_stdout(executor: SandboxExecutor) -> None:
     """Multi-line stdout should be captured completely."""
     code = 'for i in range(5):\n    print(f"line {i}")'
@@ -105,7 +105,7 @@ async def test_capture_stdout(executor: SandboxExecutor) -> None:
 # Test 6: Exit code is captured
 # ------------------------------------------------------------------
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_exit_code_captured(executor: SandboxExecutor) -> None:
     """Non-zero exit codes should be accurately captured."""
     result = await executor.execute(

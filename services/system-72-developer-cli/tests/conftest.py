@@ -11,3 +11,8 @@ async def async_client() -> AsyncClient:
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         yield client
+
+
+@pytest.fixture
+def anyio_backend() -> str:
+    return "asyncio"

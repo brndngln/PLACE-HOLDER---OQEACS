@@ -7,7 +7,10 @@ from pathlib import Path
 from typing import Any
 
 import structlog
-import tree_sitter
+try:
+    import tree_sitter
+except ImportError:  # pragma: no cover - exercised in offline test envs
+    tree_sitter = None  # type: ignore[assignment]
 
 from src.config import settings
 from src.models import CodeEntity, EntityType, Relationship, RelationshipType
@@ -81,14 +84,18 @@ class CodeParser:
     """
 
     def __init__(self) -> None:
-        self._parser = tree_sitter.Parser()
-        self._languages: dict[str, tree_sitter.Language] = {}
+        self._parser = tree_sitter.Parser() if tree_sitter is not None else None
+        self._languages: dict[str, Any] = {}
         self._initialized = False
         logger.info("code_parser.created")
 
     def _ensure_initialized(self) -> None:
         """Lazily initialize tree-sitter languages."""
         if self._initialized:
+            return
+        if tree_sitter is None or self._parser is None:
+            logger.warning("tree_sitter_unavailable_fallback_parser_enabled")
+            self._initialized = True
             return
         for lang_name in settings.supported_languages:
             try:
@@ -167,6 +174,8 @@ class CodeParser:
 
     def _parse_source(self, source: bytes, language: str) -> tree_sitter.Tree | None:
         """Parse source bytes into a tree-sitter Tree."""
+        if self._parser is None:
+            return None
         lang_obj = self._languages.get(language)
         if lang_obj is None:
             logger.debug("parser.no_tree_sitter_language", language=language)

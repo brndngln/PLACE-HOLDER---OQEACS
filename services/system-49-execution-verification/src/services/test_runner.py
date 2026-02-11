@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from textwrap import dedent
 
 import httpx
@@ -48,6 +49,15 @@ class TestRunner:
         self, code: str, language: str
     ) -> list[TestCase]:
         """Call LiteLLM to auto-generate test cases when none are provided."""
+        enable_llm = os.getenv("ENABLE_LLM_TEST_GEN", "false").strip().lower()
+        if enable_llm not in {"1", "true", "yes", "on"}:
+            return [
+                TestCase(
+                    input={},
+                    expected_output=None,
+                    description="Default smoke test — code should run without errors",
+                )
+            ]
         prompt = dedent(f"""\
             You are a senior QA engineer. Given the following {language} code,
             generate 3-5 concise test cases. Return ONLY a JSON array where

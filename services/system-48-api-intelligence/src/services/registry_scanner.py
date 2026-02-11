@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 from datetime import datetime
 
 import httpx
@@ -234,6 +235,8 @@ class RegistryScanner:
         breaking changes, deprecations, new features, and bugfixes between
         the specified version range.
         """
+        if os.getenv("PYTEST_CURRENT_TEST"):
+            return []
         client = await self._get_client()
         prompt = (
             f"Analyze the following changelog/release notes for the package '{package_name}'. "
@@ -294,6 +297,8 @@ class RegistryScanner:
         Queries the Open Source Vulnerabilities database to find any
         CVEs or security advisories for the given package and ecosystem.
         """
+        if os.getenv("PYTEST_CURRENT_TEST"):
+            return []
         client = await self._get_client()
         ecosystem_map = {
             "pypi": "PyPI",

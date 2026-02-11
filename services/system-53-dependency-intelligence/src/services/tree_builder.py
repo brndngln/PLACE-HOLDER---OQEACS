@@ -4,8 +4,6 @@ import json
 import uuid
 from pathlib import Path
 
-import networkx as nx
-
 from src.models import DependencyNode, DependencyTree
 
 
@@ -25,11 +23,32 @@ class DependencyTreeBuilder:
 
         nodes = [DependencyNode(name=n, version=v, ecosystem=self._ecosystem(path.name), direct=True) for n, v in parsed]
         edges: list[tuple[str, str]] = []
-        g = nx.DiGraph()
-        for node in nodes:
-            g.add_node(node.name)
-        has_cycles = not nx.is_directed_acyclic_graph(g)
+        has_cycles = self._has_cycles(nodes, edges)
         return DependencyTree(id=str(uuid.uuid4()), nodes=nodes, edges=edges, has_cycles=has_cycles)
+
+    @staticmethod
+    def _has_cycles(nodes: list[DependencyNode], edges: list[tuple[str, str]]) -> bool:
+        graph: dict[str, list[str]] = {node.name: [] for node in nodes}
+        for source, target in edges:
+            graph.setdefault(source, []).append(target)
+
+        visiting: set[str] = set()
+        visited: set[str] = set()
+
+        def dfs(name: str) -> bool:
+            if name in visiting:
+                return True
+            if name in visited:
+                return False
+            visiting.add(name)
+            for nxt in graph.get(name, []):
+                if dfs(nxt):
+                    return True
+            visiting.remove(name)
+            visited.add(name)
+            return False
+
+        return any(dfs(node.name) for node in nodes)
 
     @staticmethod
     def _ecosystem(lockfile: str) -> str:

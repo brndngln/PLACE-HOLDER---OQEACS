@@ -27,8 +27,9 @@ class LayerValidator:
 
     @staticmethod
     def _infer_layer(path: str) -> str:
-        p = path.replace("\\", "/").lower()
+        p = path.replace("\\", "/").replace(".", "/").lower()
+        parts = [segment for segment in p.split("/") if segment]
         for layer in ["controllers", "services", "repositories", "domain", "infra"]:
-            if f"/{layer}/" in f"/{p}/":
+            if layer in parts:
                 return layer
         return ""
