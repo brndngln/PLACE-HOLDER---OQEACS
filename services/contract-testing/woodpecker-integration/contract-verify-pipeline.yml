@@ -1,6 +1,6 @@
 steps:
   contract-verify:
-    image: pactfoundation/pact-cli:latest
+    image: pactfoundation/pact-cli:1.94.1
     commands:
       - |
         pact-broker can-i-deploy \

@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  flowise:
+    image: flowiseai/flowise:2.1
+    container_name: omni-flowise
+    restart: unless-stopped
+    env_file:
+      - ../../.env
+    environment:
+      FLOWISE_USERNAME: ${CI_ADMIN_USER}
+      FLOWISE_PASSWORD: ${CODER_ADMIN_PASSWORD}
+      DATABASE_TYPE: sqlite
+      DATABASE_PATH: /root/.flowise/database.sqlite
+      PORT: 3000
+    volumes:
+      - flowise-data:/root/.flowise
+      - ./flows:/app/flows
+    ports:
+      - "3020:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/v1/ping >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    labels:
+      omni.quantum.component: flowise
+      omni.quantum.tier: business
+      omni.quantum.critical: "false"
+    networks:
+      - omni-quantum-network
+
+volumes:
+  flowise-data:
+
+networks:
+  omni-quantum-network:
+    external: true

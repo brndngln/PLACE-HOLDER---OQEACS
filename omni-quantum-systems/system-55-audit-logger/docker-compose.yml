@@ -1,47 +1,101 @@
-version: "3.9"
-x-log: &log {driver: json-file, options: {max-size: "50m", max-file: "5"}}
+version: '3.9'
+x-log:
+  driver: json-file
+  options:
+    max-size: 50m
+    max-file: '5'
 services:
   audit-logger:
     build: .
     container_name: omni-audit-logger
-    ports: ["9550:9550"]
+    ports:
+    - 9550:9550
     environment:
-      DATABASE_URL: postgresql://{{ vault://secret/data/audit-logger#db_user }}:{{ vault://secret/data/audit-logger#db_password }}@omni-audit-logger-postgres:5432/audit_logger
+      DATABASE_URL: postgresql://{{ vault://secret/data/audit-logger#db_user }}:{{ vault://secret/data/audit-logger#db_password
+        }}@omni-audit-logger-postgres:5432/audit_logger
       MM_WEBHOOK: http://omni-mattermost-webhook:8066/hooks/omni-alerts
       N8N_WEBHOOK: http://omni-n8n:5678/webhook/audit-events
-    healthcheck: {test: ["CMD", "wget", "-qO-", "http://localhost:9550/health"], interval: 15s, timeout: 5s, retries: 5}
+    healthcheck:
+      test:
+      - CMD
+      - wget
+      - -qO-
+      - http://localhost:9550/health
+      interval: 15s
+      timeout: 5s
+      retries: 5
     mem_limit: 512m
     read_only: true
-    tmpfs: ["/tmp"]
-    security_opt: ["no-new-privileges:true"]
+    tmpfs:
+    - /tmp
+    security_opt:
+    - no-new-privileges:true
     restart: unless-stopped
-    logging: *log
-    labels: {omni.quantum.component: audit-logger, omni.quantum.tier: standard, omni.quantum.critical: "false"}
-    depends_on: {audit-logger-postgres: {condition: service_healthy}}
-    volumes: [audit-buffer-data:/var/lib/audit-logger]
-    networks: [omni-quantum-network]
-
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: '5'
+    labels:
+      omni.quantum.component: audit-logger
+      omni.quantum.tier: business
+      omni.quantum.critical: 'false'
+    depends_on:
+      audit-logger-postgres:
+        condition: service_healthy
+    volumes:
+    - audit-buffer-data:/var/lib/audit-logger
+    networks:
+    - omni-quantum-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    cap_drop:
+    - ALL
   audit-logger-postgres:
     image: postgres:16-alpine
     container_name: omni-audit-logger-postgres
     environment:
       POSTGRES_DB: audit_logger
-      POSTGRES_USER: "{{ vault://secret/data/audit-logger#db_user }}"
-      POSTGRES_PASSWORD: "{{ vault://secret/data/audit-logger#db_password }}"
-    healthcheck: {test: ["CMD-SHELL", "pg_isready -U {{ vault://secret/data/audit-logger#db_user }} -d audit_logger"], interval: 15s, timeout: 5s, retries: 5}
+      POSTGRES_USER: '{{ vault://secret/data/audit-logger#db_user }}'
+      POSTGRES_PASSWORD: '{{ vault://secret/data/audit-logger#db_password }}'
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - pg_isready -U {{ vault://secret/data/audit-logger#db_user }} -d audit_logger
+      interval: 15s
+      timeout: 5s
+      retries: 5
     mem_limit: 256m
     restart: unless-stopped
-    logging: *log
-    labels: {omni.quantum.component: audit-logger-postgres, omni.quantum.tier: standard, omni.quantum.critical: "false"}
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: '5'
+    labels:
+      omni.quantum.component: audit-logger-postgres
+      omni.quantum.tier: business
+      omni.quantum.critical: 'false'
     volumes:
-      - audit-postgres-data:/var/lib/postgresql/data
-      - ./scripts/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
-    networks: [omni-quantum-network]
-
+    - audit-postgres-data:/var/lib/postgresql/data
+    - ./scripts/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    networks:
+    - omni-quantum-network
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
 volumes:
-  audit-postgres-data:
-  audit-buffer-data:
-
+  audit-postgres-data: null
+  audit-buffer-data: null
 networks:
   omni-quantum-network:
     external: true

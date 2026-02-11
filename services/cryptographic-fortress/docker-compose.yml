@@ -1,0 +1,53 @@
+version: "3.9"
+
+services:
+  vault:
+    image: hashicorp/vault:1.17
+    container_name: omni-vault
+    restart: unless-stopped
+    env_file:
+      - ../../.env
+    environment:
+      VAULT_ADDR: ${VAULT_ADDR}
+      VAULT_API_ADDR: ${VAULT_URL}
+      VAULT_DEV_ROOT_TOKEN_ID: ${VAULT_ROOT_TOKEN}
+      VAULT_LOCAL_CONFIG: |
+        {
+          "storage": {"file": {"path": "/vault/file"}},
+          "listener": [{"tcp": {"address": "0.0.0.0:8200", "tls_disable": true}}],
+          "ui": true
+        }
+    command: vault server -config=/vault/config/local.json
+    volumes:
+      - vault-data:/vault/file
+      - ./config:/vault/config
+    ports:
+      - "8200:8200"
+    cap_add:
+      - IPC_LOCK
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8200/v1/sys/health >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "2.0"
+    labels:
+      omni.quantum.component: vault
+      omni.quantum.tier: security
+      omni.quantum.critical: "true"
+    networks:
+      - omni-quantum-network
+
+volumes:
+  vault-data:
+
+networks:
+  omni-quantum-network:
+    external: true

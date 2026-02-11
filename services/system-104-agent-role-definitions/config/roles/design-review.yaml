@@ -1,0 +1,6 @@
+name: design-review-agent
+focus: ui_ux_architecture
+quality_bars:
+  - consistency
+  - accessibility
+  - responsiveness

@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  data_generation_seeding:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: omni/data-generation-seeding:1.0.0
+    container_name: omni-data-generation-seeding
+    restart: unless-stopped
+    env_file:
+      - ../../.env
+    environment:
+      SYSTEM_ID: "156"
+      SYSTEM_NAME: "data-generation-seeding"
+      SYSTEM_PORT: "9793"
+      LOG_LEVEL: \INFO
+    ports:
+      - "9793:9793"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:9793/health')\" || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    labels:
+      omni.quantum.component: data-generation-seeding
+      omni.quantum.tier: specialized
+      omni.quantum.critical: "false"
+    networks:
+      - omni-quantum-network
+
+networks:
+  omni-quantum-network:
+    external: true

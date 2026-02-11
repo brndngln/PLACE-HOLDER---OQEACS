@@ -146,7 +146,7 @@ steps:
 # Stage 5: Security Hardening — Zero-tolerance security
 # ============================================================================
   semgrep-scan:
-    image: returntocorp/semgrep:latest
+    image: returntocorp/semgrep:1.98.0
     commands:
       - semgrep scan --config auto --json --output semgrep-results.json . 2>/dev/null || true
       - |
@@ -166,7 +166,7 @@ steps:
         "
 
   trivy-scan:
-    image: aquasec/trivy:latest
+    image: aquasec/trivy:0.57.1
     commands:
       - trivy fs --severity HIGH,CRITICAL --format json --output trivy-results.json . 2>/dev/null || true
       - |
@@ -210,8 +210,8 @@ steps:
           IMAGE="${CI_REPO_NAME}:${TAG}"
           docker build -t ${REGISTRY}/${IMAGE} .
           docker push ${REGISTRY}/${IMAGE}
-          docker tag ${REGISTRY}/${IMAGE} ${REGISTRY}/${CI_REPO_NAME}:latest
-          docker push ${REGISTRY}/${CI_REPO_NAME}:latest
+          docker tag ${REGISTRY}/${IMAGE} ${REGISTRY}/${CI_REPO_NAME}:stable
+          docker push ${REGISTRY}/${CI_REPO_NAME}:stable
           echo "✅ Built and pushed ${IMAGE}"
         fi
     when:

@@ -1,67 +1,178 @@
-version: "3.9"
-x-log: &log {driver: json-file, options: {max-size: "50m", max-file: "5"}}
-x-labels: &labels {omni.quantum.tier: standard, omni.quantum.critical: "false"}
-
+version: '3.9'
+x-log:
+  driver: json-file
+  options:
+    max-size: 50m
+    max-file: '5'
+x-labels:
+  omni.quantum.tier: standard
+  omni.quantum.critical: 'false'
 services:
   glitchtip-web:
-    image: glitchtip/glitchtip:latest
+    image: glitchtip/glitchtip:v4.0.2
     container_name: omni-glitchtip
     command: ./bin/run-migrations-and-server.sh
-    ports: ["8010:8000"]
-    environment: &gt-env
-      SECRET_KEY: "{{ vault://secret/data/glitchtip#secret_key }}"
+    ports:
+    - 8010:8000
+    environment:
+      SECRET_KEY: '{{ vault://secret/data/glitchtip#secret_key }}'
       DATABASE_URL: postgres://{{ vault://secret/data/glitchtip#db_user }}:{{ vault://secret/data/glitchtip#db_password }}@omni-glitchtip-postgres:5432/glitchtip
       REDIS_URL: redis://omni-glitchtip-redis:6379
       EMAIL_URL: smtp://{{ vault://secret/data/smtp#username }}:{{ vault://secret/data/smtp#password }}@omni-listmonk:1025
-      GLITCHTIP_MAX_EVENT_LIFE_DAYS: "90"
-    healthcheck: {test: ["CMD", "wget", "-qO-", "http://localhost:8000/_health/"], interval: 20s, timeout: 10s, retries: 8}
+      GLITCHTIP_MAX_EVENT_LIFE_DAYS: '90'
+    healthcheck:
+      test:
+      - CMD
+      - wget
+      - -qO-
+      - http://localhost:8000/_health/
+      interval: 20s
+      timeout: 10s
+      retries: 8
     mem_limit: 512m
     restart: unless-stopped
-    logging: *log
-    labels: {<<: *labels, omni.quantum.component: glitchtip-web}
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: '5'
+    labels:
+      omni.quantum.component: glitchtip
+      omni.quantum.tier: business
+      omni.quantum.critical: 'false'
     depends_on:
-      glitchtip-postgres: {condition: service_healthy}
-      glitchtip-redis: {condition: service_healthy}
-    networks: [omni-quantum-network]
-
+      glitchtip-postgres:
+        condition: service_healthy
+      glitchtip-redis:
+        condition: service_healthy
+    networks:
+    - omni-quantum-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
   glitchtip-worker:
-    image: glitchtip/glitchtip:latest
+    image: glitchtip/glitchtip:v4.0.2
     container_name: omni-glitchtip-worker
     command: celery -A glitchtip worker -B -l info
-    environment: *gt-env
+    environment:
+      SECRET_KEY: '{{ vault://secret/data/glitchtip#secret_key }}'
+      DATABASE_URL: postgres://{{ vault://secret/data/glitchtip#db_user }}:{{ vault://secret/data/glitchtip#db_password }}@omni-glitchtip-postgres:5432/glitchtip
+      REDIS_URL: redis://omni-glitchtip-redis:6379
+      EMAIL_URL: smtp://{{ vault://secret/data/smtp#username }}:{{ vault://secret/data/smtp#password }}@omni-listmonk:1025
+      GLITCHTIP_MAX_EVENT_LIFE_DAYS: '90'
     healthcheck:
-      test: ["CMD", "bash", "-lc", "ps aux | grep -v grep | grep celery"]
+      test:
+      - CMD
+      - bash
+      - -lc
+      - ps aux | grep -v grep | grep celery
       interval: 20s
       timeout: 10s
       retries: 5
     mem_limit: 256m
     restart: unless-stopped
-    logging: *log
-    labels: {<<: *labels, omni.quantum.component: glitchtip-worker}
-    networks: [omni-quantum-network]
-
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: '5'
+    labels:
+      omni.quantum.component: glitchtip-worker
+      omni.quantum.tier: business
+      omni.quantum.critical: 'false'
+    networks:
+    - omni-quantum-network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
   glitchtip-postgres:
     image: postgres:16-alpine
     container_name: omni-glitchtip-postgres
-    environment: {POSTGRES_DB: glitchtip, POSTGRES_USER: "{{ vault://secret/data/glitchtip#db_user }}", POSTGRES_PASSWORD: "{{ vault://secret/data/glitchtip#db_password }}"}
-    healthcheck: {test: ["CMD-SHELL", "pg_isready -U {{ vault://secret/data/glitchtip#db_user }} -d glitchtip"], interval: 15s, timeout: 5s, retries: 5}
+    environment:
+      POSTGRES_DB: glitchtip
+      POSTGRES_USER: '{{ vault://secret/data/glitchtip#db_user }}'
+      POSTGRES_PASSWORD: '{{ vault://secret/data/glitchtip#db_password }}'
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - pg_isready -U {{ vault://secret/data/glitchtip#db_user }} -d glitchtip
+      interval: 15s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
     mem_limit: 256m
-    logging: *log
-    labels: {<<: *labels, omni.quantum.component: glitchtip-postgres}
-    volumes: [glitchtip-postgres-data:/var/lib/postgresql/data]
-    networks: [omni-quantum-network]
-
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: '5'
+    labels:
+      omni.quantum.component: glitchtip-postgres
+      omni.quantum.tier: business
+      omni.quantum.critical: 'false'
+    volumes:
+    - glitchtip-postgres-data:/var/lib/postgresql/data
+    networks:
+    - omni-quantum-network
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
   glitchtip-redis:
     image: redis:7-alpine
     container_name: omni-glitchtip-redis
-    healthcheck: {test: ["CMD", "redis-cli", "ping"], interval: 10s, timeout: 5s, retries: 5}
+    healthcheck:
+      test:
+      - CMD
+      - redis-cli
+      - ping
+      interval: 10s
+      timeout: 5s
+      retries: 5
     mem_limit: 128m
     restart: unless-stopped
-    logging: *log
-    labels: {<<: *labels, omni.quantum.component: glitchtip-redis}
-    volumes: [glitchtip-redis-data:/data]
-    networks: [omni-quantum-network]
-
-volumes: {glitchtip-postgres-data: {}, glitchtip-redis-data: {}}
-networks: {omni-quantum-network: {external: true}}
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: '5'
+    labels:
+      omni.quantum.component: glitchtip-redis
+      omni.quantum.tier: business
+      omni.quantum.critical: 'false'
+    volumes:
+    - glitchtip-redis-data:/data
+    networks:
+    - omni-quantum-network
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
+volumes:
+  glitchtip-postgres-data: {}
+  glitchtip-redis-data: {}
+networks:
+  omni-quantum-network:
+    external: true

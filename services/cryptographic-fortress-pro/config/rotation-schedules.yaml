@@ -48,9 +48,9 @@ high_sensitivity:
         - omni-grafana
         - omni-langfuse
         - omni-n8n
-        - omni-wikijs
+        - notion-workspace
         - omni-nocodb
-        - omni-plane
+        - notion-workspace
         - omni-superset
         - omni-woodpecker-server
         - omni-litellm
@@ -124,9 +124,9 @@ high_sensitivity:
       type: password
       length: 32
       charset: "alphanumeric_special"
-      service: omni-wikijs
+      service: notion-workspace
       restart_method: docker_restart
-      health_check: "curl -sf http://omni-wikijs:3000/healthz"
+      health_check: "curl -sf https://notion.so"
 
     - name: postgres-nocodb-password
       vault_path: "database/postgres/nocodb"
@@ -144,9 +144,9 @@ high_sensitivity:
       type: password
       length: 32
       charset: "alphanumeric_special"
-      service: omni-plane-api
+      service: notion-workspace
       restart_method: docker_restart
-      health_check: "curl -sf http://omni-plane-api:8000/api/health"
+      health_check: "curl -sf http://notion-workspace:8000/api/health"
 
     - name: postgres-superset-password
       vault_path: "database/postgres/superset"
@@ -251,7 +251,7 @@ high_sensitivity:
       dependent_services:
         - omni-mattermost
         - omni-n8n
-        - omni-plane
+        - notion-workspace
         - omni-semantic-cache
 
     - name: redis-authentik-password
@@ -453,9 +453,9 @@ low_sensitivity:
       type: password
       length: 20
       charset: "alphanumeric_special"
-      service: omni-wikijs
+      service: notion-workspace
       restart_method: api_update
-      health_check: "curl -sf http://omni-wikijs:3000/healthz"
+      health_check: "curl -sf https://notion.so"
 
     - name: calcom-encryption-key
       vault_path: "services/calcom"

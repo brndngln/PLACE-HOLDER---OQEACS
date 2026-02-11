@@ -139,16 +139,16 @@ create_channel() {
 }
 
 create_all_channels() {
-    create_channel "alerts"      "Critical system alerts from Alertmanager, CrowdSec, Uptime Kuma, Backup Fortress, Secret Rotation"
-    create_channel "builds"      "CI/CD pipeline status from Woodpecker, Code Scorer, Gate Engine"
-    create_channel "reviews"     "Code review notifications and quality scores"
-    create_channel "deployments" "Deploy status and approval requests from Coolify, Woodpecker, Orchestrator"
-    create_channel "financial"   "Invoice, payment, and budget alerts from financial microservices and Crater"
-    create_channel "knowledge"   "Knowledge base updates and staleness alerts"
-    create_channel "security"    "Security events, bans, and audit logs from CrowdSec, Vault, Authentik"
-    create_channel "general"     "Platform discussion and Orchestrator commands"
-    create_channel "incidents"   "Active incident management from Uptime Kuma and Prometheus"
-    create_channel "costs"       "LLM and infrastructure cost tracking from LiteLLM and Langfuse"
+    create_channel "omni-alerts"      "Critical system alerts from Alertmanager, CrowdSec, Uptime Kuma, Backup Fortress, Secret Rotation"
+    create_channel "omni-builds"      "CI/CD pipeline status from Woodpecker, Code Scorer, Gate Engine"
+    create_channel "omni-reviews"     "Code review notifications and quality scores"
+    create_channel "omni-deployments" "Deploy status and approval requests from Coolify, Woodpecker, Orchestrator"
+    create_channel "omni-financial"   "Invoice, payment, and budget alerts from financial microservices and Crater"
+    create_channel "omni-knowledge"   "Knowledge base updates and staleness alerts"
+    create_channel "omni-security"    "Security events, bans, and audit logs from CrowdSec, Vault, Authentik"
+    create_channel "omni-general"     "Platform discussion and Orchestrator commands"
+    create_channel "omni-incidents"   "Active incident management from Uptime Kuma and Prometheus"
+    create_channel "omni-costs"       "LLM and infrastructure cost tracking from LiteLLM and Langfuse"
 }
 
 # ---------------------------------------------------------------------------
@@ -227,16 +227,16 @@ for b in json.load(sys.stdin):
 
 assign_bots_to_channels() {
     log_info "Assigning bots to channels ..."
-    add_bot_to_channel "alertbot" "alerts"
-    add_bot_to_channel "alertbot" "security"
-    add_bot_to_channel "alertbot" "incidents"
-    add_bot_to_channel "cicdbot"  "builds"
-    add_bot_to_channel "cicdbot"  "deployments"
-    add_bot_to_channel "aibot"    "reviews"
-    add_bot_to_channel "aibot"    "knowledge"
-    add_bot_to_channel "finbot"   "financial"
-    add_bot_to_channel "finbot"   "costs"
-    add_bot_to_channel "omnibot"  "general"
+    add_bot_to_channel "alertbot" "omni-alerts"
+    add_bot_to_channel "alertbot" "omni-security"
+    add_bot_to_channel "alertbot" "omni-incidents"
+    add_bot_to_channel "cicdbot"  "omni-builds"
+    add_bot_to_channel "cicdbot"  "omni-deployments"
+    add_bot_to_channel "aibot"    "omni-reviews"
+    add_bot_to_channel "aibot"    "omni-knowledge"
+    add_bot_to_channel "finbot"   "omni-financial"
+    add_bot_to_channel "finbot"   "omni-costs"
+    add_bot_to_channel "omnibot"  "omni-general"
 }
 
 # ---------------------------------------------------------------------------
@@ -260,16 +260,16 @@ create_incoming_webhook() {
 }
 
 create_all_webhooks() {
-    create_incoming_webhook "alerts"      "Alerts Webhook"
-    create_incoming_webhook "builds"      "Builds Webhook"
-    create_incoming_webhook "reviews"     "Reviews Webhook"
-    create_incoming_webhook "deployments" "Deployments Webhook"
-    create_incoming_webhook "financial"   "Financial Webhook"
-    create_incoming_webhook "knowledge"   "Knowledge Webhook"
-    create_incoming_webhook "security"    "Security Webhook"
-    create_incoming_webhook "general"     "General Webhook"
-    create_incoming_webhook "incidents"   "Incidents Webhook"
-    create_incoming_webhook "costs"       "Costs Webhook"
+    create_incoming_webhook "omni-alerts"      "Alerts Webhook"
+    create_incoming_webhook "omni-builds"      "Builds Webhook"
+    create_incoming_webhook "omni-reviews"     "Reviews Webhook"
+    create_incoming_webhook "omni-deployments" "Deployments Webhook"
+    create_incoming_webhook "omni-financial"   "Financial Webhook"
+    create_incoming_webhook "omni-knowledge"   "Knowledge Webhook"
+    create_incoming_webhook "omni-security"    "Security Webhook"
+    create_incoming_webhook "omni-general"     "General Webhook"
+    create_incoming_webhook "omni-incidents"   "Incidents Webhook"
+    create_incoming_webhook "omni-costs"       "Costs Webhook"
 }
 
 # ---------------------------------------------------------------------------

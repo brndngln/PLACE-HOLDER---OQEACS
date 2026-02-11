@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-API_BASE="http://omni-twenty:3000/api"
+API_BASE="https://notion.so"
 TOKEN="${TWENTY_API_TOKEN}"
 N8N_BASE="http://omni-n8n:5678/webhook"
 MM_WEBHOOK="http://omni-mattermost-webhook:8066"
@@ -9,7 +9,7 @@ MM_WEBHOOK="http://omni-mattermost-webhook:8066"
 OIDC_CLIENT_ID=$(vault kv get -field=client_id secret/authentik/twenty)
 OIDC_CLIENT_SECRET=$(vault kv get -field=client_secret secret/authentik/twenty)
 
-until curl -sf http://omni-twenty:3000/health; do sleep 3; done
+until curl -sf https://notion.so/health; do sleep 3; done
 
 auth_header="Authorization: Bearer ${TOKEN}"
 ct="Content-Type: application/json"

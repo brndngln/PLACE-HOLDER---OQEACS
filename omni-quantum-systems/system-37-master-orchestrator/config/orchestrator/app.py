@@ -93,20 +93,26 @@ event_subscribers: list[asyncio.Queue] = []
 # =============================================================================
 async def check_service_health(svc: ServiceDef) -> dict:
     """Check a single service's health and return status dict."""
-    url_env = os.getenv(svc.env_key, "")
-    if not url_env:
-        # Fallback: construct from container name
-        url_env = f"http://{svc.container}:{svc.port}" if svc.container else ""
+    url_env = os.getenv(svc.env_key, "").strip() if svc.env_key else ""
+    health_url = svc.healthcheck_url
+    use_env_endpoints = os.getenv("OMNI_USE_ENV_ENDPOINTS", "false").lower() in ("1", "true", "yes")
+    if use_env_endpoints and url_env:
+        if svc.health_path:
+            health_url = f"{url_env.rstrip('/')}{svc.health_path}"
+        else:
+            health_url = url_env
+    if not health_url and svc.container_name:
+        health_url = f"http://{svc.container_name}:{svc.port}{svc.health_path}"
+    if not health_url and svc.container:
+        health_url = f"http://{svc.container}:{svc.port}{svc.health_path}"
 
-    if not url_env:
+    if not health_url:
         return {
             "id": svc.id, "name": svc.name, "codename": svc.codename,
             "status": ServiceStatus.UNKNOWN, "tier": svc.tier.value,
             "latency_ms": 0, "message": "No endpoint configured",
             "checked_at": datetime.now(timezone.utc).isoformat(),
         }
-
-    health_url = f"{url_env.rstrip('/')}{svc.health_path}"
     start = time.monotonic()
 
     try:
@@ -145,6 +151,11 @@ async def check_service_health(svc: ServiceDef) -> dict:
         "status": status.value, "tier": svc.tier.value,
         "latency_ms": latency, "message": message,
         "tags": svc.tags, "port": svc.port,
+        "compose_path": svc.compose_path,
+        "container_name": svc.container_name,
+        "healthcheck_url": svc.healthcheck_url,
+        "restart_policy": svc.restart_policy,
+        "backup_schedule": svc.backup_schedule,
         "checked_at": datetime.now(timezone.utc).isoformat(),
     }
 
@@ -414,9 +425,13 @@ async def get_registry():
             {
                 "id": s.id, "name": s.name, "codename": s.codename,
                 "description": s.description, "tier": s.tier.value,
-                "tags": s.tags, "port": s.port, "container": s.container,
+                "compose_path": s.compose_path,
+                "tags": s.tags, "port": s.port,
+                "container_name": s.container_name,
                 "depends_on": s.depends_on,
-                "health_path": s.health_path,
+                "healthcheck_url": s.healthcheck_url,
+                "restart_policy": s.restart_policy,
+                "backup_schedule": s.backup_schedule,
             }
             for s in SERVICES
         ],
@@ -477,7 +492,7 @@ async def action_restart(req: ActionRequest):
 async def action_backup(req: ActionRequest):
     """Trigger a backup for a service via Backup Orchestrator (System 32)."""
     target = req.target or "all"
-    backup_url = os.getenv("BACKUP_ORCHESTRATOR_URL", "http://omni-backup-orchestrator:9321")
+    backup_url = os.getenv("BACKUP_ORCHESTRATOR_URL", "http://omni-backup-orchestrator:8187")
 
     try:
         async with httpx.AsyncClient(timeout=30) as client:
@@ -485,6 +500,15 @@ async def action_backup(req: ActionRequest):
             resp.raise_for_status()
             ACTION_COUNTER.labels(action="backup").inc()
             return {"action": "backup", "target": target, "result": resp.json()}
+    except (httpx.ConnectError, httpx.TimeoutException) as e:
+        logger.warning(f"backup_service_unavailable target={target} error={e}")
+        return {
+            "action": "backup",
+            "target": target,
+            "result": "degraded",
+            "warning": "backup service unavailable",
+            "detail": str(e),
+        }
     except Exception as e:
         raise HTTPException(500, f"Backup trigger failed: {str(e)}")
 
@@ -493,7 +517,7 @@ async def action_backup(req: ActionRequest):
 async def action_rotate_secrets(req: ActionRequest):
     """Trigger secret rotation via Rotation Agent (System 33)."""
     target = req.target or "all"
-    rotation_url = os.getenv("ROTATION_AGENT_URL", "http://omni-secret-rotation:9331")
+    rotation_url = os.getenv("ROTATION_AGENT_URL", "http://omni-secret-rotation-agent:8189")
 
     try:
         async with httpx.AsyncClient(timeout=30) as client:
@@ -504,6 +528,15 @@ async def action_rotate_secrets(req: ActionRequest):
             resp.raise_for_status()
             ACTION_COUNTER.labels(action="rotate-secrets").inc()
             return {"action": "rotate-secrets", "target": target, "result": resp.json()}
+    except (httpx.ConnectError, httpx.TimeoutException) as e:
+        logger.warning(f"rotation_service_unavailable target={target} error={e}")
+        return {
+            "action": "rotate-secrets",
+            "target": target,
+            "result": "degraded",
+            "warning": "rotation service unavailable",
+            "detail": str(e),
+        }
     except Exception as e:
         raise HTTPException(500, f"Secret rotation failed: {str(e)}")
 
@@ -525,6 +558,15 @@ async def action_deploy(req: ActionRequest):
             resp.raise_for_status()
             ACTION_COUNTER.labels(action="deploy").inc()
             return {"action": "deploy", "target": req.target, "result": resp.json()}
+    except (httpx.ConnectError, httpx.TimeoutException) as e:
+        logger.warning(f"deploy_service_unavailable target={req.target} error={e}")
+        return {
+            "action": "deploy",
+            "target": req.target,
+            "result": "degraded",
+            "warning": "deploy service unavailable",
+            "detail": str(e),
+        }
     except Exception as e:
         raise HTTPException(500, f"Deploy failed: {str(e)}")
 

@@ -66,7 +66,7 @@ steps:
   # Stage 2: Security Scan
   # ===========================================================================
   security-semgrep:
-    image: returntocorp/semgrep:latest
+    image: returntocorp/semgrep:1.98.0
     group: security
     depends_on:
       - lint-ruff
@@ -151,7 +151,7 @@ steps:
         - "VCS_REF=${CI_COMMIT_SHA}"
         - "VERSION=${CI_COMMIT_SHA:0:8}"
       cache_from:
-        - "${CI_REPO}:latest"
+        - "${CI_REPO}:stable"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
@@ -361,7 +361,7 @@ steps:
   # Stage 6: Container Scan + SBOM + Sign
   # ===========================================================================
   container-scan-trivy:
-    image: aquasec/trivy:latest
+    image: aquasec/trivy:0.57.1
     group: container-security
     depends_on:
       - ai-code-review
@@ -384,7 +384,7 @@ steps:
       branch: [main, "release/*"]
 
   sbom-syft:
-    image: anchore/syft:latest
+    image: anchore/syft:v1.17.0
     group: container-security
     depends_on:
       - ai-code-review
@@ -410,7 +410,7 @@ steps:
       branch: [main, "release/*"]
 
   cosign-sign:
-    image: bitnami/cosign:latest
+    image: bitnami/cosign:2.4.1
     depends_on:
       - container-scan-trivy
       - sbom-syft
@@ -548,7 +548,7 @@ steps:
       branch: main
 
   staging-load-test:
-    image: grafana/k6:latest
+    image: grafana/k6:0.55.0
     depends_on:
       - staging-smoke-test
     commands:

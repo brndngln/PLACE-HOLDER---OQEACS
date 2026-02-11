@@ -1,23 +1,10 @@
-# ===========================================================================
-# SYSTEM 1 -- BACKUP FORTRESS: Backup Orchestrator + Restore Verifier
-# Omni Quantum Elite AI Coding System -- Data Protection Layer
-#
-# Restic-based backup orchestration and automated restore verification
-# for all platform services. Both services on omni-quantum-network.
-# ===========================================================================
-
-x-logging: &default-logging
+x-logging:
   driver: json-file
   options:
-    max-size: "50m"
-    max-file: "5"
-    tag: "{{.Name}}"
-
+    max-size: 50m
+    max-file: '5'
+    tag: '{{.Name}}'
 services:
-  # ─────────────────────────────────────────────────────
-  # Backup Orchestrator — schedules and executes backups
-  # for all platform services via Restic + MinIO S3
-  # ─────────────────────────────────────────────────────
   backup-orchestrator:
     build:
       context: ./backup-orchestrator
@@ -25,57 +12,47 @@ services:
     container_name: omni-backup-orchestrator
     restart: unless-stopped
     ports:
-      - "8400:8000"
+    - 8400:8000
     environment:
-      # Restic / MinIO
       RESTIC_PASSWORD: ${RESTIC_PASSWORD:-omni-quantum-restic-key}
       MINIO_ENDPOINT: ${MINIO_ENDPOINT:-http://omni-minio:9000}
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
       MINIO_MC_ALIAS: ${MINIO_MC_ALIAS:-omni}
-      # PostgreSQL
       POSTGRES_HOST: ${POSTGRES_HOST:-omni-postgres}
       POSTGRES_PORT: ${POSTGRES_PORT:-5432}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DATABASES: ${POSTGRES_DATABASES:-omni_quantum,gitea,authentik,n8n,grafana}
-      # Redis
       REDIS_HOST: ${REDIS_HOST:-omni-redis}
       REDIS_PORT: ${REDIS_PORT:-6379}
       REDIS_PASSWORD: ${REDIS_PASSWORD:-}
-      # Qdrant
       QDRANT_HOST: ${QDRANT_HOST:-omni-qdrant}
       QDRANT_PORT: ${QDRANT_PORT:-6333}
-      # Gitea
       GITEA_HOST: ${GITEA_HOST:-omni-gitea}
       GITEA_DATA_DIR: ${GITEA_DATA_DIR:-/data/gitea}
-      # Vault
       VAULT_ADDR: ${VAULT_ADDR:-http://omni-vault:8200}
       VAULT_TOKEN: ${VAULT_TOKEN:-}
-      # n8n
       N8N_HOST: ${N8N_HOST:-http://omni-n8n:5678}
       N8N_API_KEY: ${N8N_API_KEY:-}
-      # Mattermost
       MATTERMOST_HOST: ${MATTERMOST_HOST:-omni-mattermost}
       MATTERMOST_WEBHOOK_URL: ${MATTERMOST_WEBHOOK_URL:-}
-      # Grafana
       GRAFANA_HOST: ${GRAFANA_HOST:-http://omni-grafana:3000}
       GRAFANA_API_KEY: ${GRAFANA_API_KEY:-}
-      # Prometheus
       PROMETHEUS_HOST: ${PROMETHEUS_HOST:-http://omni-prometheus:9090}
-      # Docker volumes to backup (comma-separated, empty = auto-discover)
       DOCKER_VOLUMES: ${DOCKER_VOLUMES:-}
-      # Temp backup directory
       BACKUP_BASE_DIR: /tmp/backups
-      # System 37 orchestrator registration
       ORCHESTRATOR_URL: ${ORCHESTRATOR_URL:-http://omni-master-orchestrator:8000}
-      # System 31 Uptime Kuma registration
       UPTIME_KUMA_URL: ${UPTIME_KUMA_URL:-http://omni-uptime-kuma:3001}
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - backup-temp:/tmp/backups
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+    - backup-temp:/tmp/backups
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:8000/health"]
+      test:
+      - CMD
+      - curl
+      - -sf
+      - http://localhost:8000/health
       interval: 30s
       timeout: 10s
       retries: 3
@@ -84,23 +61,25 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "0.5"
+          cpus: '0.5'
         reservations:
           memory: 128M
     labels:
       omni.quantum.component: backup-orchestrator
-      omni.quantum.tier: critical
-      omni.quantum.critical: "true"
-      omni.quantum.system: "1"
-      omni.quantum.stack: backup
-    logging: *default-logging
+      omni.quantum.tier: business
+      omni.quantum.critical: 'true'
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: '5'
+        tag: '{{.Name}}'
     networks:
-      - omni-quantum-network
-
-  # ─────────────────────────────────────────────────────
-  # Restore Verifier — automated daily restore tests
-  # to verify backup integrity via temp Docker containers
-  # ─────────────────────────────────────────────────────
+    - omni-quantum-network
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
   restore-verifier:
     build:
       context: ./restore-verifier
@@ -108,30 +87,28 @@ services:
     container_name: omni-restore-verifier
     restart: unless-stopped
     ports:
-      - "8401:8001"
+    - 8401:8001
     environment:
-      # Restic / MinIO
       RESTIC_PASSWORD: ${RESTIC_PASSWORD:-omni-quantum-restic-key}
       MINIO_ENDPOINT: ${MINIO_ENDPOINT:-http://omni-minio:9000}
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
-      # PostgreSQL (for verification)
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DATABASES: ${POSTGRES_DATABASES:-omni_quantum,gitea,authentik,n8n,grafana}
-      # Redis (for verification)
       REDIS_PASSWORD: ${REDIS_PASSWORD:-}
-      # Mattermost notifications
       MATTERMOST_WEBHOOK_URL: ${MATTERMOST_WEBHOOK_URL:-}
-      # Isolated verification network name
       VERIFY_NETWORK: ${VERIFY_NETWORK:-omni-verify-isolated}
-      # Temp restore directory
       BACKUP_BASE_DIR: /tmp/verify-restore
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - verify-temp:/tmp/verify-restore
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+    - verify-temp:/tmp/verify-restore
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:8001/health"]
+      test:
+      - CMD
+      - curl
+      - -sf
+      - http://localhost:8001/health
       interval: 30s
       timeout: 10s
       retries: 3
@@ -140,25 +117,30 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "0.5"
+          cpus: '0.5'
         reservations:
           memory: 128M
     labels:
       omni.quantum.component: restore-verifier
-      omni.quantum.tier: critical
-      omni.quantum.critical: "true"
-      omni.quantum.system: "1"
-      omni.quantum.stack: backup
-    logging: *default-logging
+      omni.quantum.tier: business
+      omni.quantum.critical: 'true'
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: '5'
+        tag: '{{.Name}}'
     networks:
-      - omni-quantum-network
-
+    - omni-quantum-network
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
 volumes:
   backup-temp:
     driver: local
   verify-temp:
     driver: local
-
 networks:
   omni-quantum-network:
     external: true

@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+  gitea:
+    image: gitea/gitea:1.22.6
+    container_name: omni-gitea
+    restart: unless-stopped
+    env_file:
+      - ../../.env
+    environment:
+      GITEA__database__DB_TYPE: postgres
+      GITEA__database__HOST: omni-postgres:5432
+      GITEA__database__NAME: gitea
+      GITEA__database__USER: gitea
+      GITEA__database__PASSWD: ${GITEA_PASSWORD}
+      GITEA__security__INSTALL_LOCK: "true"
+      GITEA__server__ROOT_URL: ${GITEA_URL}
+    volumes:
+      - gitea-data:/data
+      - ./config:/config
+    ports:
+      - "3000:3000"
+      - "2222:22"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/healthz >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    labels:
+      omni.quantum.component: gitea
+      omni.quantum.tier: development
+      omni.quantum.critical: "true"
+    networks:
+      - omni-quantum-network
+
+volumes:
+  gitea-data:
+
+networks:
+  omni-quantum-network:
+    external: true

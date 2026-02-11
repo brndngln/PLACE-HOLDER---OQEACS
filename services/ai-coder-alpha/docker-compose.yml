@@ -1,62 +1,48 @@
-version: "3.8"
-
-# ===========================================================================
-# SYSTEM 16 -- AI CODER ALPHA: Docker Compose
-# Omni Quantum Elite AI Coding System -- AI Coding Agent Layer
-#
-# Services:
-#   - openhands-core (port 3000): OpenHands AI coding agent runtime
-#   - openhands-task-orchestrator (port 3001): 10-stage task lifecycle manager
-#   - openhands-gitea-webhook-handler (port 3002): Gitea webhook automation
-# ===========================================================================
-
+version: '3.8'
 services:
-  # -----------------------------------------------------------------------
-  # OpenHands Core Runtime
-  # -----------------------------------------------------------------------
   omni-openhands-core:
-    image: ghcr.io/all-hands-ai/openhands:latest
+    image: ghcr.io/all-hands-ai/openhands:0.20.1
     container_name: omni-openhands-core
     restart: unless-stopped
     ports:
-      - "3000:3000"
+    - 3000:3000
     environment:
-      - LLM_BASE_URL=http://omni-litellm:4000/v1
-      - LLM_MODEL=devstral-2:123b
-      - LLM_API_KEY=${LITELLM_API_KEY:-from_vault}
-      - LLM_MAX_TOKENS=16384
-      - LLM_TEMPERATURE=0.1
-      - SANDBOX_TYPE=docker
-      - SANDBOX_DOCKER_NETWORK=omni-quantum-network
-      - SANDBOX_BASE_IMAGE=python:3.12-slim
-      - SANDBOX_MAX_RUNTIME_SECONDS=600
-      - SANDBOX_MAX_MEMORY_MB=2048
-      - SANDBOX_ENABLE_NETWORKING=true
-      - WORKSPACE_BASE_DIR=/opt/openhands/workspaces
-      - WORKSPACE_MOUNT_PATH=/workspace
-      - GITEA_URL=http://omni-gitea:3000
-      - GITEA_TOKEN=${GITEA_TOKEN}
-      - GITEA_ORG=omni-quantum
-      - VAULT_ADDR=http://omni-vault:8200
-      - VAULT_TOKEN=${VAULT_TOKEN}
-      - LANGFUSE_URL=http://omni-langfuse:3000
-      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY}
-      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY}
-      - MATTERMOST_WEBHOOK_URL=http://omni-mattermost-webhook:8066
-      - LOG_LEVEL=info
-      - LOG_FORMAT=json
+    - LLM_BASE_URL=http://omni-litellm:4000/v1
+    - LLM_MODEL=devstral-2:123b
+    - LLM_API_KEY=${LITELLM_API_KEY:-from_vault}
+    - LLM_MAX_TOKENS=16384
+    - LLM_TEMPERATURE=0.1
+    - SANDBOX_TYPE=docker
+    - SANDBOX_DOCKER_NETWORK=omni-quantum-network
+    - SANDBOX_BASE_IMAGE=python:3.12-slim
+    - SANDBOX_MAX_RUNTIME_SECONDS=600
+    - SANDBOX_MAX_MEMORY_MB=2048
+    - SANDBOX_ENABLE_NETWORKING=true
+    - WORKSPACE_BASE_DIR=/opt/openhands/workspaces
+    - WORKSPACE_MOUNT_PATH=/workspace
+    - GITEA_URL=http://omni-gitea:3000
+    - GITEA_TOKEN=${GITEA_TOKEN}
+    - GITEA_ORG=omni-quantum
+    - VAULT_ADDR=http://omni-vault:8200
+    - VAULT_TOKEN=${VAULT_TOKEN}
+    - LANGFUSE_URL=http://omni-langfuse:3000
+    - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY}
+    - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY}
+    - MATTERMOST_WEBHOOK_URL=http://omni-mattermost-webhook:8066
+    - LOG_LEVEL=info
+    - LOG_FORMAT=json
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - openhands-workspaces:/opt/openhands/workspaces
-      - ./config/openhands-config.yaml:/app/config/openhands-config.yaml:ro
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+    - openhands-workspaces:/opt/openhands/workspaces
+    - ./config/openhands-config.yaml:/app/config/openhands-config.yaml:ro
     deploy:
       resources:
         limits:
           memory: 2G
-          cpus: "2.0"
+          cpus: '2.0'
         reservations:
           memory: 1G
-          cpus: "1.0"
+          cpus: '1.0'
     depends_on:
       omni-litellm:
         condition: service_started
@@ -65,22 +51,25 @@ services:
       omni-langfuse:
         condition: service_started
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:3000/health
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 30s
     networks:
-      - omni-quantum-network
+    - omni-quantum-network
     labels:
-      omni.quantum.system: "16"
-      omni.quantum.component: "openhands-core"
-      omni.quantum.tier: "high"
-      omni.quantum.service: "ai-coder-alpha"
-
-  # -----------------------------------------------------------------------
-  # Task Orchestrator (10-stage lifecycle)
-  # -----------------------------------------------------------------------
+      omni.quantum.component: openhands-core
+      omni.quantum.tier: development
+      omni.quantum.critical: 'false'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
   omni-openhands-task-orchestrator:
     build:
       context: .
@@ -88,38 +77,38 @@ services:
     container_name: omni-openhands-task-orchestrator
     restart: unless-stopped
     ports:
-      - "3001:3001"
+    - 3002:3001
     environment:
-      - OPENHANDS_CONFIG_PATH=/app/config/openhands-config.yaml
-      - LITELLM_URL=http://omni-litellm:4000
-      - TOKEN_INFINITY_CONTEXT_URL=http://omni-token-infinity:9600
-      - TOKEN_INFINITY_ROUTING_URL=http://omni-token-infinity:9601
-      - CODE_SCORER_URL=http://omni-code-scorer
-      - GATE_ENGINE_URL=http://omni-gate-engine
-      - GITEA_URL=http://omni-gitea:3000
-      - GITEA_TOKEN=${GITEA_TOKEN}
-      - GITEA_ORG=omni-quantum
-      - LANGFUSE_URL=http://omni-langfuse:3000
-      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY}
-      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY}
-      - MATTERMOST_WEBHOOK_URL=http://omni-mattermost-webhook:8066
-      - VAULT_ADDR=http://omni-vault:8200
-      - VAULT_TOKEN=${VAULT_TOKEN}
-      - OPENHANDS_URL=http://omni-openhands-core:3000
-      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
-      - LOG_LEVEL=info
-      - LOG_FORMAT=json
+    - OPENHANDS_CONFIG_PATH=/app/config/openhands-config.yaml
+    - LITELLM_URL=http://omni-litellm:4000
+    - TOKEN_INFINITY_CONTEXT_URL=http://omni-token-infinity:9600
+    - TOKEN_INFINITY_ROUTING_URL=http://omni-token-infinity:9601
+    - CODE_SCORER_URL=http://omni-code-scorer
+    - GATE_ENGINE_URL=http://omni-gate-engine
+    - GITEA_URL=http://omni-gitea:3000
+    - GITEA_TOKEN=${GITEA_TOKEN}
+    - GITEA_ORG=omni-quantum
+    - LANGFUSE_URL=http://omni-langfuse:3000
+    - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY}
+    - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY}
+    - MATTERMOST_WEBHOOK_URL=http://omni-mattermost-webhook:8066
+    - VAULT_ADDR=http://omni-vault:8200
+    - VAULT_TOKEN=${VAULT_TOKEN}
+    - OPENHANDS_URL=http://omni-openhands-core:3000
+    - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+    - LOG_LEVEL=info
+    - LOG_FORMAT=json
     volumes:
-      - ./config/openhands-config.yaml:/app/config/openhands-config.yaml:ro
-      - openhands-workspaces:/opt/openhands/workspaces:ro
+    - ./config/openhands-config.yaml:/app/config/openhands-config.yaml:ro
+    - openhands-workspaces:/opt/openhands/workspaces:ro
     deploy:
       resources:
         limits:
           memory: 512M
-          cpus: "1.0"
+          cpus: '1.0'
         reservations:
           memory: 256M
-          cpus: "0.5"
+          cpus: '0.5'
     depends_on:
       omni-openhands-core:
         condition: service_healthy
@@ -138,22 +127,25 @@ services:
       omni-token-infinity:
         condition: service_started
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:3001/health
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 15s
     networks:
-      - omni-quantum-network
+    - omni-quantum-network
     labels:
-      omni.quantum.system: "16"
-      omni.quantum.component: "task-orchestrator"
-      omni.quantum.tier: "high"
-      omni.quantum.service: "ai-coder-alpha"
-
-  # -----------------------------------------------------------------------
-  # Gitea Webhook Handler
-  # -----------------------------------------------------------------------
+      omni.quantum.component: openhands-task-orchestrator
+      omni.quantum.tier: development
+      omni.quantum.critical: 'true'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
   omni-openhands-gitea-webhook-handler:
     build:
       context: .
@@ -161,28 +153,28 @@ services:
     container_name: omni-openhands-gitea-webhook-handler
     restart: unless-stopped
     ports:
-      - "3002:3002"
+    - 3003:3002
     environment:
-      - TASK_ORCHESTRATOR_URL=http://omni-openhands-task-orchestrator:3001
-      - CODE_SCORER_URL=http://omni-code-scorer
-      - GITEA_URL=http://omni-gitea:3000
-      - GITEA_TOKEN=${GITEA_TOKEN}
-      - GITEA_ORG=omni-quantum
-      - GITEA_WEBHOOK_SECRET=${GITEA_WEBHOOK_SECRET}
-      - MATTERMOST_WEBHOOK_URL=http://omni-mattermost-webhook:8066
-      - VAULT_ADDR=http://omni-vault:8200
-      - VAULT_TOKEN=${VAULT_TOKEN}
-      - OPENHANDS_BOT_USER=openhands-bot
-      - LOG_LEVEL=info
-      - LOG_FORMAT=json
+    - TASK_ORCHESTRATOR_URL=http://omni-openhands-task-orchestrator:3001
+    - CODE_SCORER_URL=http://omni-code-scorer
+    - GITEA_URL=http://omni-gitea:3000
+    - GITEA_TOKEN=${GITEA_TOKEN}
+    - GITEA_ORG=omni-quantum
+    - GITEA_WEBHOOK_SECRET=${GITEA_WEBHOOK_SECRET}
+    - MATTERMOST_WEBHOOK_URL=http://omni-mattermost-webhook:8066
+    - VAULT_ADDR=http://omni-vault:8200
+    - VAULT_TOKEN=${VAULT_TOKEN}
+    - OPENHANDS_BOT_USER=openhands-bot
+    - LOG_LEVEL=info
+    - LOG_FORMAT=json
     deploy:
       resources:
         limits:
           memory: 256M
-          cpus: "0.5"
+          cpus: '0.5'
         reservations:
           memory: 128M
-          cpus: "0.25"
+          cpus: '0.25'
     depends_on:
       omni-openhands-task-orchestrator:
         condition: service_healthy
@@ -191,32 +183,31 @@ services:
       omni-code-scorer:
         condition: service_started
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:3002/health
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
     networks:
-      - omni-quantum-network
+    - omni-quantum-network
     labels:
-      omni.quantum.system: "16"
-      omni.quantum.component: "gitea-webhook-handler"
-      omni.quantum.tier: "medium"
-      omni.quantum.service: "ai-coder-alpha"
-
-# -------------------------------------------------------------------------
-# Volumes
-# -------------------------------------------------------------------------
+      omni.quantum.component: openhands-gitea-webhook-handler
+      omni.quantum.tier: foundation
+      omni.quantum.critical: 'true'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
 volumes:
   openhands-workspaces:
     driver: local
     labels:
-      omni.quantum.system: "16"
-      omni.quantum.component: "openhands-workspaces"
-
-# -------------------------------------------------------------------------
-# Networks
-# -------------------------------------------------------------------------
+      omni.quantum.system: '16'
+      omni.quantum.component: openhands-workspaces
 networks:
   omni-quantum-network:
     external: true

@@ -217,13 +217,13 @@ schedules:
       - loki-config:/etc/loki
     priority: medium
 
-  caddy_config:
+  traefik_config:
     schedule: "30 5 * * *"
     type: volume
-    description: "Caddy certificates + config"
+    description: "Traefik certificates + config"
     volumes:
-      - caddy-data:/data
-      - caddy-config:/config
+      - traefik-letsencrypt:/letsencrypt
+      - traefik-config:/etc/traefik
     priority: medium
 
   # ===========================================================================

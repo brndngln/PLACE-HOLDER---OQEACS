@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: omni-iac-generation
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: omni-iac-generation
+  template:
+    metadata:
+      labels:
+        app: omni-iac-generation
+    spec:
+      containers:
+      - name: omni-iac-generation
+        image: omni/iac-generation:1.0.0
+        ports:
+        - containerPort: 9791

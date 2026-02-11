@@ -1,0 +1,49 @@
+version: '3.9'
+services:
+  pgbouncer:
+    image: edoburu/pgbouncer:1.22.0
+    container_name: omni-pgbouncer
+    restart: unless-stopped
+    ports:
+    - 6432:6432
+    environment:
+      DATABASE_URL: postgresql://fortress:quantum_elite_2024@omni-postgres:5432/financial_fortress
+      REDIS_URL: ${REDIS_URL:-redis://omni-redis:6379}
+      LITELLM_URL: ${LITELLM_URL:-http://omni-litellm:4000}
+      MATTERMOST_WEBHOOK_URL: ${MATTERMOST_WEBHOOK_URL:-http://omni-mattermost:8065/hooks/incoming}
+      QDRANT_URL: ${QDRANT_URL:-http://omni-qdrant:6333}
+      PORT: '6432'
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 200
+      DEFAULT_POOL_SIZE: 20
+    labels:
+      omni.quantum.component: pgbouncer
+      omni.quantum.tier: development
+      omni.quantum.critical: 'false'
+    networks:
+    - omni-quantum-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:6432/health || wget -qO- http://localhost:6432/health >/dev/null || nc -z localhost 6432
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
+networks:
+  omni-quantum-network:
+    external: true

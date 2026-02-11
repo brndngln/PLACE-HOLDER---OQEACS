@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  continuous_learning_pipeline:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: omni/continuous-learning-pipeline:1.0.0
+    container_name: omni-continuous-learning-pipeline
+    restart: unless-stopped
+    env_file:
+      - ../../.env
+    environment:
+      SYSTEM_ID: "98"
+      SYSTEM_NAME: "continuous-learning-pipeline"
+      SYSTEM_PORT: "9768"
+      LOG_LEVEL: \INFO
+    ports:
+      - "9768:9768"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:9768/health')\" || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    labels:
+      omni.quantum.component: continuous-learning-pipeline
+      omni.quantum.tier: knowledge
+      omni.quantum.critical: "false"
+    networks:
+      - omni-quantum-network
+
+networks:
+  omni-quantum-network:
+    external: true

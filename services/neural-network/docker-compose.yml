@@ -1,34 +1,43 @@
-version: "3.8"
-
+version: '3.8'
 services:
   omni-ollama:
-    image: ollama/ollama:latest
+    image: ollama/ollama:0.6.4
     container_name: omni-ollama
     restart: unless-stopped
     ports:
-      - "11434:11434"
+    - 11434:11434
     volumes:
-      - ollama-models:/root/.ollama
+    - ollama-models:/root/.ollama
     deploy:
       resources:
         limits:
           memory: 32G
+          cpus: '2.0'
         reservations:
           devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
+          - driver: nvidia
+            count: all
+            capabilities:
+            - gpu
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:11434/api/tags
       interval: 30s
       timeout: 10s
       retries: 5
     networks:
-      - omni-quantum-network
+    - omni-quantum-network
     labels:
-      omni.quantum.component: "ollama"
-      omni.quantum.tier: "high"
-
+      omni.quantum.component: ollama
+      omni.quantum.tier: development
+      omni.quantum.critical: 'true'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
   omni-model-manager:
     build:
       context: .
@@ -36,36 +45,43 @@ services:
     container_name: omni-model-manager
     restart: unless-stopped
     ports:
-      - "11435:11435"
+    - 11435:11435
     environment:
-      - OLLAMA_URL=http://omni-ollama:11434
-      - MODELS_CONFIG=/app/config/models-config.yaml
-      - MATTERMOST_WEBHOOK_URL=http://omni-mattermost-webhook:8066
-      - ORCHESTRATOR_URL=http://omni-orchestrator:9500
+    - OLLAMA_URL=http://omni-ollama:11434
+    - MODELS_CONFIG=/app/config/models-config.yaml
+    - MATTERMOST_WEBHOOK_URL=http://omni-mattermost-webhook:8066
+    - ORCHESTRATOR_URL=http://omni-orchestrator:9500
     volumes:
-      - ./config/models-config.yaml:/app/config/models-config.yaml:ro
+    - ./config/models-config.yaml:/app/config/models-config.yaml:ro
     deploy:
       resources:
         limits:
           memory: 256M
-          cpus: "0.25"
+          cpus: '0.25'
     depends_on:
       omni-ollama:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11435/health"]
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:11435/health
       interval: 30s
       timeout: 10s
       retries: 3
     networks:
-      - omni-quantum-network
+    - omni-quantum-network
     labels:
-      omni.quantum.component: "model-manager"
-      omni.quantum.tier: "high"
-
+      omni.quantum.component: model-manager
+      omni.quantum.tier: development
+      omni.quantum.critical: 'false'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
 volumes:
-  ollama-models:
-
+  ollama-models: null
 networks:
   omni-quantum-network:
     external: true

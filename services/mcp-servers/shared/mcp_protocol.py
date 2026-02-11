@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import json
 import uuid
 from collections.abc import Awaitable, Callable
@@ -11,7 +10,6 @@ import httpx
 import structlog
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
-from sse_starlette.sse import EventSourceResponse
 
 from .auth import ClientInfo, get_client_info
 
@@ -157,15 +155,20 @@ class MCPServer:
             return self._err(req.id, -32603, "Internal error", {"detail": str(exc)})
 
     def _wire_routes(self) -> None:
-        @self.router.get("/mcp/sse")
-        async def sse(_: ClientInfo = Depends(get_client_info)):
-            async def events():
-                while True:
-                    yield {"event": "heartbeat", "data": json.dumps({"ok": True})}
-                    await asyncio.sleep(30)
+        @self.router.get("/mcp")
+        async def mcp_info(_: ClientInfo = Depends(get_client_info)):
+            return {
+                "transport": "streamable-http",
+                "protocolVersion": "2024-11-05",
+                "server": self.name,
+                "capabilities": {"tools": True, "resources": True, "prompts": True},
+            }
 
-            return EventSourceResponse(events())
+        @self.router.post("/mcp")
+        async def mcp(req: JsonRpcRequest, client: ClientInfo = Depends(get_client_info)):
+            return await self.handle_message(req, client)
 
+        # Backward-compatible alias; clients should use /mcp.
         @self.router.post("/mcp/messages")
         async def messages(req: JsonRpcRequest, client: ClientInfo = Depends(get_client_info)):
             return await self.handle_message(req, client)

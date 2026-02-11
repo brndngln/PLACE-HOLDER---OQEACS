@@ -1,15 +1,12 @@
-version: "3.9"
-
-x-logging: &default-logging
+version: '3.9'
+x-logging:
   driver: json-file
   options:
-    max-size: "50m"
-    max-file: "5"
-
-x-labels: &default-labels
+    max-size: 50m
+    max-file: '5'
+x-labels:
   omni.quantum.tier: standard
-  omni.quantum.critical: "false"
-
+  omni.quantum.critical: 'false'
 services:
   kong:
     image: kong:3.8
@@ -31,31 +28,47 @@ services:
       KONG_PROXY_ACCESS_LOG: /dev/stdout
       KONG_PROXY_ERROR_LOG: /dev/stderr
     ports:
-      - "8000:8000"
-      - "8001:8001"
-      - "8444:8444"
+    - 8001:8000
+    - 8444:8444
     depends_on:
       kong-postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8100/status"]
+      test:
+      - CMD
+      - curl
+      - -fsS
+      - http://localhost:8100/status
       interval: 20s
       timeout: 10s
       retries: 6
       start_period: 40s
     mem_limit: 512m
     restart: unless-stopped
-    logging: *default-logging
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: '5'
     labels:
-      <<: *default-labels
       omni.quantum.component: kong
+      omni.quantum.tier: business
+      omni.quantum.critical: 'false'
     volumes:
-      - kong-prefix:/kong_prefix/
-      - kong-tmp:/tmp
-      - ./developer-portal:/developer-portal:ro
+    - kong-prefix:/kong_prefix/
+    - kong-tmp:/tmp
+    - ./developer-portal:/developer-portal:ro
     networks:
-      - omni-quantum-network
-
+    - omni-quantum-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
   kong-postgres:
     image: postgres:16-alpine
     container_name: omni-kong-postgres
@@ -64,26 +77,40 @@ services:
       POSTGRES_USER: kong
       POSTGRES_PASSWORD: ${KONG_PG_PASSWORD}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U kong -d kong"]
+      test:
+      - CMD-SHELL
+      - pg_isready -U kong -d kong
       interval: 15s
       timeout: 5s
       retries: 6
     mem_limit: 256m
     restart: unless-stopped
-    logging: *default-logging
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: '5'
     labels:
-      <<: *default-labels
       omni.quantum.component: kong-postgres
+      omni.quantum.tier: business
+      omni.quantum.critical: 'false'
     volumes:
-      - kong-postgres-data:/var/lib/postgresql/data
+    - kong-postgres-data:/var/lib/postgresql/data
     networks:
-      - omni-quantum-network
-
+    - omni-quantum-network
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
 volumes:
-  kong-prefix:
-  kong-tmp:
-  kong-postgres-data:
-
+  kong-prefix: null
+  kong-tmp: null
+  kong-postgres-data: null
 networks:
   omni-quantum-network:
     external: true

@@ -1,20 +1,5 @@
-# ===========================================================================
-# SYSTEM 4 — SECURITY NEXUS: Authentik SSO/Identity Provider
-# Omni Quantum Elite AI Coding System — Security & Identity Layer
-#
-# Authentik server + worker + dedicated PostgreSQL + dedicated Redis
-# All services on omni-quantum-network
-# ===========================================================================
-
-version: "3.8"
-
+version: '3.8'
 services:
-  # ─────────────────────────────────────────────────────
-  # Authentik Dedicated PostgreSQL
-  # Authentik requires its own PostgreSQL instance — it runs
-  # heavy migrations and uses features that conflict with
-  # shared multi-tenant databases.
-  # ─────────────────────────────────────────────────────
   omni-authentik-db:
     image: postgres:16-alpine
     container_name: omni-authentik-db
@@ -24,13 +9,11 @@ services:
       POSTGRES_PASSWORD: ${AUTHENTIK_POSTGRESQL_PASSWORD}
       POSTGRES_DB: ${AUTHENTIK_POSTGRESQL_DB:-authentik}
     volumes:
-      - authentik-db-data:/var/lib/postgresql/data
+    - authentik-db-data:/var/lib/postgresql/data
     healthcheck:
       test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U ${AUTHENTIK_POSTGRESQL_USER:-authentik} -d ${AUTHENTIK_POSTGRESQL_DB:-authentik}",
-        ]
+      - CMD-SHELL
+      - pg_isready -U ${AUTHENTIK_POSTGRESQL_USER:-authentik} -d ${AUTHENTIK_POSTGRESQL_DB:-authentik}
       interval: 10s
       timeout: 5s
       retries: 5
@@ -39,39 +22,34 @@ services:
       resources:
         limits:
           memory: 512M
+          cpus: '2.0'
     labels:
-      omni_quantum_component: authentik-db
-      omni_quantum_tier: critical
-      omni_quantum_system: "4"
-      omni_quantum_stack: security
+      omni.quantum.component: authentik-db
+      omni.quantum.tier: security
+      omni.quantum.critical: 'true'
     networks:
-      - omni-quantum-network
-
-  # ─────────────────────────────────────────────────────
-  # Authentik Dedicated Redis
-  # Used for caching, session storage, and task queue
-  # ─────────────────────────────────────────────────────
+    - omni-quantum-network
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
   omni-authentik-redis:
     image: redis:7-alpine
     container_name: omni-authentik-redis
     restart: unless-stopped
-    command: >
-      redis-server
-      --requirepass ${AUTHENTIK_REDIS_PASSWORD}
-      --maxmemory 256mb
-      --maxmemory-policy allkeys-lru
-      --save 60 1000
+    command: 'redis-server --requirepass ${AUTHENTIK_REDIS_PASSWORD} --maxmemory 256mb --maxmemory-policy allkeys-lru --save
+      60 1000
+
+      '
     volumes:
-      - authentik-redis-data:/data
+    - authentik-redis-data:/data
     healthcheck:
       test:
-        [
-          "CMD",
-          "redis-cli",
-          "-a",
-          "${AUTHENTIK_REDIS_PASSWORD}",
-          "ping",
-        ]
+      - CMD
+      - redis-cli
+      - -a
+      - ${AUTHENTIK_REDIS_PASSWORD}
+      - ping
       interval: 10s
       timeout: 5s
       retries: 5
@@ -79,17 +57,17 @@ services:
       resources:
         limits:
           memory: 256M
+          cpus: '2.0'
     labels:
-      omni_quantum_component: authentik-redis
-      omni_quantum_tier: critical
-      omni_quantum_system: "4"
-      omni_quantum_stack: security
+      omni.quantum.component: authentik-redis
+      omni.quantum.tier: security
+      omni.quantum.critical: 'true'
     networks:
-      - omni-quantum-network
-
-  # ─────────────────────────────────────────────────────
-  # Authentik Server — web UI, API, OIDC/SAML provider
-  # ─────────────────────────────────────────────────────
+    - omni-quantum-network
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
   omni-authentik:
     image: ghcr.io/goauthentik/server:2024.2
     container_name: omni-authentik
@@ -98,36 +76,37 @@ services:
     environment:
       AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY}
       AUTHENTIK_POSTGRESQL__HOST: omni-authentik-db
-      AUTHENTIK_POSTGRESQL__PORT: "5432"
+      AUTHENTIK_POSTGRESQL__PORT: '5432'
       AUTHENTIK_POSTGRESQL__USER: ${AUTHENTIK_POSTGRESQL_USER:-authentik}
       AUTHENTIK_POSTGRESQL__PASSWORD: ${AUTHENTIK_POSTGRESQL_PASSWORD}
       AUTHENTIK_POSTGRESQL__NAME: ${AUTHENTIK_POSTGRESQL_DB:-authentik}
       AUTHENTIK_REDIS__HOST: omni-authentik-redis
-      AUTHENTIK_REDIS__PORT: "6379"
+      AUTHENTIK_REDIS__PORT: '6379'
       AUTHENTIK_REDIS__PASSWORD: ${AUTHENTIK_REDIS_PASSWORD}
-      AUTHENTIK_REDIS__DB: "0"
-      # Email relay (optional — for password resets, invites)
+      AUTHENTIK_REDIS__DB: '0'
       AUTHENTIK_EMAIL__HOST: ${AUTHENTIK_EMAIL_HOST:-localhost}
       AUTHENTIK_EMAIL__PORT: ${AUTHENTIK_EMAIL_PORT:-587}
       AUTHENTIK_EMAIL__USERNAME: ${AUTHENTIK_EMAIL_USERNAME:-}
       AUTHENTIK_EMAIL__PASSWORD: ${AUTHENTIK_EMAIL_PASSWORD:-}
       AUTHENTIK_EMAIL__USE_TLS: ${AUTHENTIK_EMAIL_USE_TLS:-true}
       AUTHENTIK_EMAIL__FROM: ${AUTHENTIK_EMAIL_FROM:-noreply@omni-quantum.internal}
-      # Logging
       AUTHENTIK_LOG_LEVEL: info
-      AUTHENTIK_ERROR_REPORTING__ENABLED: "false"
-      # Bootstrap admin (first run only)
+      AUTHENTIK_ERROR_REPORTING__ENABLED: 'false'
       AUTHENTIK_BOOTSTRAP_PASSWORD: ${AUTHENTIK_BOOTSTRAP_PASSWORD}
       AUTHENTIK_BOOTSTRAP_TOKEN: ${AUTHENTIK_BOOTSTRAP_TOKEN}
       AUTHENTIK_BOOTSTRAP_EMAIL: ${AUTHENTIK_BOOTSTRAP_EMAIL:-admin@omni-quantum.internal}
     volumes:
-      - authentik-media:/media
-      - authentik-templates:/templates
+    - authentik-media:/media
+    - authentik-templates:/templates
     ports:
-      - "9000:9000"
-      - "9443:9443"
+    - 9000:9000
+    - 9443:9443
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:9000/-/health/live/"]
+      test:
+      - CMD
+      - curl
+      - -sf
+      - http://localhost:9000/-/health/live/
       interval: 15s
       timeout: 5s
       retries: 5
@@ -136,31 +115,29 @@ services:
       resources:
         limits:
           memory: 1G
+          cpus: '1.0'
         reservations:
           memory: 512M
     labels:
-      omni_quantum_component: authentik
-      omni_quantum_tier: critical
-      omni_quantum_system: "4"
-      omni_quantum_stack: security
-      # Traefik labels
-      traefik.enable: "true"
-      traefik.http.routers.authentik.rule: "Host(`auth.omni-quantum.internal`)"
-      traefik.http.routers.authentik.entrypoints: "websecure"
-      traefik.http.routers.authentik.tls: "true"
-      traefik.http.services.authentik.loadbalancer.server.port: "9000"
+      traefik.enable: 'true'
+      traefik.http.routers.authentik.rule: Host(`auth.omni-quantum.internal`)
+      traefik.http.routers.authentik.entrypoints: websecure
+      traefik.http.routers.authentik.tls: 'true'
+      traefik.http.services.authentik.loadbalancer.server.port: '9000'
+      omni.quantum.component: authentik
+      omni.quantum.tier: security
+      omni.quantum.critical: 'true'
     depends_on:
       omni-authentik-db:
         condition: service_healthy
       omni-authentik-redis:
         condition: service_healthy
     networks:
-      - omni-quantum-network
-
-  # ─────────────────────────────────────────────────────
-  # Authentik Worker — background tasks, LDAP outpost,
-  # event processing, scheduled jobs
-  # ─────────────────────────────────────────────────────
+    - omni-quantum-network
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
   omni-authentik-worker:
     image: ghcr.io/goauthentik/server:2024.2
     container_name: omni-authentik-worker
@@ -169,40 +146,50 @@ services:
     environment:
       AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY}
       AUTHENTIK_POSTGRESQL__HOST: omni-authentik-db
-      AUTHENTIK_POSTGRESQL__PORT: "5432"
+      AUTHENTIK_POSTGRESQL__PORT: '5432'
       AUTHENTIK_POSTGRESQL__USER: ${AUTHENTIK_POSTGRESQL_USER:-authentik}
       AUTHENTIK_POSTGRESQL__PASSWORD: ${AUTHENTIK_POSTGRESQL_PASSWORD}
       AUTHENTIK_POSTGRESQL__NAME: ${AUTHENTIK_POSTGRESQL_DB:-authentik}
       AUTHENTIK_REDIS__HOST: omni-authentik-redis
-      AUTHENTIK_REDIS__PORT: "6379"
+      AUTHENTIK_REDIS__PORT: '6379'
       AUTHENTIK_REDIS__PASSWORD: ${AUTHENTIK_REDIS_PASSWORD}
-      AUTHENTIK_REDIS__DB: "0"
+      AUTHENTIK_REDIS__DB: '0'
       AUTHENTIK_LOG_LEVEL: info
-      AUTHENTIK_ERROR_REPORTING__ENABLED: "false"
+      AUTHENTIK_ERROR_REPORTING__ENABLED: 'false'
     volumes:
-      - authentik-media:/media
-      - authentik-templates:/templates
-      # Docker socket for embedded outpost management
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+    - authentik-media:/media
+    - authentik-templates:/templates
+    - /var/run/docker.sock:/var/run/docker.sock:ro
     deploy:
       resources:
         limits:
           memory: 512M
+          cpus: '0.5'
         reservations:
           memory: 256M
     labels:
-      omni_quantum_component: authentik-worker
-      omni_quantum_tier: critical
-      omni_quantum_system: "4"
-      omni_quantum_stack: security
+      omni.quantum.component: authentik-worker
+      omni.quantum.tier: security
+      omni.quantum.critical: 'true'
     depends_on:
       omni-authentik-db:
         condition: service_healthy
       omni-authentik-redis:
         condition: service_healthy
     networks:
-      - omni-quantum-network
-
+    - omni-quantum-network
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - exit 0
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
 volumes:
   authentik-db-data:
     driver: local
@@ -212,7 +199,6 @@ volumes:
     driver: local
   authentik-templates:
     driver: local
-
 networks:
   omni-quantum-network:
     external: true

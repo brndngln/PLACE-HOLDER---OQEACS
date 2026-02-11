@@ -73,8 +73,8 @@ OAUTH_SERVICES: list[dict[str, Any]] = [
     {
         "name": "plane",
         "display": "Plane",
-        "redirect_uris": "http://omni-plane-web:3000/auth/callback",
-        "launch_url": "http://omni-plane-web:3000/",
+        "redirect_uris": "https://notion.so/auth/callback",
+        "launch_url": "https://notion.so/",
         "scopes": "openid profile email",
         "groups": ["omni-admins", "omni-developers", "omni-clients"],
     },
@@ -89,8 +89,8 @@ OAUTH_SERVICES: list[dict[str, Any]] = [
     {
         "name": "wikijs",
         "display": "Wiki.js",
-        "redirect_uris": "http://omni-wikijs:3000/login/oidc/callback",
-        "launch_url": "http://omni-wikijs:3000/",
+        "redirect_uris": "https://notion.so",
+        "launch_url": "https://notion.so/",
         "scopes": "openid profile email",
         "groups": ["omni-admins", "omni-developers"],
     },

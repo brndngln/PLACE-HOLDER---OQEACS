@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  design_forge:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: omni/design-forge:1.0.0
+    container_name: omni-design-forge
+    restart: unless-stopped
+    env_file:
+      - ../../.env
+    environment:
+      SYSTEM_ID: "167"
+      SYSTEM_NAME: "design-forge"
+      SYSTEM_PORT: "9670"
+      LOG_LEVEL: \INFO
+    ports:
+      - "9670:9670"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:9670/health')\" || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    labels:
+      omni.quantum.component: design-forge
+      omni.quantum.tier: expansion
+      omni.quantum.critical: "false"
+    networks:
+      - omni-quantum-network
+
+networks:
+  omni-quantum-network:
+    external: true

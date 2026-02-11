@@ -1,0 +1,52 @@
+services:
+  falco:
+    image: falcosecurity/falco:0.37.2
+    container_name: omni-falco
+    privileged: true
+    pid: host
+    environment:
+      MATTERMOST_WEBHOOK_URL: ${MATTERMOST_WEBHOOK_URL:-http://omni-mattermost:8065/hooks/security-webhook}
+      OMI_ENDPOINT: ${OMI_ENDPOINT:-http://omni-omi-bridge:9700/api/v1/notify}
+      FALCO_RULES_FILE: /etc/falco/falco-rules.yaml
+    volumes:
+    - /var/run/docker.sock:/host/var/run/docker.sock:ro
+    - /proc:/host/proc:ro
+    - /boot:/host/boot:ro
+    - /lib/modules:/host/lib/modules:ro
+    - /usr:/host/usr:ro
+    - ./falco-rules.yaml:/etc/falco/falco-rules.yaml:ro
+    command: 'falco --cri /host/var/run/docker.sock --disable-source interactive_shell --disable-source kernel_module --disable-source
+      kmod
+
+      '
+    networks:
+    - omni-quantum-network
+    healthcheck:
+      test:
+      - CMD
+      - falco
+      - --list
+      - rules
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+    labels:
+      omni.quantum.component: falco
+      omni.quantum.tier: security
+      omni.quantum.critical: 'true'
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    restart: unless-stopped
+    security_opt:
+    - no-new-privileges:true
+networks:
+  omni-quantum-network:
+    external: true

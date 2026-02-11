@@ -1,35 +1,108 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -Eeuo pipefail
 
-LOG_DIR="${LOG_DIR:-./logs}"
-LOG_FILE="${LOG_DIR}/shutdown-$(date +%Y%m%d-%H%M%S).log"
-mkdir -p "$LOG_DIR"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$ROOT_DIR"
 
-log() { echo "$(date '+%Y-%m-%d %H:%M:%S') $1" | tee -a "$LOG_FILE"; }
-compose_down() { [ -f "$1" ] && docker compose -f "$1" down || log "skip missing $1"; }
+DRY_RUN="${DRY_RUN:-0}"
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; NC='\033[0m'
 
-log "Stopping master orchestrator first"
-compose_down services/master-orchestrator/docker-compose.yml
+log() { echo -e "$(date '+%Y-%m-%d %H:%M:%S') $*"; }
+run() {
+  if [[ "$DRY_RUN" == "1" ]]; then
+    log "${YELLOW}[dry-run] $*${NC}"
+  else
+    "$@"
+  fi
+}
 
-for file in \
-  services/omi-bridge/docker-compose.yml \
-  services/enhanced-backup/docker-compose.yml services/uptime-monitor/docker-compose.yml services/enhanced-logging/docker-compose.yml services/enhanced-monitoring/docker-compose.yml \
-  services/financial/docker-compose.yml \
-  services/container-manager/docker-compose.yml services/db-admin/docker-compose.yml services/npm-registry/docker-compose.yml services/feedback-forms/docker-compose.yml \
-  services/benchmarking/docker-compose.yml services/ml-tracking/docker-compose.yml services/chaos-testing/docker-compose.yml services/contract-testing/docker-compose.yml services/api-gateway/docker-compose.yml \
-  services/translation-mgmt/docker-compose.yml services/audit-logger/docker-compose.yml services/search-engine/docker-compose.yml services/error-tracking/docker-compose.yml services/feature-flags/docker-compose.yml services/web-analytics/docker-compose.yml services/support-center/docker-compose.yml services/email-service/docker-compose.yml \
-  services/invoice-manager/docker-compose.yml services/crm-hub/docker-compose.yml services/schedule-manager/docker-compose.yml services/analytics-engine/docker-compose.yml services/flow-builder/docker-compose.yml services/deploy-engine/docker-compose.yml services/project-command/docker-compose.yml \
-  services/code-forge/docker-compose.yml services/build-forge/docker-compose.yml services/sourcegraph/docker-compose.yml services/context-compiler/docker-compose.yml services/gate-engine/docker-compose.yml services/code-scorer/docker-compose.yml \
-  services/knowledge-base/docker-compose.yml services/semantic-cache/docker-compose.yml services/knowledge-freshness/docker-compose.yml services/knowledge-ingestor/docker-compose.yml \
-  services/ai-observability/docker-compose.yml services/ai-coder-beta/docker-compose.yml services/ai-coder-alpha/docker-compose.yml services/token-infinity/docker-compose.yml services/ai-gateway/docker-compose.yml services/neural-network/docker-compose.yml \
-  services/integration-hub/docker-compose.yml services/workflow-engine/docker-compose.yml services/communication-hub/docker-compose.yml \
-  services/cryptographic-fortress-pro/docker-compose.yml services/security-shield/docker-compose.yml services/security-nexus/docker-compose.yml services/gateway-sentinel/docker-compose.yml \
-  services/neo4j-graphrag/docker-compose.yml services/vector-memory/docker-compose.yml services/log-nexus/docker-compose.yml services/observatory/docker-compose.yml services/code-fortress/docker-compose.yml \
-  services/cryptographic-fortress/docker-compose.yml services/object-store/docker-compose.yml services/infrastructure/redis/docker-compose.yml services/infrastructure/postgres/docker-compose.yml
- do
-  compose_down "$file"
- done
+declare -A ASSIGNED
+TIER0=()
+TIER1=()
+TIER2=()
+TIER3=()
+TIER4=()
+TIER5=()
 
-TOTAL=$(docker ps --filter "label=omni.quantum.component" --format '{{.Names}}' | wc -l | tr -d ' ')
-log "Shutdown complete. Running omni containers: $TOTAL"
-log "Data volumes preserved."
+add_to_tier() {
+  local tier="$1"
+  local file="$2"
+  [[ -f "$file" ]] || return 0
+  ASSIGNED["$file"]=1
+  case "$tier" in
+    0) TIER0+=("$file") ;;
+    1) TIER1+=("$file") ;;
+    2) TIER2+=("$file") ;;
+    4) TIER4+=("$file") ;;
+    5) TIER5+=("$file") ;;
+  esac
+}
+
+build_tiers() {
+  mapfile -t ALL_COMPOSES < <(find services omni-quantum-systems -name docker-compose.yml | sort)
+
+  add_to_tier 0 services/postgresql/docker-compose.yml
+  add_to_tier 0 services/redis/docker-compose.yml
+  add_to_tier 0 services/object-store/docker-compose.yml
+
+  add_to_tier 1 services/cryptographic-fortress/docker-compose.yml
+  add_to_tier 1 services/security-nexus/docker-compose.yml
+  add_to_tier 1 services/observatory/docker-compose.yml
+  add_to_tier 1 services/log-nexus/docker-compose.yml
+  add_to_tier 1 services/gateway-sentinel/docker-compose.yml
+
+  add_to_tier 2 services/neural-network/docker-compose.yml
+  add_to_tier 2 services/ai-gateway/docker-compose.yml
+  add_to_tier 2 services/vector-memory/docker-compose.yml
+  add_to_tier 2 services/code-fortress/docker-compose.yml
+
+  add_to_tier 4 omni-quantum-systems/system-29-enhanced-monitoring/docker-compose.yml
+  add_to_tier 4 omni-quantum-systems/system-30-enhanced-logging/docker-compose.yml
+  add_to_tier 4 omni-quantum-systems/system-31-uptime-monitor/docker-compose.yml
+  add_to_tier 4 omni-quantum-systems/system-32-enhanced-backup/docker-compose.yml
+  add_to_tier 4 omni-quantum-systems/system-33-enhanced-secrets/docker-compose.yml
+  add_to_tier 4 omni-quantum-systems/system-34-enhanced-proxy/docker-compose.yml
+  add_to_tier 4 omni-quantum-systems/system-35-cicd-pipelines/docker-compose.yml
+  add_to_tier 4 omni-quantum-systems/system-36-dev-environments/docker-compose.yml
+
+  add_to_tier 5 omni-quantum-systems/system-37-master-orchestrator/docker-compose.yml
+
+  local f
+  for f in "${ALL_COMPOSES[@]}"; do
+    if [[ -z "${ASSIGNED[$f]:-}" ]]; then
+      TIER3+=("$f")
+    fi
+  done
+}
+
+down_tier() {
+  local tier_name="$1"
+  shift
+  local files=("$@")
+
+  log "${BLUE}=== ${tier_name} ===${NC}"
+  local f
+  for f in "${files[@]}"; do
+    if [[ -f "$f" ]]; then
+      run docker compose -f "$f" down
+    fi
+  done
+}
+
+main() {
+  command -v docker >/dev/null 2>&1 || { log "${RED}docker not found${NC}"; exit 1; }
+  docker compose version >/dev/null 2>&1 || { log "${RED}docker compose plugin not found${NC}"; exit 1; }
+
+  build_tiers
+
+  down_tier "Tier 5 - Master Orchestrator (37)" "${TIER5[@]}"
+  down_tier "Tier 4 - Enhanced Infrastructure (29-36)" "${TIER4[@]}"
+  down_tier "Tier 3 - Application Services" "${TIER3[@]}"
+  down_tier "Tier 2 - Core AI/Code" "${TIER2[@]}"
+  down_tier "Tier 1 - Security/Observability/Ingress" "${TIER1[@]}"
+  down_tier "Tier 0 - Foundation" "${TIER0[@]}"
+
+  log "${GREEN}Shutdown complete${NC}"
+}
+
+main "$@"

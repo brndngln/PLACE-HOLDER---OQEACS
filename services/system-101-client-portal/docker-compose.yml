@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  client_portal:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: omni/client-portal:1.0.0
+    container_name: omni-client-portal
+    restart: unless-stopped
+    env_file:
+      - ../../.env
+    environment:
+      SYSTEM_ID: "101"
+      SYSTEM_NAME: "client-portal"
+      SYSTEM_PORT: "9771"
+      LOG_LEVEL: \INFO
+    ports:
+      - "9771:9771"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:9771/health')\" || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    labels:
+      omni.quantum.component: client-portal
+      omni.quantum.tier: business
+      omni.quantum.critical: "true"
+    networks:
+      - omni-quantum-network
+
+networks:
+  omni-quantum-network:
+    external: true

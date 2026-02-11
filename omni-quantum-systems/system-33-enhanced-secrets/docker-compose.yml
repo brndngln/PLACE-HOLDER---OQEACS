@@ -1,20 +1,10 @@
-###############################################################################
-# System 33: Enhanced Secret Management — "Cryptographic Fortress Pro"
-# Enhances: System 2 — adds SOPS, dynamic secrets, PKI auto-issuance,
-#           automatic rotation, audit dashboards, emergency break-glass
-###############################################################################
-
-x-logging: &default-logging
+x-logging:
   driver: json-file
   options:
-    max-size: "10m"
-    max-file: "5"
-    tag: "{{.Name}}"
-
+    max-size: 10m
+    max-file: '5'
+    tag: '{{.Name}}'
 services:
-  #---------------------------------------------------------------------------
-  # Secret Rotation Agent — auto-rotates API keys + DB credentials
-  #---------------------------------------------------------------------------
   secret-rotation-agent:
     build:
       context: ./config/rotation-agent
@@ -25,33 +15,47 @@ services:
       VAULT_ADDR: http://omni-vault:8200
       VAULT_TOKEN: ${VAULT_ROOT_TOKEN}
       POSTGRES_HOST: omni-postgres
-      POSTGRES_PORT: "5432"
+      POSTGRES_PORT: '5432'
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       MATTERMOST_WEBHOOK: ${MATTERMOST_SECURITY_WEBHOOK}
       OMI_WEBHOOK: ${OMI_WEBHOOK_URL}
-      ROTATION_CHECK_INTERVAL: "3600"
+      ROTATION_CHECK_INTERVAL: '3600'
     ports:
-      - "8189:8189"
+    - 8189:8189
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8189/health')"]
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request; urllib.request.urlopen('http://localhost:8189/health')
       interval: 15s
       timeout: 10s
       retries: 5
       start_period: 30s
     restart: unless-stopped
-    logging: *default-logging
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '5'
+        tag: '{{.Name}}'
     networks:
-      - omni-quantum-network
+    - omni-quantum-network
     labels:
-      - "omni.quantum.component=secret-rotation-agent"
-      - "omni.quantum.tier=standard"
-      - "omni.quantum.critical=true"
-      - "prometheus.scrape=true"
-      - "prometheus.port=8189"
-
-  #---------------------------------------------------------------------------
-  # PKI Manager — auto-issues TLS certs for service-to-service mTLS
-  #---------------------------------------------------------------------------
+      prometheus.scrape: 'true'
+      prometheus.port: '8189'
+      omni.quantum.component: secret-rotation-agent
+      omni.quantum.tier: business
+      omni.quantum.critical: 'true'
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
   pki-manager:
     build:
       context: ./config/pki-manager
@@ -61,31 +65,45 @@ services:
       TZ: UTC
       VAULT_ADDR: http://omni-vault:8200
       VAULT_TOKEN: ${VAULT_ROOT_TOKEN}
-      PKI_DOMAIN: "omni.internal"
-      CERT_TTL: "720h"
+      PKI_DOMAIN: omni-quantum.internal
+      CERT_TTL: 720h
       MATTERMOST_WEBHOOK: ${MATTERMOST_SECURITY_WEBHOOK}
     ports:
-      - "8190:8190"
+    - 8190:8190
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8190/health')"]
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request; urllib.request.urlopen('http://localhost:8190/health')
       interval: 15s
       timeout: 10s
       retries: 5
       start_period: 30s
     restart: unless-stopped
-    logging: *default-logging
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '5'
+        tag: '{{.Name}}'
     networks:
-      - omni-quantum-network
+    - omni-quantum-network
     labels:
-      - "omni.quantum.component=pki-manager"
-      - "omni.quantum.tier=standard"
-      - "omni.quantum.critical=true"
-      - "prometheus.scrape=true"
-      - "prometheus.port=8190"
-
-  #---------------------------------------------------------------------------
-  # Vault Audit Dashboard — visualizes Vault audit logs
-  #---------------------------------------------------------------------------
+      prometheus.scrape: 'true'
+      prometheus.port: '8190'
+      omni.quantum.component: pki-manager
+      omni.quantum.tier: business
+      omni.quantum.critical: 'true'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
   vault-audit-dashboard:
     build:
       context: ./config/audit-dashboard
@@ -97,24 +115,39 @@ services:
       VAULT_TOKEN: ${VAULT_ROOT_TOKEN}
       LOKI_URL: http://omni-loki:3100
     ports:
-      - "8191:8191"
+    - 8191:8191
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8191/health')"]
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request; urllib.request.urlopen('http://localhost:8191/health')
       interval: 15s
       timeout: 10s
       retries: 5
       start_period: 30s
     restart: unless-stopped
-    logging: *default-logging
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '5'
+        tag: '{{.Name}}'
     networks:
-      - omni-quantum-network
+    - omni-quantum-network
     labels:
-      - "omni.quantum.component=vault-audit-dashboard"
-      - "omni.quantum.tier=standard"
-      - "omni.quantum.critical=false"
-      - "prometheus.scrape=true"
-      - "prometheus.port=8191"
-
+      prometheus.scrape: 'true'
+      prometheus.port: '8191'
+      omni.quantum.component: vault-audit-dashboard
+      omni.quantum.tier: business
+      omni.quantum.critical: 'false'
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+    security_opt:
+    - no-new-privileges:true
 networks:
   omni-quantum-network:
     external: true

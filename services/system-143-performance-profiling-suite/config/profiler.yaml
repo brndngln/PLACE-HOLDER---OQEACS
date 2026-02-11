@@ -1,0 +1,5 @@
+profilers:
+  - py-spy
+  - memray
+  - valgrind
+sampling_interval_seconds: 30

@@ -1,0 +1,27 @@
+version: "3.9"
+
+x-stub-requirements:
+  note: pending-build-stub
+  healthcheck: pending
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  deploy:
+    resources:
+      limits:
+        memory: 256M
+        cpus: "0.5"
+  labels:
+    omni.quantum.component: pending-stub
+    omni.quantum.tier: business
+    omni.quantum.critical: "false"
+  restart: unless-stopped
+  networks:
+    - omni-quantum-network
+
+services: {}
+
+networks:
+  omni-quantum-network:
+    external: true

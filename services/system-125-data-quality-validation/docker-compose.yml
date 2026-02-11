@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  data_quality_validation:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: omni/data-quality-validation:1.0.0
+    container_name: omni-data-quality-validation
+    restart: unless-stopped
+    env_file:
+      - ../../.env
+    environment:
+      SYSTEM_ID: "125"
+      SYSTEM_NAME: "data-quality-validation"
+      SYSTEM_PORT: "9788"
+      LOG_LEVEL: \INFO
+    ports:
+      - "9788:9788"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:9788/health')\" || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    labels:
+      omni.quantum.component: data-quality-validation
+      omni.quantum.tier: testing
+      omni.quantum.critical: "false"
+    networks:
+      - omni-quantum-network
+
+networks:
+  omni-quantum-network:
+    external: true

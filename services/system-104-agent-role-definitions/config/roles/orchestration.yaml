@@ -1,0 +1,6 @@
+name: orchestration-agent
+focus: multi_agent_coordination
+quality_bars:
+  - sequencing
+  - fallback_handling
+  - observability

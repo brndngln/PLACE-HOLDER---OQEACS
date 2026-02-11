@@ -1,46 +1,50 @@
-###############################################################################
-# System 30: Enhanced Log Aggregation — "Log Nexus Pro"
-# Purpose: Production-grade centralized logging with structured logging,
-#          trace correlation, retention policies, pattern detection
-# Enhances: System 6 (Log Nexus) — Loki + Promtail
-###############################################################################
-
-x-logging: &default-logging
+x-logging:
   driver: json-file
   options:
-    max-size: "10m"
-    max-file: "5"
-    tag: "{{.Name}}"
-
+    max-size: 10m
+    max-file: '5'
+    tag: '{{.Name}}'
 services:
-  #---------------------------------------------------------------------------
-  # Loki Gateway — nginx-based load balancer for Loki
-  #---------------------------------------------------------------------------
   loki-gateway:
     image: nginx:1.27-alpine
     container_name: omni-loki-gateway
     volumes:
-      - ./config/loki-gateway.conf:/etc/nginx/nginx.conf:ro
+    - ./config/loki-gateway.conf:/etc/nginx/nginx.conf:ro
     ports:
-      - "3100:3100"
+    - 3101:3100
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3100/ready"]
+      test:
+      - CMD
+      - wget
+      - --spider
+      - -q
+      - http://localhost:3100/ready
       interval: 15s
       timeout: 10s
       retries: 5
       start_period: 15s
     restart: unless-stopped
-    logging: *default-logging
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '5'
+        tag: '{{.Name}}'
     networks:
-      - omni-quantum-network
+    - omni-quantum-network
     labels:
-      - "omni.quantum.component=loki-gateway"
-      - "omni.quantum.tier=standard"
-      - "omni.quantum.critical=false"
-
-  #---------------------------------------------------------------------------
-  # Log Pattern Detector — detects error patterns and anomalous log bursts
-  #---------------------------------------------------------------------------
+      omni.quantum.component: loki-gateway
+      omni.quantum.tier: business
+      omni.quantum.critical: 'false'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
   log-pattern-detector:
     build:
       context: ./config/log-pattern-detector
@@ -51,31 +55,45 @@ services:
       LOKI_URL: http://omni-loki:3100
       MATTERMOST_WEBHOOK: ${MATTERMOST_ALERTS_WEBHOOK}
       OMI_WEBHOOK: ${OMI_WEBHOOK_URL}
-      CHECK_INTERVAL: "120"
-      BURST_THRESHOLD: "100"
+      CHECK_INTERVAL: '120'
+      BURST_THRESHOLD: '100'
       REDIS_URL: redis://omni-redis:6379/6
     ports:
-      - "8184:8184"
+    - 8184:8184
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8184/health')"]
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request; urllib.request.urlopen('http://localhost:8184/health')
       interval: 15s
       timeout: 10s
       retries: 5
       start_period: 30s
     restart: unless-stopped
-    logging: *default-logging
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '5'
+        tag: '{{.Name}}'
     networks:
-      - omni-quantum-network
+    - omni-quantum-network
     labels:
-      - "omni.quantum.component=log-pattern-detector"
-      - "omni.quantum.tier=standard"
-      - "omni.quantum.critical=false"
-      - "prometheus.scrape=true"
-      - "prometheus.port=8184"
-
-  #---------------------------------------------------------------------------
-  # Log Correlator — links logs to Langfuse traces via trace IDs
-  #---------------------------------------------------------------------------
+      prometheus.scrape: 'true'
+      prometheus.port: '8184'
+      omni.quantum.component: log-pattern-detector
+      omni.quantum.tier: business
+      omni.quantum.critical: 'false'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
   log-correlator:
     build:
       context: ./config/log-correlator
@@ -88,24 +106,41 @@ services:
       LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
       LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
     ports:
-      - "8185:8185"
+    - 8185:8185
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8185/health')"]
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request; urllib.request.urlopen('http://localhost:8185/health')
       interval: 15s
       timeout: 10s
       retries: 5
       start_period: 30s
     restart: unless-stopped
-    logging: *default-logging
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '5'
+        tag: '{{.Name}}'
     networks:
-      - omni-quantum-network
+    - omni-quantum-network
     labels:
-      - "omni.quantum.component=log-correlator"
-      - "omni.quantum.tier=standard"
-      - "omni.quantum.critical=false"
-      - "prometheus.scrape=true"
-      - "prometheus.port=8185"
-
+      prometheus.scrape: 'true'
+      prometheus.port: '8185'
+      omni.quantum.component: log-correlator
+      omni.quantum.tier: business
+      omni.quantum.critical: 'false'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
 networks:
   omni-quantum-network:
     external: true

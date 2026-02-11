@@ -1,45 +1,106 @@
-version: "3.9"
-x-log: &log {driver: json-file, options: {max-size: "50m", max-file: "5"}}
-x-labels: &labels {omni.quantum.tier: standard, omni.quantum.critical: "false"}
-
+version: '3.9'
+x-log:
+  driver: json-file
+  options:
+    max-size: 50m
+    max-file: '5'
+x-labels:
+  omni.quantum.tier: standard
+  omni.quantum.critical: 'false'
 services:
   meilisearch:
     image: getmeili/meilisearch:v1.11
     container_name: omni-meilisearch
-    ports: ["7700:7700"]
+    ports:
+    - 7700:7700
     environment:
-      MEILI_MASTER_KEY: "{{ vault://secret/data/meilisearch#master_key }}"
+      MEILI_MASTER_KEY: '{{ vault://secret/data/meilisearch#master_key }}'
       MEILI_ENV: production
       MEILI_DB_PATH: /meili_data
-    healthcheck: {test: ["CMD", "wget", "-qO-", "http://localhost:7700/health"], interval: 15s, timeout: 5s, retries: 5}
+    healthcheck:
+      test:
+      - CMD
+      - wget
+      - -qO-
+      - http://localhost:7700/health
+      interval: 15s
+      timeout: 5s
+      retries: 5
     mem_limit: 1g
     restart: unless-stopped
-    logging: *log
-    labels: {<<: *labels, omni.quantum.component: meilisearch}
-    volumes: [meili_data:/meili_data]
-    networks: [omni-quantum-network]
-
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: '5'
+    labels:
+      omni.quantum.component: meilisearch
+      omni.quantum.tier: business
+      omni.quantum.critical: 'false'
+    volumes:
+    - meili_data:/meili_data
+    networks:
+    - omni-quantum-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
   meilisearch-indexer:
     build:
       context: ./config/meilisearch-indexer
       dockerfile: Dockerfile
     container_name: omni-meilisearch-indexer
-    ports: ["7701:7701"]
+    ports:
+    - 7701:7701
     environment:
       MEILI_URL: http://omni-meilisearch:7700
-      MEILI_API_KEY: "{{ vault://secret/data/meilisearch#admin_key }}"
+      MEILI_API_KEY: '{{ vault://secret/data/meilisearch#admin_key }}'
       MM_WEBHOOK: http://omni-mattermost-webhook:8066/hooks/omni-alerts
       N8N_WEBHOOK: http://omni-n8n:5678/webhook/search-events
-    healthcheck: {test: ["CMD", "wget", "-qO-", "http://localhost:7701/health"], interval: 15s, timeout: 5s, retries: 5}
+    healthcheck:
+      test:
+      - CMD
+      - wget
+      - -qO-
+      - http://localhost:7701/health
+      interval: 15s
+      timeout: 5s
+      retries: 5
     mem_limit: 256m
     read_only: true
-    tmpfs: ["/tmp"]
-    security_opt: ["no-new-privileges:true"]
+    tmpfs:
+    - /tmp
+    security_opt:
+    - no-new-privileges:true
     restart: unless-stopped
-    logging: *log
-    labels: {<<: *labels, omni.quantum.component: meilisearch-indexer}
-    depends_on: {meilisearch: {condition: service_healthy}}
-    networks: [omni-quantum-network]
-
-volumes: {meili_data: {}}
-networks: {omni-quantum-network: {external: true}}
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: '5'
+    labels:
+      omni.quantum.component: meilisearch-indexer
+      omni.quantum.tier: business
+      omni.quantum.critical: 'false'
+    depends_on:
+      meilisearch:
+        condition: service_healthy
+    networks:
+    - omni-quantum-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    cap_drop:
+    - ALL
+volumes:
+  meili_data: {}
+networks:
+  omni-quantum-network:
+    external: true

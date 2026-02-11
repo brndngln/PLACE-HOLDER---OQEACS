@@ -1,0 +1,6 @@
+name: code-review-agent
+focus: correctness_and_maintainability
+quality_bars:
+  - reliability
+  - readability
+  - test_coverage

@@ -12,7 +12,7 @@ logger = structlog.get_logger()
 EVENTS = Counter("webhook_events_total", "Webhook events", ["event_type"])
 MM_WEBHOOK = "http://omni-mattermost-webhook:8066"
 
-TWENTY_API = os.getenv("TWENTY_API_BASE", "http://omni-twenty:3000/api")
+TWENTY_API = os.getenv("TWENTY_API_BASE", "https://notion.so")
 TWENTY_TOKEN = os.getenv("TWENTY_API_TOKEN", "")
 CRATER_API = os.getenv("CRATER_API_BASE", "http://omni-crater:80/api/v1")
 CRATER_TOKEN = os.getenv("CRATER_API_TOKEN", "")

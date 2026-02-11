@@ -62,16 +62,16 @@ BOT_TOKENS: dict[str, str] = {
 
 # Channel → bot mapping
 CHANNEL_BOT: dict[str, str] = {
-    "alerts": "alertbot",
-    "security": "alertbot",
-    "incidents": "alertbot",
-    "builds": "cicdbot",
-    "deployments": "cicdbot",
-    "reviews": "aibot",
-    "knowledge": "aibot",
-    "financial": "finbot",
-    "costs": "finbot",
-    "general": "omnibot",
+    "omni-alerts": "alertbot",
+    "omni-security": "alertbot",
+    "omni-incidents": "alertbot",
+    "omni-builds": "cicdbot",
+    "omni-deployments": "cicdbot",
+    "omni-reviews": "aibot",
+    "omni-knowledge": "aibot",
+    "omni-financial": "finbot",
+    "omni-costs": "finbot",
+    "omni-general": "omnibot",
 }
 
 # ---------------------------------------------------------------------------
@@ -364,10 +364,10 @@ async def webhook_prometheus(request: Request) -> dict[str, str]:
                 "dashboard_link": alert.get("generatorURL", ""),
             })
             is_critical = severity == "critical"
-            await post_to_channel(client, "alerts", msg, mention_channel=is_critical)
+            await post_to_channel(client, "omni-alerts", msg, mention_channel=is_critical)
             if is_critical:
                 await trigger_omi_haptic(client, "critical", f"Critical alert: {title}")
-            record_event("prometheus", "alerts", severity, title, trace_id)
+            record_event("prometheus", "omni-alerts", severity, title, trace_id)
             log.info("prometheus_alert_processed", alert=title, severity=severity, trace_id=trace_id)
 
     return {"status": "ok", "trace_id": trace_id}
@@ -392,8 +392,8 @@ async def webhook_crowdsec(request: Request) -> dict[str, str]:
             "description": f"CrowdSec detected suspicious activity from {source_ip}",
             "dashboard_link": "",
         })
-        await post_to_channel(client, "security", msg)
-        record_event("crowdsec", "security", "warning", f"CrowdSec {event_type}: {source_ip}", trace_id)
+        await post_to_channel(client, "omni-security", msg)
+        record_event("crowdsec", "omni-security", "warning", f"CrowdSec {event_type}: {source_ip}", trace_id)
         log.info("crowdsec_event_processed", event_type=event_type, source_ip=source_ip, trace_id=trace_id)
 
     return {"status": "ok", "trace_id": trace_id}
@@ -424,11 +424,11 @@ async def webhook_uptime_kuma(request: Request) -> dict[str, str]:
             "dashboard_link": "",
         })
         is_critical = status == "DOWN"
-        await post_to_channel(client, "alerts", msg, mention_channel=is_critical)
-        await post_to_channel(client, "incidents", msg, mention_channel=is_critical)
+        await post_to_channel(client, "omni-alerts", msg, mention_channel=is_critical)
+        await post_to_channel(client, "omni-incidents", msg, mention_channel=is_critical)
         if is_critical:
             await trigger_omi_haptic(client, "critical", f"Service DOWN: {service_name}")
-        record_event("uptime-kuma", "alerts", severity, f"Service {status}: {service_name}", trace_id)
+        record_event("uptime-kuma", "omni-alerts", severity, f"Service {status}: {service_name}", trace_id)
         log.info("uptime_kuma_processed", service=service_name, status=status, trace_id=trace_id)
 
     return {"status": "ok", "trace_id": trace_id}
@@ -462,8 +462,8 @@ async def webhook_woodpecker(request: Request) -> dict[str, str]:
             "duration": duration,
             "ci_link": pipeline.get("link", ""),
         })
-        await post_to_channel(client, "builds", msg)
-        record_event("woodpecker", "builds", "info", f"Build {status}: {repo_name}", trace_id)
+        await post_to_channel(client, "omni-builds", msg)
+        record_event("woodpecker", "omni-builds", "info", f"Build {status}: {repo_name}", trace_id)
         log.info("woodpecker_processed", repo=repo_name, status=status, trace_id=trace_id)
 
     return {"status": "ok", "trace_id": trace_id}
@@ -495,8 +495,8 @@ async def webhook_code_scorer(request: Request) -> dict[str, str]:
             "dim_test_coverage": str(dims.get("test_coverage", "N/A")),
             "dim_documentation": str(dims.get("documentation", "N/A")),
         })
-        await post_to_channel(client, "reviews", msg)
-        record_event("code-scorer", "reviews", "info", f"Review {gate_result}: {body.get('task_id', '')}", trace_id)
+        await post_to_channel(client, "omni-reviews", msg)
+        record_event("code-scorer", "omni-reviews", "info", f"Review {gate_result}: {body.get('task_id', '')}", trace_id)
         log.info("code_scorer_processed", task_id=body.get("task_id"), score=score, passed=body.get("passed"), trace_id=trace_id)
 
     return {"status": "ok", "trace_id": trace_id}
@@ -527,10 +527,10 @@ async def webhook_coolify(request: Request) -> dict[str, str]:
             "rollback_link": body.get("rollback_url", ""),
         })
         is_failure = status == "failed"
-        await post_to_channel(client, "deployments", msg, mention_channel=is_failure)
+        await post_to_channel(client, "omni-deployments", msg, mention_channel=is_failure)
         if is_failure:
             await trigger_omi_haptic(client, "test-failure", f"Deploy failed: {app_name}")
-        record_event("coolify", "deployments", "critical" if is_failure else "info", f"Deploy {status}: {app_name}", trace_id)
+        record_event("coolify", "omni-deployments", "critical" if is_failure else "info", f"Deploy {status}: {app_name}", trace_id)
         log.info("coolify_processed", app=app_name, status=status, trace_id=trace_id)
 
     return {"status": "ok", "trace_id": trace_id}
@@ -567,8 +567,8 @@ async def webhook_financial(request: Request) -> dict[str, str]:
             "invoice_link": body.get("invoice_link", ""),
         })
         mention = days_overdue > 7
-        await post_to_channel(client, "financial", msg, mention_channel=mention)
-        record_event("financial", "financial", "warning" if days_overdue > 3 else "info", f"Invoice overdue: {body.get('invoice_number', '')}", trace_id)
+        await post_to_channel(client, "omni-financial", msg, mention_channel=mention)
+        record_event("financial", "omni-financial", "warning" if days_overdue > 3 else "info", f"Invoice overdue: {body.get('invoice_number', '')}", trace_id)
         log.info("financial_processed", invoice=body.get("invoice_number"), days_overdue=days_overdue, trace_id=trace_id)
 
     return {"status": "ok", "trace_id": trace_id}
@@ -592,8 +592,8 @@ async def webhook_knowledge(request: Request) -> dict[str, str]:
             "summary": body.get("summary", "Knowledge base updated"),
             "source_link": body.get("source_link", ""),
         })
-        await post_to_channel(client, "knowledge", msg)
-        record_event("knowledge", "knowledge", "info", f"Knowledge update: {body.get('source_name', '')}", trace_id)
+        await post_to_channel(client, "omni-knowledge", msg)
+        record_event("knowledge", "omni-knowledge", "info", f"Knowledge update: {body.get('source_name', '')}", trace_id)
         log.info("knowledge_processed", source=body.get("source_name"), docs=body.get("docs_ingested"), trace_id=trace_id)
 
     return {"status": "ok", "trace_id": trace_id}
@@ -622,9 +622,9 @@ async def webhook_backup(request: Request) -> dict[str, str]:
                 "source": "Backup Fortress",
                 "dashboard_link": "",
             })
-            await post_to_channel(client, "alerts", msg, mention_channel=True)
+            await post_to_channel(client, "omni-alerts", msg, mention_channel=True)
             await trigger_omi_haptic(client, "critical", f"Backup failed: {service}")
-        record_event("backup", "alerts", "critical" if is_failure else "info", f"Backup {status}: {service}", trace_id)
+        record_event("backup", "omni-alerts", "critical" if is_failure else "info", f"Backup {status}: {service}", trace_id)
         log.info("backup_processed", service=service, status=status, trace_id=trace_id)
 
     return {"status": "ok", "trace_id": trace_id}
@@ -649,8 +649,8 @@ async def webhook_rotation(request: Request) -> dict[str, str]:
             "description": body.get("message", f"Secret rotation event for {service}"),
             "dashboard_link": "",
         })
-        await post_to_channel(client, "security", msg)
-        record_event("rotation", "security", "info", f"Secret rotation: {service}", trace_id)
+        await post_to_channel(client, "omni-security", msg)
+        record_event("rotation", "omni-security", "info", f"Secret rotation: {service}", trace_id)
         log.info("rotation_processed", service=service, event=event_type, trace_id=trace_id)
 
     return {"status": "ok", "trace_id": trace_id}

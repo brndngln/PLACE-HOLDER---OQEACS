@@ -1,61 +1,142 @@
-version: "3.9"
-
-x-log: &log {driver: json-file, options: {max-size: "50m", max-file: "5"}}
-x-labels: &labels {omni.quantum.tier: standard, omni.quantum.critical: "false"}
-
+version: '3.9'
+x-log:
+  driver: json-file
+  options:
+    max-size: 50m
+    max-file: '5'
+x-labels:
+  omni.quantum.tier: standard
+  omni.quantum.critical: 'false'
 services:
   plausible:
-    image: plausible/analytics:latest
+    image: plausible/analytics:v2.1.5
     container_name: omni-plausible
     depends_on:
-      plausible-postgres: {condition: service_healthy}
-      plausible-clickhouse: {condition: service_healthy}
-    ports: ["8000:8000"]
+      plausible-postgres:
+        condition: service_healthy
+      plausible-clickhouse:
+        condition: service_healthy
+    ports:
+    - 8100:8000
     environment:
-      BASE_URL: https://plausible.omni.local
-      SECRET_KEY_BASE: "{{ vault://secret/data/plausible#secret_key_base }}"
-      DATABASE_URL: postgresql://{{ vault://secret/data/plausible#db_user }}:{{ vault://secret/data/plausible#db_password }}@omni-plausible-postgres:5432/plausible
+      BASE_URL: https://plausible.omni-quantum-quantum.local
+      SECRET_KEY_BASE: '{{ vault://secret/data/plausible#secret_key_base }}'
+      DATABASE_URL: postgresql://{{ vault://secret/data/plausible#db_user }}:{{ vault://secret/data/plausible#db_password
+        }}@omni-plausible-postgres:5432/plausible
       CLICKHOUSE_DATABASE_URL: http://omni-plausible-clickhouse:8123/plausible_events_db
-      DISABLE_REGISTRATION: "true"
-      MAILER_EMAIL: notifications@omni.local
-    healthcheck: {test: ["CMD", "wget", "-qO-", "http://localhost:8000/api/health"], interval: 20s, timeout: 10s, retries: 5}
+      DISABLE_REGISTRATION: 'true'
+      MAILER_EMAIL: notifications@omni-quantum-quantum.local
+    healthcheck:
+      test:
+      - CMD
+      - wget
+      - -qO-
+      - http://localhost:8000/api/health
+      interval: 20s
+      timeout: 10s
+      retries: 5
     mem_limit: 512m
     restart: unless-stopped
-    logging: *log
-    labels: {<<: *labels, omni.quantum.component: plausible}
-    volumes: [plausible-data:/var/lib/plausible]
-    networks: [omni-quantum-network]
-
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: '5'
+    labels:
+      omni.quantum.component: plausible
+      omni.quantum.tier: business
+      omni.quantum.critical: 'false'
+    volumes:
+    - plausible-data:/var/lib/plausible
+    networks:
+    - omni-quantum-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
   plausible-clickhouse:
     image: clickhouse/clickhouse-server:24
     container_name: omni-plausible-clickhouse
-    healthcheck: {test: ["CMD", "clickhouse-client", "--query", "SELECT 1"], interval: 20s, timeout: 10s, retries: 5}
+    healthcheck:
+      test:
+      - CMD
+      - clickhouse-client
+      - --query
+      - SELECT 1
+      interval: 20s
+      timeout: 10s
+      retries: 5
     mem_limit: 1g
     restart: unless-stopped
-    logging: *log
-    labels: {<<: *labels, omni.quantum.component: plausible-clickhouse}
-    volumes: [plausible-clickhouse-data:/var/lib/clickhouse]
-    networks: [omni-quantum-network]
-
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: '5'
+    labels:
+      omni.quantum.component: plausible-clickhouse
+      omni.quantum.tier: business
+      omni.quantum.critical: 'false'
+    volumes:
+    - plausible-clickhouse-data:/var/lib/clickhouse
+    networks:
+    - omni-quantum-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
   plausible-postgres:
     image: postgres:16-alpine
     container_name: omni-plausible-postgres
     environment:
       POSTGRES_DB: plausible
-      POSTGRES_USER: "{{ vault://secret/data/plausible#db_user }}"
-      POSTGRES_PASSWORD: "{{ vault://secret/data/plausible#db_password }}"
-    healthcheck: {test: ["CMD-SHELL", "pg_isready -U {{ vault://secret/data/plausible#db_user }} -d plausible"], interval: 15s, timeout: 5s, retries: 5}
+      POSTGRES_USER: '{{ vault://secret/data/plausible#db_user }}'
+      POSTGRES_PASSWORD: '{{ vault://secret/data/plausible#db_password }}'
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - pg_isready -U {{ vault://secret/data/plausible#db_user }} -d plausible
+      interval: 15s
+      timeout: 5s
+      retries: 5
     mem_limit: 256m
     restart: unless-stopped
-    logging: *log
-    labels: {<<: *labels, omni.quantum.component: plausible-postgres}
-    volumes: [plausible-postgres-data:/var/lib/postgresql/data]
-    networks: [omni-quantum-network]
-
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: '5'
+    labels:
+      omni.quantum.component: plausible-postgres
+      omni.quantum.tier: business
+      omni.quantum.critical: 'false'
+    volumes:
+    - plausible-postgres-data:/var/lib/postgresql/data
+    networks:
+    - omni-quantum-network
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
 volumes:
-  plausible-data:
-  plausible-clickhouse-data:
-  plausible-postgres-data:
+  plausible-data: null
+  plausible-clickhouse-data: null
+  plausible-postgres-data: null
 networks:
   omni-quantum-network:
     external: true

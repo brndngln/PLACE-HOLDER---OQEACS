@@ -23,8 +23,8 @@ done
 
 TOTAL_TOOLS=0
 for port in 8335 8336 8337 8338; do
-  curl -fsS -X POST "http://omni-mcp-orchestrator:${port}/mcp/messages?api_key=${MCP_DEFAULT_API_KEY:-}" -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","method":"initialize","id":1,"params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}' >/dev/null || true
-  tools_json=$(curl -fsS -X POST "http://omni-mcp-orchestrator:${port}/mcp/messages?api_key=${MCP_DEFAULT_API_KEY:-}" -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","method":"tools/list","id":2}' || echo '{}')
+  curl -fsS -X POST "http://omni-mcp-orchestrator:${port}/mcp?api_key=${MCP_DEFAULT_API_KEY:-}" -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","method":"initialize","id":1,"params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}' >/dev/null || true
+  tools_json=$(curl -fsS -X POST "http://omni-mcp-orchestrator:${port}/mcp?api_key=${MCP_DEFAULT_API_KEY:-}" -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","method":"tools/list","id":2}' || echo '{}')
   count=$(echo "$tools_json" | jq '.result.tools | length' 2>/dev/null || echo 0)
   TOTAL_TOOLS=$((TOTAL_TOOLS + count))
   echo "Server :${port} => ${count} tools"

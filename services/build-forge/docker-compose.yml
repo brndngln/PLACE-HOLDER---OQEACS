@@ -1,51 +1,38 @@
-# =============================================================================
-# System 35 — Build Forge: Docker Compose
-# Omni Quantum Elite AI Coding System
-#
-# Services:
-#   - woodpecker-server (port 8000) — CI server connected to Gitea + PostgreSQL
-#   - woodpecker-agent-1 (2GB)     — Build agent with Docker socket
-#   - woodpecker-agent-2 (2GB)     — Build agent with Docker-in-Docker
-#   - notifier (port 8001)         — Webhook relay for Mattermost + Omi
-# =============================================================================
-
-version: "3.8"
-
+version: '3.8'
 services:
-  # ---------------------------------------------------------------------------
-  # Woodpecker CI Server
-  # ---------------------------------------------------------------------------
   woodpecker-server:
     image: woodpeckerci/woodpecker-server:v2.7.1
     container_name: omni-woodpecker-server
     restart: unless-stopped
     env_file:
-      - ./config/woodpecker-server.env
+    - ./config/woodpecker-server.env
     environment:
-      WOODPECKER_HOST: "http://omni-woodpecker-server:8000"
-      WOODPECKER_GITEA: "true"
-      WOODPECKER_GITEA_URL: "http://omni-gitea:3000"
-      WOODPECKER_GITEA_CLIENT: "${WOODPECKER_GITEA_CLIENT:-from_vault}"
-      WOODPECKER_GITEA_SECRET: "${WOODPECKER_GITEA_SECRET:-from_vault}"
-      WOODPECKER_AGENT_SECRET: "${WOODPECKER_AGENT_SECRET:-from_vault}"
-      WOODPECKER_DATABASE_DRIVER: "postgres"
-      WOODPECKER_DATABASE_DATASOURCE: "postgres://woodpecker:${WOODPECKER_DB_PASSWORD:-password}@omni-postgres:5432/woodpecker?sslmode=disable"
-      WOODPECKER_ADMIN: "brendan"
-      WOODPECKER_LOG_LEVEL: "info"
-      WOODPECKER_LOG_FORMAT: "json"
+      WOODPECKER_HOST: http://omni-woodpecker-server:8000
+      WOODPECKER_GITEA: 'true'
+      WOODPECKER_GITEA_URL: http://omni-gitea:3000
+      WOODPECKER_GITEA_CLIENT: ${WOODPECKER_GITEA_CLIENT:-from_vault}
+      WOODPECKER_GITEA_SECRET: ${WOODPECKER_GITEA_SECRET:-from_vault}
+      WOODPECKER_AGENT_SECRET: ${WOODPECKER_AGENT_SECRET:-from_vault}
+      WOODPECKER_DATABASE_DRIVER: postgres
+      WOODPECKER_DATABASE_DATASOURCE: postgres://woodpecker:${WOODPECKER_DB_PASSWORD:-password}@omni-postgres:5432/woodpecker?sslmode=disable
+      WOODPECKER_ADMIN: brendan
+      WOODPECKER_LOG_LEVEL: info
+      WOODPECKER_LOG_FORMAT: json
     ports:
-      - "8000:8000"
-      - "9000:9000"
+    - 8015:8000
     volumes:
-      - woodpecker-server-data:/var/lib/woodpecker
+    - woodpecker-server-data:/var/lib/woodpecker
     deploy:
       resources:
         limits:
           memory: 512M
+          cpus: '1.0'
         reservations:
           memory: 256M
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/healthz || exit 1"]
+      test:
+      - CMD-SHELL
+      - wget -qO- http://localhost:8000/healthz || exit 1
       interval: 15s
       timeout: 5s
       retries: 5
@@ -54,42 +41,42 @@ services:
       omni-postgres:
         condition: service_healthy
     labels:
-      - "omni.system=build-forge"
-      - "omni.component=woodpecker-server"
-      - "omni.version=2.7.1"
-      - "omni.port=8000"
-      - "omni.metrics.port=9100"
-      - "omni.healthcheck=/healthz"
+      omni.quantum.component: woodpecker-server
+      omni.quantum.tier: development
+      omni.quantum.critical: 'true'
     networks:
-      - omni-quantum-network
-
-  # ---------------------------------------------------------------------------
-  # Woodpecker Agent 1 — Docker Socket Mount
-  # ---------------------------------------------------------------------------
+    - omni-quantum-network
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
   woodpecker-agent-1:
     image: woodpeckerci/woodpecker-agent:v2.7.1
     container_name: omni-woodpecker-agent-1
     restart: unless-stopped
     environment:
-      WOODPECKER_SERVER: "omni-woodpecker-server:9000"
-      WOODPECKER_AGENT_SECRET: "${WOODPECKER_AGENT_SECRET:-from_vault}"
-      WOODPECKER_LOG_LEVEL: "info"
-      WOODPECKER_LOG_FORMAT: "json"
-      WOODPECKER_MAX_PROCS: "2"
-      WOODPECKER_HEALTHCHECK: "true"
-      WOODPECKER_BACKEND_DOCKER_NETWORK: "omni-quantum-network"
-      DOCKER_HOST: "unix:///var/run/docker.sock"
+      WOODPECKER_SERVER: omni-woodpecker-server:9000
+      WOODPECKER_AGENT_SECRET: ${WOODPECKER_AGENT_SECRET:-from_vault}
+      WOODPECKER_LOG_LEVEL: info
+      WOODPECKER_LOG_FORMAT: json
+      WOODPECKER_MAX_PROCS: '2'
+      WOODPECKER_HEALTHCHECK: 'true'
+      WOODPECKER_BACKEND_DOCKER_NETWORK: omni-quantum-network
+      DOCKER_HOST: unix:///var/run/docker.sock
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - woodpecker-agent-1-data:/var/lib/woodpecker
+    - /var/run/docker.sock:/var/run/docker.sock
+    - woodpecker-agent-1-data:/var/lib/woodpecker
     deploy:
       resources:
         limits:
           memory: 2G
+          cpus: '0.5'
         reservations:
           memory: 512M
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/healthz || exit 1"]
+      test:
+      - CMD-SHELL
+      - wget -qO- http://localhost:3000/healthz || exit 1
       interval: 15s
       timeout: 5s
       retries: 5
@@ -98,43 +85,45 @@ services:
       woodpecker-server:
         condition: service_healthy
     labels:
-      - "omni.system=build-forge"
-      - "omni.component=woodpecker-agent"
-      - "omni.agent.id=1"
-      - "omni.agent.type=docker-socket"
+      omni.quantum.component: woodpecker-agent-1
+      omni.quantum.tier: development
+      omni.quantum.critical: 'false'
     networks:
-      - omni-quantum-network
-
-  # ---------------------------------------------------------------------------
-  # Woodpecker Agent 2 — Docker-in-Docker
-  # ---------------------------------------------------------------------------
+    - omni-quantum-network
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
   woodpecker-agent-2:
     image: woodpeckerci/woodpecker-agent:v2.7.1
     container_name: omni-woodpecker-agent-2
     restart: unless-stopped
     privileged: true
     environment:
-      WOODPECKER_SERVER: "omni-woodpecker-server:9000"
-      WOODPECKER_AGENT_SECRET: "${WOODPECKER_AGENT_SECRET:-from_vault}"
-      WOODPECKER_LOG_LEVEL: "info"
-      WOODPECKER_LOG_FORMAT: "json"
-      WOODPECKER_MAX_PROCS: "2"
-      WOODPECKER_HEALTHCHECK: "true"
-      WOODPECKER_BACKEND_DOCKER_NETWORK: "omni-quantum-network"
-      DOCKER_HOST: "tcp://localhost:2376"
-      DOCKER_TLS_VERIFY: "1"
-      DOCKER_CERT_PATH: "/certs/client"
+      WOODPECKER_SERVER: omni-woodpecker-server:9000
+      WOODPECKER_AGENT_SECRET: ${WOODPECKER_AGENT_SECRET:-from_vault}
+      WOODPECKER_LOG_LEVEL: info
+      WOODPECKER_LOG_FORMAT: json
+      WOODPECKER_MAX_PROCS: '2'
+      WOODPECKER_HEALTHCHECK: 'true'
+      WOODPECKER_BACKEND_DOCKER_NETWORK: omni-quantum-network
+      DOCKER_HOST: tcp://localhost:2376
+      DOCKER_TLS_VERIFY: '1'
+      DOCKER_CERT_PATH: /certs/client
     volumes:
-      - woodpecker-agent-2-data:/var/lib/woodpecker
-      - dind-certs-client:/certs/client:ro
+    - woodpecker-agent-2-data:/var/lib/woodpecker
+    - dind-certs-client:/certs/client:ro
     deploy:
       resources:
         limits:
           memory: 2G
+          cpus: '0.5'
         reservations:
           memory: 512M
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/healthz || exit 1"]
+      test:
+      - CMD-SHELL
+      - wget -qO- http://localhost:3000/healthz || exit 1
       interval: 15s
       timeout: 5s
       retries: 5
@@ -145,77 +134,77 @@ services:
       dind:
         condition: service_healthy
     labels:
-      - "omni.system=build-forge"
-      - "omni.component=woodpecker-agent"
-      - "omni.agent.id=2"
-      - "omni.agent.type=dind"
+      omni.quantum.component: woodpecker-agent-2
+      omni.quantum.tier: development
+      omni.quantum.critical: 'false'
     networks:
-      - omni-quantum-network
-
-  # ---------------------------------------------------------------------------
-  # Docker-in-Docker daemon for Agent 2
-  # ---------------------------------------------------------------------------
+    - omni-quantum-network
+    security_opt:
+    - no-new-privileges:true
   dind:
     image: docker:26-dind
     container_name: omni-woodpecker-dind
     restart: unless-stopped
     privileged: true
     environment:
-      DOCKER_TLS_CERTDIR: "/certs"
+      DOCKER_TLS_CERTDIR: /certs
     volumes:
-      - dind-storage:/var/lib/docker
-      - dind-certs-ca:/certs/ca
-      - dind-certs-client:/certs/client
+    - dind-storage:/var/lib/docker
+    - dind-certs-ca:/certs/ca
+    - dind-certs-client:/certs/client
     deploy:
       resources:
         limits:
           memory: 2G
+          cpus: '1.0'
         reservations:
           memory: 256M
     healthcheck:
-      test: ["CMD", "docker", "info"]
+      test:
+      - CMD
+      - docker
+      - info
       interval: 15s
       timeout: 10s
       retries: 5
       start_period: 20s
     labels:
-      - "omni.system=build-forge"
-      - "omni.component=dind"
+      omni.quantum.component: woodpecker-dind
+      omni.quantum.tier: development
+      omni.quantum.critical: 'false'
     networks:
-      - omni-quantum-network
-
-  # ---------------------------------------------------------------------------
-  # Build Forge Notifier
-  # ---------------------------------------------------------------------------
+    - omni-quantum-network
+    security_opt:
+    - no-new-privileges:true
   notifier:
     image: python:3.12-slim
     container_name: omni-build-forge-notifier
     restart: unless-stopped
     working_dir: /app
-    command: >
-      sh -c "
-        pip install --no-cache-dir fastapi uvicorn httpx structlog pydantic &&
-        python -m uvicorn main:app --host 0.0.0.0 --port 8001 --log-level info
-      "
+    command: "sh -c \"\n  pip install --no-cache-dir fastapi uvicorn httpx structlog pydantic &&\n  python -m uvicorn main:app\
+      \ --host 0.0.0.0 --port 8001 --log-level info\n\"\n"
     environment:
-      SERVICE_PORT: "8001"
-      MATTERMOST_WEBHOOK_URL: "${MATTERMOST_WEBHOOK_URL:-http://omni-mattermost-webhook:8066/hooks/builds}"
-      MATTERMOST_DEPLOY_WEBHOOK_URL: "${MATTERMOST_DEPLOY_WEBHOOK_URL:-http://omni-mattermost-webhook:8066/hooks/deployments}"
-      OMI_BRIDGE_URL: "${OMI_BRIDGE_URL:-http://omni-omi-bridge:9700}"
-      WOODPECKER_URL: "http://omni-woodpecker-server:8000"
-      LANGFUSE_URL: "http://omni-langfuse:3000"
+      SERVICE_PORT: '8001'
+      MATTERMOST_WEBHOOK_URL: ${MATTERMOST_WEBHOOK_URL:-http://omni-mattermost-webhook:8066/hooks/builds}
+      MATTERMOST_DEPLOY_WEBHOOK_URL: ${MATTERMOST_DEPLOY_WEBHOOK_URL:-http://omni-mattermost-webhook:8066/hooks/deployments}
+      OMI_BRIDGE_URL: ${OMI_BRIDGE_URL:-http://omni-omi-bridge:9700}
+      WOODPECKER_URL: http://omni-woodpecker-server:8000
+      LANGFUSE_URL: http://omni-langfuse:3000
     ports:
-      - "8001:8001"
+    - 8005:8001
     volumes:
-      - ./notifier:/app:ro
+    - ./notifier:/app:ro
     deploy:
       resources:
         limits:
           memory: 256M
+          cpus: '0.5'
         reservations:
           memory: 128M
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8001/health')\" || exit 1"]
+      test:
+      - CMD-SHELL
+      - python -c "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')" || exit 1
       interval: 15s
       timeout: 5s
       retries: 3
@@ -224,17 +213,15 @@ services:
       woodpecker-server:
         condition: service_healthy
     labels:
-      - "omni.system=build-forge"
-      - "omni.component=notifier"
-      - "omni.port=8001"
-      - "omni.healthcheck=/health"
-      - "omni.metrics=/metrics"
+      omni.quantum.component: build-forge-notifier
+      omni.quantum.tier: development
+      omni.quantum.critical: 'false'
     networks:
-      - omni-quantum-network
-
-  # ---------------------------------------------------------------------------
-  # PostgreSQL (external reference — only used if not already running)
-  # ---------------------------------------------------------------------------
+    - omni-quantum-network
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
   omni-postgres:
     image: postgres:16-alpine
     container_name: omni-postgres
@@ -242,63 +229,63 @@ services:
     environment:
       POSTGRES_DB: woodpecker
       POSTGRES_USER: woodpecker
-      POSTGRES_PASSWORD: "${WOODPECKER_DB_PASSWORD:-password}"
+      POSTGRES_PASSWORD: ${WOODPECKER_DB_PASSWORD:-password}
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+    - postgres-data:/var/lib/postgresql/data
     deploy:
       resources:
         limits:
           memory: 512M
+          cpus: '2.0'
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U woodpecker -d woodpecker"]
+      test:
+      - CMD-SHELL
+      - pg_isready -U woodpecker -d woodpecker
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 15s
     labels:
-      - "omni.system=build-forge"
-      - "omni.component=postgres"
+      omni.quantum.component: postgres
+      omni.quantum.tier: foundation
+      omni.quantum.critical: 'true'
     networks:
-      - omni-quantum-network
+    - omni-quantum-network
     profiles:
-      - with-postgres
-
-# =============================================================================
-# Volumes
-# =============================================================================
+    - with-postgres
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
 volumes:
   woodpecker-server-data:
     driver: local
     labels:
-      - "omni.system=build-forge"
+    - omni.quantum.system=build-forge
   woodpecker-agent-1-data:
     driver: local
     labels:
-      - "omni.system=build-forge"
+    - omni.quantum.system=build-forge
   woodpecker-agent-2-data:
     driver: local
     labels:
-      - "omni.system=build-forge"
+    - omni.quantum.system=build-forge
   dind-storage:
     driver: local
     labels:
-      - "omni.system=build-forge"
+    - omni.quantum.system=build-forge
   dind-certs-ca:
     driver: local
     labels:
-      - "omni.system=build-forge"
+    - omni.quantum.system=build-forge
   dind-certs-client:
     driver: local
     labels:
-      - "omni.system=build-forge"
+    - omni.quantum.system=build-forge
   postgres-data:
     driver: local
     labels:
-      - "omni.system=build-forge"
-
-# =============================================================================
-# Networks
-# =============================================================================
+    - omni.quantum.system=build-forge
 networks:
   omni-quantum-network:
     external: true

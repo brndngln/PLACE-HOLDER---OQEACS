@@ -1,0 +1,6 @@
+name: security-review-agent
+focus: threat_and_risk_detection
+quality_bars:
+  - least_privilege
+  - secret_hygiene
+  - dependency_integrity

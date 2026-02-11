@@ -1,35 +1,18 @@
-# ===========================================================================
-# SYSTEM 3 -- AI GATEWAY: LiteLLM Proxy + Cost Tracker
-# Omni Quantum Elite AI Coding System -- AI Model Routing Layer
-#
-# Services:
-#   omni-litellm       -- LiteLLM proxy (port 4000), routes to Ollama models
-#   omni-cost-tracker   -- Cost tracking API (port 4001), reads from Langfuse
-#
-# Both services attach to the shared omni-quantum-network.
-# ===========================================================================
-
-version: "3.8"
-
+version: '3.8'
 services:
-  # ─────────────────────────────────────────────────────
-  # LiteLLM Proxy -- unified OpenAI-compatible gateway
-  # Routes requests to local Ollama models with fallback
-  # chains, Redis caching, and Langfuse observability.
-  # ─────────────────────────────────────────────────────
   omni-litellm:
     image: litellm/litellm:main
     container_name: omni-litellm
     restart: unless-stopped
     command:
-      - "--config"
-      - "/app/config/litellm-config.yaml"
-      - "--port"
-      - "4000"
-      - "--num_workers"
-      - "4"
+    - --config
+    - /app/config/litellm-config.yaml
+    - --port
+    - '4000'
+    - --num_workers
+    - '4'
     ports:
-      - "4000:4000"
+    - 4000:4000
     environment:
       LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
       DATABASE_URL: ${DATABASE_URL:-postgresql://litellm:litellm@omni-postgres:5432/litellm}
@@ -39,12 +22,16 @@ services:
       LANGFUSE_HOST: ${LANGFUSE_HOST:-http://omni-langfuse:3000}
       MATTERMOST_WEBHOOK_URL: ${MATTERMOST_WEBHOOK_URL}
       LITELLM_LOG: INFO
-      STORE_MODEL_IN_DB: "True"
+      STORE_MODEL_IN_DB: 'True'
     volumes:
-      - ./config/litellm-config.yaml:/app/config/litellm-config.yaml:ro
-      - ./middleware/request-logger.py:/app/middleware/request-logger.py:ro
+    - ./config/litellm-config.yaml:/app/config/litellm-config.yaml:ro
+    - ./middleware/request-logger.py:/app/middleware/request-logger.py:ro
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:4000/health/liveliness"]
+      test:
+      - CMD
+      - curl
+      - -sf
+      - http://localhost:4000/health/liveliness
       interval: 15s
       timeout: 5s
       retries: 5
@@ -53,31 +40,29 @@ services:
       resources:
         limits:
           memory: 1G
+          cpus: '2.0'
         reservations:
           memory: 512M
     logging:
       driver: json-file
       options:
-        max-size: "50m"
-        max-file: "5"
+        max-size: 50m
+        max-file: '5'
     labels:
-      omni_quantum_component: litellm
-      omni_quantum_tier: critical
-      omni_quantum_system: "3"
-      omni_quantum_stack: ai-gateway
-      traefik.enable: "true"
-      traefik.http.routers.litellm.rule: "Host(`ai.omni-quantum.internal`)"
-      traefik.http.routers.litellm.entrypoints: "websecure"
-      traefik.http.routers.litellm.tls: "true"
-      traefik.http.services.litellm.loadbalancer.server.port: "4000"
+      traefik.enable: 'true'
+      traefik.http.routers.litellm.rule: Host(`ai.omni-quantum.internal`)
+      traefik.http.routers.litellm.entrypoints: websecure
+      traefik.http.routers.litellm.tls: 'true'
+      traefik.http.services.litellm.loadbalancer.server.port: '4000'
+      omni.quantum.component: litellm
+      omni.quantum.tier: foundation
+      omni.quantum.critical: 'true'
     networks:
-      - omni-quantum-network
-
-  # ─────────────────────────────────────────────────────
-  # Cost Tracker -- monitors AI spending and reports
-  # Reads generation data from Langfuse, computes costs,
-  # exposes budget APIs, and posts daily summaries.
-  # ─────────────────────────────────────────────────────
+    - omni-quantum-network
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
   omni-cost-tracker:
     build:
       context: ./cost-tracker
@@ -85,7 +70,7 @@ services:
     container_name: omni-cost-tracker
     restart: unless-stopped
     ports:
-      - "4001:4001"
+    - 4001:4001
     environment:
       LANGFUSE_HOST: ${LANGFUSE_HOST:-http://omni-langfuse:3000}
       LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
@@ -95,7 +80,11 @@ services:
       DAILY_BUDGET_USD: ${DAILY_BUDGET_USD:-25.0}
       LOG_FORMAT: ${LOG_FORMAT:-json}
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:4001/health"]
+      test:
+      - CMD
+      - curl
+      - -sf
+      - http://localhost:4001/health
       interval: 15s
       timeout: 5s
       retries: 5
@@ -104,29 +93,32 @@ services:
       resources:
         limits:
           memory: 256M
+          cpus: '1.0'
         reservations:
           memory: 128M
     logging:
       driver: json-file
       options:
-        max-size: "50m"
-        max-file: "5"
+        max-size: 50m
+        max-file: '5'
     labels:
-      omni_quantum_component: cost-tracker
-      omni_quantum_tier: standard
-      omni_quantum_system: "3"
-      omni_quantum_stack: ai-gateway
-      traefik.enable: "true"
-      traefik.http.routers.cost-tracker.rule: "Host(`costs.omni-quantum.internal`)"
-      traefik.http.routers.cost-tracker.entrypoints: "websecure"
-      traefik.http.routers.cost-tracker.tls: "true"
-      traefik.http.services.cost-tracker.loadbalancer.server.port: "4001"
+      traefik.enable: 'true'
+      traefik.http.routers.cost-tracker.rule: Host(`costs.omni-quantum.internal`)
+      traefik.http.routers.cost-tracker.entrypoints: websecure
+      traefik.http.routers.cost-tracker.tls: 'true'
+      traefik.http.services.cost-tracker.loadbalancer.server.port: '4001'
+      omni.quantum.component: cost-tracker
+      omni.quantum.tier: business
+      omni.quantum.critical: 'false'
     depends_on:
       omni-litellm:
         condition: service_healthy
     networks:
-      - omni-quantum-network
-
+    - omni-quantum-network
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
 networks:
   omni-quantum-network:
     external: true

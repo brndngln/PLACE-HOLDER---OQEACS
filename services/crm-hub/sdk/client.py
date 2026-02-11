@@ -19,7 +19,7 @@ STAGE_PROBABILITY = {
 class TwentyCRMClient:
     def __init__(
         self,
-        base_url: str = "http://omni-twenty:3000/api",
+        base_url: str = "https://notion.so",
         api_token: str = "",
     ):
         self._client = httpx.Client(

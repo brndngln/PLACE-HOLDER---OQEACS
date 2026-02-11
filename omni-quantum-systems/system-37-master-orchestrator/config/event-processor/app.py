@@ -12,7 +12,7 @@ import time
 import httpx
 import redis
 
-REDIS_URL = os.getenv("REDIS_URL", "redis://omni-redis:6379/5")
+REDIS_URL = os.getenv("REDIS_URL", "redis://omni-redis:6379/11")
 ORCHESTRATOR_URL = os.getenv("ORCHESTRATOR_URL", "http://omni-orchestrator:9500")
 MATTERMOST_WEBHOOK = os.getenv("MATTERMOST_WEBHOOK", "")
 OMI_WEBHOOK = os.getenv("OMI_WEBHOOK", "")

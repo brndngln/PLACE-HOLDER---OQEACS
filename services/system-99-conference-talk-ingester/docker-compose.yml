@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  conference_talk_ingester:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: omni/conference-talk-ingester:1.0.0
+    container_name: omni-conference-talk-ingester
+    restart: unless-stopped
+    env_file:
+      - ../../.env
+    environment:
+      SYSTEM_ID: "99"
+      SYSTEM_NAME: "conference-talk-ingester"
+      SYSTEM_PORT: "9769"
+      LOG_LEVEL: \INFO
+    ports:
+      - "9769:9769"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:9769/health')\" || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    labels:
+      omni.quantum.component: conference-talk-ingester
+      omni.quantum.tier: knowledge
+      omni.quantum.critical: "false"
+    networks:
+      - omni-quantum-network
+
+networks:
+  omni-quantum-network:
+    external: true

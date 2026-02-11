@@ -1,36 +1,99 @@
-version: "3.9"
-x-log: &log {driver: json-file, options: {max-size: "50m", max-file: "5"}}
-x-labels: &labels {omni.quantum.tier: standard, omni.quantum.critical: "false"}
+version: '3.9'
+x-log:
+  driver: json-file
+  options:
+    max-size: 50m
+    max-file: '5'
+x-labels:
+  omni.quantum.tier: standard
+  omni.quantum.critical: 'false'
 services:
   tolgee:
-    image: tolgee/tolgee:latest
+    image: tolgee/tolgee:v3.69.2
     container_name: omni-tolgee
-    ports: ["8085:8080"]
+    ports:
+    - 8085:8080
     environment:
-      TOLGEE_AUTHENTICATION_ENABLED: "true"
+      TOLGEE_AUTHENTICATION_ENABLED: 'true'
       TOLGEE_POSTGRES_URL: jdbc:postgresql://omni-tolgee-postgres:5432/tolgee
-      TOLGEE_POSTGRES_USERNAME: "{{ vault://secret/data/tolgee#db_user }}"
-      TOLGEE_POSTGRES_PASSWORD: "{{ vault://secret/data/tolgee#db_password }}"
-      TOLGEE_ADMIN_USERNAME: "{{ vault://secret/data/tolgee#admin_user }}"
-      TOLGEE_ADMIN_PASSWORD: "{{ vault://secret/data/tolgee#admin_password }}"
-    healthcheck: {test: ["CMD", "wget", "-qO-", "http://localhost:8080/actuator/health"], interval: 20s, timeout: 10s, retries: 5}
+      TOLGEE_POSTGRES_USERNAME: '{{ vault://secret/data/tolgee#db_user }}'
+      TOLGEE_POSTGRES_PASSWORD: '{{ vault://secret/data/tolgee#db_password }}'
+      TOLGEE_ADMIN_USERNAME: '{{ vault://secret/data/tolgee#admin_user }}'
+      TOLGEE_ADMIN_PASSWORD: '{{ vault://secret/data/tolgee#admin_password }}'
+    healthcheck:
+      test:
+      - CMD
+      - wget
+      - -qO-
+      - http://localhost:8080/actuator/health
+      interval: 20s
+      timeout: 10s
+      retries: 5
     mem_limit: 512m
     restart: unless-stopped
-    logging: *log
-    labels: {<<: *labels, omni.quantum.component: tolgee}
-    depends_on: {tolgee-postgres: {condition: service_healthy}}
-    networks: [omni-quantum-network]
-
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: '5'
+    labels:
+      omni.quantum.component: tolgee
+      omni.quantum.tier: business
+      omni.quantum.critical: 'false'
+    depends_on:
+      tolgee-postgres:
+        condition: service_healthy
+    networks:
+    - omni-quantum-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
   tolgee-postgres:
     image: postgres:16-alpine
     container_name: omni-tolgee-postgres
-    environment: {POSTGRES_DB: tolgee, POSTGRES_USER: "{{ vault://secret/data/tolgee#db_user }}", POSTGRES_PASSWORD: "{{ vault://secret/data/tolgee#db_password }}"}
-    healthcheck: {test: ["CMD-SHELL", "pg_isready -U {{ vault://secret/data/tolgee#db_user }} -d tolgee"], interval: 15s, timeout: 5s, retries: 5}
+    environment:
+      POSTGRES_DB: tolgee
+      POSTGRES_USER: '{{ vault://secret/data/tolgee#db_user }}'
+      POSTGRES_PASSWORD: '{{ vault://secret/data/tolgee#db_password }}'
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - pg_isready -U {{ vault://secret/data/tolgee#db_user }} -d tolgee
+      interval: 15s
+      timeout: 5s
+      retries: 5
     mem_limit: 256m
     restart: unless-stopped
-    logging: *log
-    labels: {<<: *labels, omni.quantum.component: tolgee-postgres}
-    volumes: [tolgee-postgres-data:/var/lib/postgresql/data]
-    networks: [omni-quantum-network]
-volumes: {tolgee-postgres-data: {}}
-networks: {omni-quantum-network: {external: true}}
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: '5'
+    labels:
+      omni.quantum.component: tolgee-postgres
+      omni.quantum.tier: business
+      omni.quantum.critical: 'false'
+    volumes:
+    - tolgee-postgres-data:/var/lib/postgresql/data
+    networks:
+    - omni-quantum-network
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
+volumes:
+  tolgee-postgres-data: {}
+networks:
+  omni-quantum-network:
+    external: true

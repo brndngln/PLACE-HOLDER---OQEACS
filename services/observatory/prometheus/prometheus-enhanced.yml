@@ -615,7 +615,7 @@ scrape_configs:
     scrape_timeout: 10s
     metrics_path: /metrics
     static_configs:
-      - targets: ["omni-twenty:3000"]
+      - targets: ["notion.so:443"]
         labels:
           instance_role: crm
     relabel_configs:
@@ -695,7 +695,7 @@ scrape_configs:
     scrape_timeout: 10s
     metrics_path: /metrics
     static_configs:
-      - targets: ["omni-wikijs:3000"]
+      - targets: ["notion.so:443"]
         labels:
           instance_role: documentation
     relabel_configs:

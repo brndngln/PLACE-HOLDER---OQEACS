@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  symbolic_execution_suite:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: omni/symbolic-execution-suite:1.0.0
+    container_name: omni-symbolic-execution-suite
+    restart: unless-stopped
+    env_file:
+      - ../../.env
+    environment:
+      SYSTEM_ID: "119"
+      SYSTEM_NAME: "symbolic-execution-suite"
+      SYSTEM_PORT: "9783"
+      LOG_LEVEL: \INFO
+    ports:
+      - "9783:9783"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:9783/health')\" || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    labels:
+      omni.quantum.component: symbolic-execution-suite
+      omni.quantum.tier: testing
+      omni.quantum.critical: "false"
+    networks:
+      - omni-quantum-network
+
+networks:
+  omni-quantum-network:
+    external: true

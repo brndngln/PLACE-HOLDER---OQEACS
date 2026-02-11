@@ -321,13 +321,13 @@ SERVICES=(
     omni-vault-admin
     omni-qdrant
     omni-ollama
-    omni-plane
+    notion-workspace
     omni-nango
     omni-flowise
-    omni-wikijs
+    notion-workspace
     omni-superset
     omni-calcom
-    omni-twenty
+    notion-workspace
     omni-crater
     omni-crowdsec
     omni-portainer

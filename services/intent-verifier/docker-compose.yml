@@ -1,0 +1,39 @@
+services:
+  intent-verifier:
+    build: .
+    image: omni-intent-verifier:1.0.0
+    container_name: omni-intent-verifier
+    networks:
+    - omni-quantum-network
+    ports:
+    - 8352:8352
+    environment:
+      MODEL_ENDPOINT: ${MODEL_ENDPOINT:-http://omni-ollama:11434/api/chat}
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8352/health
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          memory: 256M
+    labels:
+      omni.quantum.component: intent-verifier
+      omni.quantum.tier: development
+      omni.quantum.critical: 'false'
+    restart: unless-stopped
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
+networks:
+  omni-quantum-network:
+    external: true

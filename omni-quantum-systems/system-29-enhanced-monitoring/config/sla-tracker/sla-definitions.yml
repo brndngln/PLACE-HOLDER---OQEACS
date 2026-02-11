@@ -20,8 +20,8 @@ sla_definitions:
         check_type: tcp
         description: "Cache and message broker"
 
-      - name: caddy
-        endpoint: http://omni-caddy:80/health
+      - name: traefik
+        endpoint: http://omni-traefik:8080/ping
         check_type: http
         description: "Reverse proxy / edge gateway"
 
@@ -105,7 +105,7 @@ sla_definitions:
         description: "AI observability"
 
       - name: plane-web
-        endpoint: http://omni-plane-web:3000
+        endpoint: https://notion.so
         check_type: http
         description: "Project management UI"
 
@@ -135,7 +135,7 @@ sla_definitions:
         description: "Visual AI workflow builder"
 
       - name: wikijs
-        endpoint: http://omni-wikijs:3000/healthz
+        endpoint: https://notion.so
         check_type: http
         description: "Knowledge base"
 
@@ -150,7 +150,7 @@ sla_definitions:
         description: "Scheduling system"
 
       - name: twenty-crm
-        endpoint: http://omni-twenty:3000/api/health
+        endpoint: https://notion.so
         check_type: http
         description: "CRM system"
 

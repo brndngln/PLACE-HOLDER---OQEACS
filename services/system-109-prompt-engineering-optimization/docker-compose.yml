@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  prompt_engineering_optimization:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: omni/prompt-engineering-optimization:1.0.0
+    container_name: omni-prompt-engineering-optimization
+    restart: unless-stopped
+    env_file:
+      - ../../.env
+    environment:
+      SYSTEM_ID: "109"
+      SYSTEM_NAME: "prompt-engineering-optimization"
+      SYSTEM_PORT: "9614"
+      LOG_LEVEL: \INFO
+    ports:
+      - "9614:9614"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:9614/health')\" || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.5"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    labels:
+      omni.quantum.component: prompt-engineering-optimization
+      omni.quantum.tier: agent
+      omni.quantum.critical: "true"
+    networks:
+      - omni-quantum-network
+
+networks:
+  omni-quantum-network:
+    external: true

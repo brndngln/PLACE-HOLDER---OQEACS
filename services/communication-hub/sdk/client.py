@@ -26,7 +26,7 @@ class MattermostClient:
     Usage::
 
         async with MattermostClient("http://omni-mattermost:8065", bot_token) as mm:
-            await mm.post_message("alerts", "Something happened")
+            await mm.post_message("omni-alerts", "Something happened")
     """
 
     def __init__(
@@ -123,7 +123,7 @@ class MattermostClient:
         """Post a text message (optionally with attachments) to a channel.
 
         Args:
-            channel: Channel name (e.g. ``"alerts"``).
+            channel: Channel name (e.g. ``"omni-alerts"``).
             text: Markdown message body.
             attachments: Optional Mattermost attachment objects.
 
@@ -204,7 +204,7 @@ class MattermostClient:
             ],
             "footer": "Woodpecker CI",
         }
-        return await self.post_message("builds", "", [attachment])
+        return await self.post_message("omni-builds", "", [attachment])
 
     async def post_review_score(
         self,
@@ -233,7 +233,7 @@ class MattermostClient:
         for dim_name, dim_val in dimensions.items():
             fields.append({"short": True, "title": dim_name.replace("_", " ").title(), "value": f"{dim_val}/10"})
         attachment = {"color": color, "title": f"Code Review — {task_id}", "fields": fields, "footer": "Code Scorer + Gate Engine"}
-        return await self.post_message("reviews", "", [attachment])
+        return await self.post_message("omni-reviews", "", [attachment])
 
     async def create_incident(
         self,
@@ -261,7 +261,7 @@ class MattermostClient:
             ],
             "footer": "Omni Quantum Incident Management",
         }
-        return await self.post_message("incidents", f"@channel New incident: **{title}**", [attachment])
+        return await self.post_message("omni-incidents", f"@channel New incident: **{title}**", [attachment])
 
     async def resolve_incident(
         self,
@@ -286,7 +286,7 @@ class MattermostClient:
             ],
             "footer": "Omni Quantum Incident Management",
         }
-        return await self.post_message("incidents", f"Incident **{incident_id}** resolved", [attachment])
+        return await self.post_message("omni-incidents", f"Incident **{incident_id}** resolved", [attachment])
 
     async def get_channel_history(
         self,

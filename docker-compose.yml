@@ -1,74 +1,225 @@
-version: '3.9'
-# OMNI QUANTUM ELITE v3.0 - Docker Compose
+version: "3.9"
+# OMNI QUANTUM ELITE v3.0 - Financial Foundation Stack
 
 services:
-  postgres:
+  financial-postgres:
     image: postgres:16-alpine
-    container_name: financial-db
+    container_name: financial-postgres
+    env_file:
+      - ./.env
     environment:
-      POSTGRES_DB: financial_fortress
-      POSTGRES_USER: fortress
-      POSTGRES_PASSWORD: quantum_elite_2024
+      POSTGRES_DB: ${POSTGRES_DB:-financial_fortress}
+      POSTGRES_USER: ${POSTGRES_USER:-omni_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
-    ports:
-      - "5432:5432"
+      - ./financial/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U fortress"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "2.0"
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    labels:
+      omni.quantum.component: financial-postgres
+      omni.quantum.tier: business
+      omni.quantum.critical: "true"
+    networks:
+      - omni-quantum-network
 
-  redis:
-    image: redis:7-alpine
+  financial-redis:
+    image: redis:7.4-alpine
     container_name: financial-redis
-    ports:
-      - "6379:6379"
+    env_file:
+      - ./.env
+    command:
+      - /bin/sh
+      - -c
+      - redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru --requirepass "$${REDIS_PASSWORD}"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping | grep -q PONG"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    labels:
+      omni.quantum.component: financial-redis
+      omni.quantum.tier: business
+      omni.quantum.critical: "true"
+    networks:
+      - omni-quantum-network
 
-  tax-fortress:
+  quantum-tax-fortress:
     build: .
     container_name: quantum-tax-fortress
+    env_file:
+      - ./.env
     environment:
-      DATABASE_URL: postgresql://fortress:quantum_elite_2024@postgres:5432/financial_fortress
-      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@financial-postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@financial-redis:6379/0
     ports:
       - "4011:4011"
     depends_on:
-      postgres:
+      financial-postgres:
         condition: service_healthy
-    command: python quantum_tax_fortress.py
+      financial-redis:
+        condition: service_healthy
+    command: python financial/quantum_tax_fortress.py
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import socket; s=socket.create_connection(('127.0.0.1',4011),2); s.close()\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    labels:
+      omni.quantum.component: quantum-tax-fortress
+      omni.quantum.tier: business
+      omni.quantum.critical: "true"
+    networks:
+      - omni-quantum-network
 
-  dashboard:
+  omniscient-dashboard:
     build: .
     container_name: omniscient-dashboard
+    env_file:
+      - ./.env
     environment:
-      DATABASE_URL: postgresql://fortress:quantum_elite_2024@postgres:5432/financial_fortress
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@financial-postgres:5432/${POSTGRES_DB}
     ports:
       - "4012:4012"
     depends_on:
-      postgres:
+      financial-postgres:
         condition: service_healthy
-    command: python omniscient_dashboard.py
+    command: python financial/omniscient_dashboard.py
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import socket; s=socket.create_connection(('127.0.0.1',4012),2); s.close()\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    labels:
+      omni.quantum.component: omniscient-dashboard
+      omni.quantum.tier: business
+      omni.quantum.critical: "false"
+    networks:
+      - omni-quantum-network
 
-  alert-engine:
+  neural-alert-engine:
     build: .
     container_name: neural-alert-engine
+    env_file:
+      - ./.env
     environment:
-      DATABASE_URL: postgresql://fortress:quantum_elite_2024@postgres:5432/financial_fortress
-      MATTERMOST_WEBHOOK_URL: ${MATTERMOST_WEBHOOK_URL:-}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@financial-postgres:5432/${POSTGRES_DB}
+      MATTERMOST_WEBHOOK_URL: ${MATTERMOST_WEBHOOK_URL}
     ports:
       - "4013:4013"
     depends_on:
-      postgres:
+      financial-postgres:
         condition: service_healthy
-    command: python neural_alert_engine.py
+    command: python financial/neural_alert_engine.py
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import socket; s=socket.create_connection(('127.0.0.1',4013),2); s.close()\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    labels:
+      omni.quantum.component: neural-alert-engine
+      omni.quantum.tier: business
+      omni.quantum.critical: "false"
+    networks:
+      - omni-quantum-network
 
-  grafana:
-    image: grafana/grafana:latest
+  financial-grafana:
+    image: grafana/grafana:11.4.0
     container_name: financial-grafana
+    env_file:
+      - ./.env
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
     ports:
-      - "3000:3000"
+      - "3006:3000"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    labels:
+      omni.quantum.component: financial-grafana
+      omni.quantum.tier: business
+      omni.quantum.critical: "false"
+    networks:
+      - omni-quantum-network
 
 volumes:
   postgres_data:
+  redis_data:
+
+networks:
+  omni-quantum-network:
+    external: true

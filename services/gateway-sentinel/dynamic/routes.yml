@@ -452,7 +452,7 @@ http:
     wikijs:
       loadBalancer:
         servers:
-          - url: "http://omni-wikijs:3000"
+          - url: "https://notion.so"
         passHostHeader: true
 
     qdrant:
@@ -465,7 +465,7 @@ http:
     plane:
       loadBalancer:
         servers:
-          - url: "http://omni-plane:3000"
+          - url: "https://notion.so"
         passHostHeader: true
 
     superset:
@@ -483,7 +483,7 @@ http:
     twenty:
       loadBalancer:
         servers:
-          - url: "http://omni-twenty:3000"
+          - url: "https://notion.so"
         passHostHeader: true
 
     crater:

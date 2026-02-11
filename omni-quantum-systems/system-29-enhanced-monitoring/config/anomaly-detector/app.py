@@ -84,7 +84,7 @@ MONITORED_METRICS = [
     },
     {
         "name": "http_5xx_rate",
-        "query": 'sum(rate(caddy_http_responses_total{code=~"5.."}[5m]))',
+        "query": 'sum(rate(traefik_service_requests_total{code=~"5.."}[5m]))',
         "description": "Total 5xx error rate",
         "unit": "req/s",
         "window": "1h",

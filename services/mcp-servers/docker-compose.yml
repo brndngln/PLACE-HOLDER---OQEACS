@@ -1,11 +1,17 @@
-version: "3.9"
-
+version: '3.9'
 services:
   mcp-orchestrator:
     build: .
     container_name: omni-mcp-orchestrator
-    command: ["uvicorn", "orchestrator-mcp.main:app", "--host", "0.0.0.0", "--port", "8335"]
-    ports: ["8335:8335"]
+    command:
+    - uvicorn
+    - orchestrator-mcp.main:app
+    - --host
+    - 0.0.0.0
+    - --port
+    - '8335'
+    ports:
+    - 8335:8335
     environment:
       VAULT_URL: http://omni-vault:8200
       ORCHESTRATOR_URL: http://omni-orchestrator:9500
@@ -15,17 +21,44 @@ services:
       AUDIT_LOGGER_URL: http://omni-audit-logger:9550
       LANGFUSE_URL: http://omni-langfuse:3000
       MATTERMOST_WEBHOOK_URL: http://omni-mattermost-webhook:8066/hooks/builds
-    healthcheck: { test: ["CMD", "curl", "-f", "http://localhost:8335/health"], interval: 20s, timeout: 10s, retries: 5 }
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8335/health
+      interval: 20s
+      timeout: 10s
+      retries: 5
     mem_limit: 256m
     restart: unless-stopped
-    networks: [omni-quantum-network]
-    labels: { omni.quantum.component: mcp-orchestrator, omni.quantum.tier: high, omni.quantum.critical: "false" }
-
+    networks:
+    - omni-quantum-network
+    labels:
+      omni.quantum.component: mcp-orchestrator
+      omni.quantum.tier: development
+      omni.quantum.critical: 'false'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
   mcp-knowledge:
     build: .
     container_name: omni-mcp-knowledge
-    command: ["uvicorn", "knowledge-mcp.main:app", "--host", "0.0.0.0", "--port", "8336"]
-    ports: ["8336:8336"]
+    command:
+    - uvicorn
+    - knowledge-mcp.main:app
+    - --host
+    - 0.0.0.0
+    - --port
+    - '8336'
+    ports:
+    - 8336:8336
     environment:
       VAULT_URL: http://omni-vault:8200
       QDRANT_URL: http://omni-qdrant:6333
@@ -35,46 +68,120 @@ services:
       KNOWLEDGE_FRESHNESS_URL: http://omni-knowledge-freshness:9430
       MEILISEARCH_INDEXER_URL: http://omni-meilisearch-indexer:7701
       AUDIT_LOGGER_URL: http://omni-audit-logger:9550
-    healthcheck: { test: ["CMD", "curl", "-f", "http://localhost:8336/health"], interval: 20s, timeout: 10s, retries: 5 }
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8336/health
+      interval: 20s
+      timeout: 10s
+      retries: 5
     mem_limit: 512m
     restart: unless-stopped
-    networks: [omni-quantum-network]
-    labels: { omni.quantum.component: mcp-knowledge, omni.quantum.tier: high, omni.quantum.critical: "false" }
-
+    networks:
+    - omni-quantum-network
+    labels:
+      omni.quantum.component: mcp-knowledge
+      omni.quantum.tier: development
+      omni.quantum.critical: 'false'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
   mcp-automation:
     build: .
     container_name: omni-mcp-automation
-    command: ["uvicorn", "automation-mcp.main:app", "--host", "0.0.0.0", "--port", "8337"]
-    ports: ["8337:8337"]
+    command:
+    - uvicorn
+    - automation-mcp.main:app
+    - --host
+    - 0.0.0.0
+    - --port
+    - '8337'
+    ports:
+    - 8337:8337
     environment:
       VAULT_URL: http://omni-vault:8200
       N8N_URL: http://omni-n8n:5678
       TOKEN_INFINITY_URL: http://omni-token-infinity:9600
       LITELLM_URL: http://omni-litellm:4000
       AUDIT_LOGGER_URL: http://omni-audit-logger:9550
-    healthcheck: { test: ["CMD", "curl", "-f", "http://localhost:8337/health"], interval: 20s, timeout: 10s, retries: 5 }
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8337/health
+      interval: 20s
+      timeout: 10s
+      retries: 5
     mem_limit: 512m
     restart: unless-stopped
-    networks: [omni-quantum-network]
-    labels: { omni.quantum.component: mcp-automation, omni.quantum.tier: high, omni.quantum.critical: "false" }
-
+    networks:
+    - omni-quantum-network
+    labels:
+      omni.quantum.component: mcp-automation
+      omni.quantum.tier: development
+      omni.quantum.critical: 'false'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
   mcp-financial:
     build: .
     container_name: omni-mcp-financial
-    command: ["uvicorn", "financial-mcp.main:app", "--host", "0.0.0.0", "--port", "8338"]
-    ports: ["8338:8338"]
+    command:
+    - uvicorn
+    - financial-mcp.main:app
+    - --host
+    - 0.0.0.0
+    - --port
+    - '8338'
+    ports:
+    - 8338:8338
     environment:
       VAULT_URL: http://omni-vault:8200
       CRM_SYNC_URL: http://omni-crm-sync:3001
       INVOICE_GENERATOR_URL: http://omni-invoice-generator:81
       LITELLM_COST_TRACKER_URL: http://omni-litellm-cost-tracker:4001
       AUDIT_LOGGER_URL: http://omni-audit-logger:9550
-    healthcheck: { test: ["CMD", "curl", "-f", "http://localhost:8338/health"], interval: 20s, timeout: 10s, retries: 5 }
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8338/health
+      interval: 20s
+      timeout: 10s
+      retries: 5
     mem_limit: 256m
     restart: unless-stopped
-    networks: [omni-quantum-network]
-    labels: { omni.quantum.component: mcp-financial, omni.quantum.tier: high, omni.quantum.critical: "false" }
-
+    networks:
+    - omni-quantum-network
+    labels:
+      omni.quantum.component: mcp-financial
+      omni.quantum.tier: development
+      omni.quantum.critical: 'false'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
 networks:
   omni-quantum-network:
     external: true

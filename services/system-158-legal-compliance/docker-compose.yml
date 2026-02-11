@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  legal_compliance:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: omni/legal-compliance:1.0.0
+    container_name: omni-legal-compliance
+    restart: unless-stopped
+    env_file:
+      - ../../.env
+    environment:
+      SYSTEM_ID: "158"
+      SYSTEM_NAME: "legal-compliance"
+      SYSTEM_PORT: "9795"
+      LOG_LEVEL: \INFO
+    ports:
+      - "9795:9795"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:9795/health')\" || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    labels:
+      omni.quantum.component: legal-compliance
+      omni.quantum.tier: governance
+      omni.quantum.critical: "false"
+    networks:
+      - omni-quantum-network
+
+networks:
+  omni-quantum-network:
+    external: true

@@ -43,7 +43,7 @@ log = structlog.get_logger(service="stripe-handler", system="15", component="int
 WEBHOOK_ROUTER_URL = os.environ.get("WEBHOOK_ROUTER_URL", "http://omni-webhook-router:8066")
 CRATER_URL = os.environ.get("CRATER_URL", "http://omni-crater:80")
 CRATER_API_KEY = os.environ.get("CRATER_API_KEY", "")
-PLANE_URL = os.environ.get("PLANE_URL", "http://omni-plane-web:3000")
+PLANE_URL = os.environ.get("PLANE_URL", "https://notion.so")
 PLANE_API_KEY = os.environ.get("PLANE_API_KEY", "")
 PLANE_WORKSPACE = os.environ.get("PLANE_WORKSPACE", "omni-quantum")
 PLANE_PROJECT = os.environ.get("PLANE_PROJECT_ID", "")

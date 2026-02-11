@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-WIKI_HOST="${WIKI_HOST:-omni-wikijs}"
+WIKI_HOST=""
 WIKI_PORT="${WIKI_PORT:-3000}"
 WIKI_URL="http://${WIKI_HOST}:${WIKI_PORT}"
 WIKI_GRAPHQL="${WIKI_URL}/graphql"

@@ -1,0 +1,48 @@
+services:
+  mcp-docs:
+    build:
+      context: .
+    image: omni/mcp-docs:1.0.0
+    container_name: omni-mcp-docs
+    environment:
+    - QDRANT_HOST=${QDRANT_HOST:-omni-qdrant}
+    - QDRANT_PORT=${QDRANT_PORT:-6333}
+    - DOC_COLLECTION=${DOC_COLLECTION:-framework_docs}
+    networks:
+    - omni-quantum-network
+    ports:
+    - 8328:8328
+    depends_on:
+    - qdrant
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -fs
+      - http://localhost:8328/ready
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    restart: unless-stopped
+    labels:
+      omni.quantum.component: mcp-docs
+      omni.quantum.tier: development
+      omni.quantum.critical: 'false'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
+networks:
+  omni-quantum-network:
+    external: true

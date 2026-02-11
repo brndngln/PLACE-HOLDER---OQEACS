@@ -9,7 +9,7 @@ logger = structlog.get_logger()
 class PlaneClient:
     def __init__(
         self,
-        base_url: str = "http://omni-plane-web:3000/api/v1",
+        base_url: str = "https://notion.so",
         api_token: str = "",
         workspace: str = "omni-quantum",
     ):

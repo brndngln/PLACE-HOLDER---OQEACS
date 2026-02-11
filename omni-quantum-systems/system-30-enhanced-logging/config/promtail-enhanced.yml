@@ -105,7 +105,7 @@ scrape_configs:
       # HTTP request parsing (for web services)
       # -----------------------------------------------------------------------
       - match:
-          selector: '{component=~"caddy|gitea|mattermost|plane-web|grafana"}'
+          selector: '{component=~"traefik|gitea|mattermost|plane-web|grafana"}'
           stages:
             - regex:
                 expression: '"(?P<method>GET|POST|PUT|DELETE|PATCH) (?P<path>[^ ]*) HTTP/[0-9.]+" (?P<status>\d{3})'

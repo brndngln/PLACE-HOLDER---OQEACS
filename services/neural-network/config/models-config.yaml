@@ -13,7 +13,7 @@ models:
     min_tokens_per_sec: 15
     tags: [tier-1, critical]
 
-  - name: deepseek-v3.2:latest
+  - name: deepseek-v3.2
     priority: 2
     vram_estimate_gb: 40
     context_length: 128000
@@ -31,7 +31,7 @@ models:
     min_tokens_per_sec: 40
     tags: [tier-2, fast]
 
-  - name: kimi-dev-72b:latest
+  - name: kimi-dev-72b
     priority: 4
     vram_estimate_gb: 42
     context_length: 131072

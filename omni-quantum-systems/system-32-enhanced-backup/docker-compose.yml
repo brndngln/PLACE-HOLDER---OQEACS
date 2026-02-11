@@ -1,22 +1,10 @@
-###############################################################################
-# System 32: Enhanced Backup System — "Backup Fortress Pro"
-# Purpose: Automated backup schedules for ALL 28+ services' data
-# Enhances: System 1 (Backup Fortress) — adds comprehensive service coverage,
-#           MinIO snapshots, Gitea repos, Mattermost data, n8n workflows,
-#           automated verification, cross-region replication
-###############################################################################
-
-x-logging: &default-logging
+x-logging:
   driver: json-file
   options:
-    max-size: "10m"
-    max-file: "5"
-    tag: "{{.Name}}"
-
+    max-size: 10m
+    max-file: '5'
+    tag: '{{.Name}}'
 services:
-  #---------------------------------------------------------------------------
-  # Backup Orchestrator — manages all backup schedules
-  #---------------------------------------------------------------------------
   backup-orchestrator:
     build:
       context: ./config/backup-orchestrator
@@ -25,7 +13,7 @@ services:
     environment:
       TZ: UTC
       POSTGRES_HOST: omni-postgres
-      POSTGRES_PORT: "5432"
+      POSTGRES_PORT: '5432'
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       REDIS_URL: redis://omni-redis:6379
@@ -45,32 +33,46 @@ services:
       VAULT_TOKEN: ${VAULT_TOKEN}
       QDRANT_URL: http://omni-qdrant:6333
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - backup-staging:/backup/staging
-      - backup-restic-cache:/root/.cache/restic
-      - ./config/backup-schedules.yml:/app/schedules.yml:ro
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+    - backup-staging:/backup/staging
+    - backup-restic-cache:/root/.cache/restic
+    - ./config/backup-schedules.yml:/app/schedules.yml:ro
     ports:
-      - "8187:8187"
+    - 8187:8187
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8187/health')"]
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request; urllib.request.urlopen('http://localhost:8187/health')
       interval: 15s
       timeout: 10s
       retries: 5
       start_period: 30s
     restart: unless-stopped
-    logging: *default-logging
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '5'
+        tag: '{{.Name}}'
     networks:
-      - omni-quantum-network
+    - omni-quantum-network
     labels:
-      - "omni.quantum.component=backup-orchestrator"
-      - "omni.quantum.tier=standard"
-      - "omni.quantum.critical=true"
-      - "prometheus.scrape=true"
-      - "prometheus.port=8187"
-
-  #---------------------------------------------------------------------------
-  # Backup Verifier — automatically tests restore capability
-  #---------------------------------------------------------------------------
+      prometheus.scrape: 'true'
+      prometheus.port: '8187'
+      omni.quantum.component: backup-orchestrator
+      omni.quantum.tier: business
+      omni.quantum.critical: 'true'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
   backup-verifier:
     build:
       context: ./config/backup-verifier
@@ -83,29 +85,46 @@ services:
       AWS_ACCESS_KEY_ID: ${MINIO_ACCESS_KEY}
       AWS_SECRET_ACCESS_KEY: ${MINIO_SECRET_KEY}
       MATTERMOST_WEBHOOK: ${MATTERMOST_ALERTS_WEBHOOK}
-      VERIFY_INTERVAL_HOURS: "24"
+      VERIFY_INTERVAL_HOURS: '24'
     volumes:
-      - backup-verify-staging:/verify/staging
-      - backup-restic-cache:/root/.cache/restic:ro
+    - backup-verify-staging:/verify/staging
+    - backup-restic-cache:/root/.cache/restic:ro
     ports:
-      - "8188:8188"
+    - 8188:8188
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8188/health')"]
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request; urllib.request.urlopen('http://localhost:8188/health')
       interval: 15s
       timeout: 10s
       retries: 5
       start_period: 30s
     restart: unless-stopped
-    logging: *default-logging
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '5'
+        tag: '{{.Name}}'
     networks:
-      - omni-quantum-network
+    - omni-quantum-network
     labels:
-      - "omni.quantum.component=backup-verifier"
-      - "omni.quantum.tier=standard"
-      - "omni.quantum.critical=false"
-      - "prometheus.scrape=true"
-      - "prometheus.port=8188"
-
+      prometheus.scrape: 'true'
+      prometheus.port: '8188'
+      omni.quantum.component: backup-verifier
+      omni.quantum.tier: business
+      omni.quantum.critical: 'false'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
 volumes:
   backup-staging:
     driver: local
@@ -113,7 +132,6 @@ volumes:
     driver: local
   backup-verify-staging:
     driver: local
-
 networks:
   omni-quantum-network:
     external: true

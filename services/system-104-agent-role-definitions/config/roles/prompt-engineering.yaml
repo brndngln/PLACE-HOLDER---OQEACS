@@ -1,0 +1,6 @@
+name: prompt-engineering-agent
+focus: instruction_quality
+quality_bars:
+  - determinism
+  - robustness
+  - token_efficiency

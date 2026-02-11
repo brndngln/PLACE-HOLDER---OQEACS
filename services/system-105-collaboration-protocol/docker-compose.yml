@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  collaboration_protocol:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: omni/collaboration-protocol:1.0.0
+    container_name: omni-collaboration-protocol
+    restart: unless-stopped
+    env_file:
+      - ../../.env
+    environment:
+      SYSTEM_ID: "105"
+      SYSTEM_NAME: "collaboration-protocol"
+      SYSTEM_PORT: "9610"
+      LOG_LEVEL: \INFO
+    ports:
+      - "9610:9610"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:9610/health')\" || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.5"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    labels:
+      omni.quantum.component: collaboration-protocol
+      omni.quantum.tier: agent
+      omni.quantum.critical: "true"
+    networks:
+      - omni-quantum-network
+
+networks:
+  omni-quantum-network:
+    external: true

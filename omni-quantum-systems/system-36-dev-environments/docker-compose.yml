@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  coder:
+    image: codercom/coder:2.17.3
+    container_name: omni-coder
+    restart: unless-stopped
+    env_file:
+      - ../../.env
+    environment:
+      CODER_PG_CONNECTION_URL: postgresql://coder:${CODER_PASSWORD}@omni-postgres:5432/coder
+      CODER_HTTP_ADDRESS: 0.0.0.0:7080
+      CODER_ACCESS_URL: http://omni-coder:7080
+      CODER_TELEMETRY: "false"
+    ports:
+      - "7080:7080"
+      - "2112:2112"
+    volumes:
+      - coder-data:/home/coder/.config/coderv2
+      - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7080/healthz >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    labels:
+      omni.quantum.component: coder
+      omni.quantum.tier: development
+      omni.quantum.critical: "false"
+    networks:
+      - omni-quantum-network
+
+volumes:
+  coder-data:
+
+networks:
+  omni-quantum-network:
+    external: true

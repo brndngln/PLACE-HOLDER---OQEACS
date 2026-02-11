@@ -1,0 +1,6 @@
+name: retrospective-agent
+focus: post_task_analysis
+quality_bars:
+  - root_cause_accuracy
+  - actionability
+  - measurable_outcomes

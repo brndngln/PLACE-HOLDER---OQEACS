@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  language_security_scanners:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: omni/language-security-scanners:1.0.0
+    container_name: omni-language-security-scanners
+    restart: unless-stopped
+    env_file:
+      - ../../.env
+    environment:
+      SYSTEM_ID: "83"
+      SYSTEM_NAME: "language-security-scanners"
+      SYSTEM_PORT: "9754"
+      LOG_LEVEL: \INFO
+    ports:
+      - "9754:9754"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:9754/health')\" || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.5"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    labels:
+      omni.quantum.component: language-security-scanners
+      omni.quantum.tier: security
+      omni.quantum.critical: "true"
+    networks:
+      - omni-quantum-network
+
+networks:
+  omni-quantum-network:
+    external: true

@@ -1,47 +1,57 @@
-version: "3.9"
-
-x-logging: &default-logging
+version: '3.9'
+x-logging:
   driver: json-file
   options:
-    max-size: "50m"
-    max-file: "5"
-
+    max-size: 50m
+    max-file: '5'
 services:
   mlflow:
     image: ghcr.io/mlflow/mlflow:v2.17.2
     container_name: omni-mlflow
     ports:
-      - "5000:5000"
+    - 5000:5000
     environment:
       MLFLOW_BACKEND_STORE_URI: postgresql://mlflow:${MLFLOW_DB_PASSWORD}@omni-mlflow-postgres:5432/mlflow
       MLFLOW_DEFAULT_ARTIFACT_ROOT: s3://omni-mlflow/artifacts
       MLFLOW_S3_ENDPOINT_URL: http://omni-minio:9000
       AWS_ACCESS_KEY_ID: ${MINIO_ACCESS_KEY}
       AWS_SECRET_ACCESS_KEY: ${MINIO_SECRET_KEY}
-    command: >-
-      mlflow server
-      --host 0.0.0.0
-      --port 5000
-      --backend-store-uri ${MLFLOW_BACKEND_STORE_URI}
-      --default-artifact-root ${MLFLOW_DEFAULT_ARTIFACT_ROOT}
+    command: mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri ${MLFLOW_BACKEND_STORE_URI} --default-artifact-root
+      ${MLFLOW_DEFAULT_ARTIFACT_ROOT}
     depends_on:
       mlflow-postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:5000/health"]
+      test:
+      - CMD
+      - curl
+      - -fsS
+      - http://localhost:5000/health
       interval: 20s
       timeout: 10s
       retries: 5
     mem_limit: 512m
     restart: unless-stopped
-    logging: *default-logging
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: '5'
     labels:
       omni.quantum.component: mlflow
-      omni.quantum.tier: standard
-      omni.quantum.critical: "false"
+      omni.quantum.tier: business
+      omni.quantum.critical: 'false'
     networks:
-      - omni-quantum-network
-
+    - omni-quantum-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
   mlflow-postgres:
     image: postgres:16-alpine
     container_name: omni-mlflow-postgres
@@ -50,49 +60,78 @@ services:
       POSTGRES_USER: mlflow
       POSTGRES_PASSWORD: ${MLFLOW_DB_PASSWORD}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U mlflow -d mlflow"]
+      test:
+      - CMD-SHELL
+      - pg_isready -U mlflow -d mlflow
       interval: 15s
       timeout: 5s
       retries: 5
     mem_limit: 256m
     restart: unless-stopped
-    logging: *default-logging
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: '5'
     labels:
       omni.quantum.component: mlflow-postgres
-      omni.quantum.tier: standard
-      omni.quantum.critical: "false"
+      omni.quantum.tier: business
+      omni.quantum.critical: 'false'
     volumes:
-      - mlflow-postgres-data:/var/lib/postgresql/data
+    - mlflow-postgres-data:/var/lib/postgresql/data
     networks:
-      - omni-quantum-network
-
+    - omni-quantum-network
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
   experiment-tracker:
     build: ./experiment-tracker
     container_name: omni-experiment-tracker
     ports:
-      - "5001:5001"
+    - 5001:5001
     environment:
       MLFLOW_TRACKING_URI: http://omni-mlflow:5000
       MM_WEBHOOK: http://omni-mattermost-webhook:8066/hooks/quality
       AUDIT_LOGGER_URL: http://omni-audit-logger:9550
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:5001/health"]
+      test:
+      - CMD
+      - curl
+      - -fsS
+      - http://localhost:5001/health
       interval: 20s
       timeout: 10s
       retries: 5
     mem_limit: 512m
     restart: unless-stopped
-    logging: *default-logging
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: '5'
     labels:
       omni.quantum.component: experiment-tracker
-      omni.quantum.tier: standard
-      omni.quantum.critical: "false"
+      omni.quantum.tier: business
+      omni.quantum.critical: 'false'
     networks:
-      - omni-quantum-network
-
+    - omni-quantum-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
 volumes:
-  mlflow-postgres-data:
-
+  mlflow-postgres-data: null
 networks:
   omni-quantum-network:
     external: true

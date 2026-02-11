@@ -24,6 +24,7 @@ Usage:
 import argparse
 import json
 import os
+import subprocess
 import sys
 
 try:
@@ -236,6 +237,27 @@ def cmd_search(args):
     print()
 
 
+def cmd_logs(args):
+    """Stream container logs for a service."""
+    service = args.service
+    tail = str(args.tail)
+    cmd = ["docker", "logs", service, "--tail", tail]
+    if args.follow:
+        cmd.append("--follow")
+    if args.since:
+        cmd.extend(["--since", args.since])
+
+    print(f"  {C.BOLD}Logs: {service}{C.RESET} (tail={tail}{', follow' if args.follow else ''}{', since=' + args.since if args.since else ''})")
+    try:
+        subprocess.run(cmd, check=True)
+    except FileNotFoundError:
+        print(f"{C.RED}✗ docker command not found{C.RESET}")
+        sys.exit(1)
+    except subprocess.CalledProcessError as exc:
+        print(f"{C.RED}✗ Failed to fetch logs for '{service}' (exit {exc.returncode}){C.RESET}")
+        sys.exit(exc.returncode)
+
+
 def cmd_docker(_args):
     """Docker host stats."""
     data = api_get("/api/v1/docker/stats")
@@ -342,6 +364,12 @@ def main():
     p_search = sub.add_parser("search", help="Search services")
     p_search.add_argument("query")
 
+    p_logs = sub.add_parser("logs", help="View service logs")
+    p_logs.add_argument("service")
+    p_logs.add_argument("--follow", action="store_true")
+    p_logs.add_argument("--tail", type=int, default=200)
+    p_logs.add_argument("--since")
+
     sub.add_parser("docker", help="Docker host stats")
     sub.add_parser("topology", help="Dependency graph")
 
@@ -356,7 +384,7 @@ def main():
     commands = {
         "status": cmd_status, "services": cmd_services, "health": cmd_health,
         "restart": cmd_restart, "backup": cmd_backup, "deploy": cmd_deploy,
-        "rotate": cmd_rotate, "search": cmd_search, "docker": cmd_docker,
+        "rotate": cmd_rotate, "search": cmd_search, "logs": cmd_logs, "docker": cmd_docker,
         "topology": cmd_topology, "events": cmd_events, "refresh": cmd_refresh,
         "configure": cmd_configure,
     }
