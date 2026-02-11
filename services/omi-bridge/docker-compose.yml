@@ -26,11 +26,6 @@ services:
         limits:
           memory: 256M
           cpus: '0.25'
-    depends_on:
-      omni-litellm:
-        condition: service_healthy
-      omni-orchestrator:
-        condition: service_healthy
     networks:
     - omni-quantum-network
     labels:

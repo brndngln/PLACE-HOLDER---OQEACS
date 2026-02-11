@@ -22,8 +22,6 @@ services:
     depends_on:
       omni-semantic-cache-redis:
         condition: service_healthy
-      omni-litellm:
-        condition: service_healthy
     deploy:
       resources:
         limits:
@@ -60,8 +58,8 @@ services:
     image: redis:7-alpine
     container_name: omni-semantic-cache-redis
     hostname: omni-semantic-cache-redis
-    command: 'redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru --appendonly yes --appendfsync everysec --save
-      60 1000 --save 300 100
+    command: 'redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru --appendonly
+      yes --appendfsync everysec --save 60 1000 --save 300 100
 
       '
     volumes:

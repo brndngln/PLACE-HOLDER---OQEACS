@@ -12,8 +12,6 @@ services:
     - omni-quantum-network
     ports:
     - 8331:8331
-    depends_on:
-    - qdrant
     healthcheck:
       test:
       - CMD

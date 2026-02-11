@@ -13,8 +13,6 @@ services:
     - omni-quantum-network
     ports:
     - 8327:8327
-    depends_on:
-    - redis
     healthcheck:
       test:
       - CMD

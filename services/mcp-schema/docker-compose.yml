@@ -14,8 +14,6 @@ services:
     - omni-quantum-network
     ports:
     - 8329:8329
-    depends_on:
-    - postgres
     healthcheck:
       test:
       - CMD

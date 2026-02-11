@@ -26,13 +26,6 @@ services:
     - ingestor_temp:/tmp/ingestor
     networks:
     - omni-quantum-network
-    depends_on:
-      omni-qdrant:
-        condition: service_healthy
-      omni-litellm:
-        condition: service_healthy
-      omni-minio:
-        condition: service_healthy
     deploy:
       resources:
         limits:

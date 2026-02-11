@@ -16,8 +16,6 @@ services:
     - omni-quantum-network
     ports:
     - 8333:8333
-    depends_on:
-    - code-scorer
     healthcheck:
       test:
       - CMD

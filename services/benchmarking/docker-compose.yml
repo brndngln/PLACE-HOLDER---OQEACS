@@ -22,7 +22,6 @@ services:
       interval: 20s
       timeout: 10s
       retries: 6
-    mem_limit: 256m
     restart: unless-stopped
     logging:
       driver: json-file
@@ -65,7 +64,6 @@ services:
       interval: 20s
       timeout: 10s
       retries: 6
-    mem_limit: 512m
     restart: unless-stopped
     logging:
       driver: json-file

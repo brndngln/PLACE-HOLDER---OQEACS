@@ -20,9 +20,6 @@ services:
       EXECUTIONS_DATA_MAX_AGE: 168
     volumes:
     - n8n-data:/home/node/.n8n
-    depends_on:
-      omni-postgres:
-        condition: service_healthy
     healthcheck:
       test:
       - CMD

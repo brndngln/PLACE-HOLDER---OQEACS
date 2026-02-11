@@ -47,23 +47,6 @@ services:
         reservations:
           memory: 512M
           cpus: '0.5'
-    depends_on:
-      omni-litellm:
-        condition: service_started
-      omni-gitea:
-        condition: service_started
-      omni-qdrant:
-        condition: service_started
-      omni-langfuse:
-        condition: service_started
-      omni-code-scorer:
-        condition: service_started
-      omni-gate-engine:
-        condition: service_started
-      omni-token-infinity:
-        condition: service_started
-      omni-sourcegraph:
-        condition: service_started
     healthcheck:
       test:
       - CMD
@@ -130,22 +113,6 @@ services:
     depends_on:
       omni-swe-agent-core:
         condition: service_healthy
-      omni-litellm:
-        condition: service_started
-      omni-gitea:
-        condition: service_started
-      omni-qdrant:
-        condition: service_started
-      omni-langfuse:
-        condition: service_started
-      omni-code-scorer:
-        condition: service_started
-      omni-gate-engine:
-        condition: service_started
-      omni-token-infinity:
-        condition: service_started
-      omni-sourcegraph:
-        condition: service_started
     healthcheck:
       test:
       - CMD
@@ -196,8 +163,6 @@ services:
     depends_on:
       omni-swe-agent-task-handler:
         condition: service_healthy
-      omni-gitea:
-        condition: service_started
     healthcheck:
       test:
       - CMD

@@ -13,9 +13,6 @@ services:
       NANGO_DB_NAME: nango
       NANGO_SECRET_KEY: ${NANGO_SECRET_KEY:-omni-nango-secret}
       SERVER_PORT: '3003'
-    depends_on:
-      omni-postgres:
-        condition: service_healthy
     healthcheck:
       test:
       - CMD

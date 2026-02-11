@@ -27,15 +27,6 @@ services:
           cpus: '1.0'
         reservations:
           memory: 512M
-    depends_on:
-      omni-qdrant:
-        condition: service_healthy
-      omni-litellm:
-        condition: service_healthy
-      omni-ollama:
-        condition: service_healthy
-      omni-langfuse:
-        condition: service_healthy
     healthcheck:
       test:
       - CMD
@@ -93,15 +84,6 @@ services:
           cpus: '1.0'
         reservations:
           memory: 256M
-    depends_on:
-      omni-qdrant:
-        condition: service_healthy
-      omni-litellm:
-        condition: service_healthy
-      omni-ollama:
-        condition: service_healthy
-      omni-langfuse:
-        condition: service_healthy
     healthcheck:
       test:
       - CMD

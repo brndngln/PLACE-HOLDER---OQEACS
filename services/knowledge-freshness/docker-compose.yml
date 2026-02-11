@@ -19,13 +19,6 @@ services:
     - ../knowledge-ingestor/config:/app/config:ro
     networks:
     - omni-quantum-network
-    depends_on:
-      omni-knowledge-ingestor:
-        condition: service_healthy
-      omni-qdrant:
-        condition: service_healthy
-      omni-mattermost-webhook:
-        condition: service_started
     deploy:
       resources:
         limits:

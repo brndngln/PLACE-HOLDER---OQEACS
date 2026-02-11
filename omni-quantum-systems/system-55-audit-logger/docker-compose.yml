@@ -11,8 +11,8 @@ services:
     ports:
     - 9550:9550
     environment:
-      DATABASE_URL: postgresql://{{ vault://secret/data/audit-logger#db_user }}:{{ vault://secret/data/audit-logger#db_password
-        }}@omni-audit-logger-postgres:5432/audit_logger
+      DATABASE_URL: postgresql://{{ vault://secret/data/audit-logger#db_user }}:{{
+        vault://secret/data/audit-logger#db_password }}@omni-audit-logger-postgres:5432/audit_logger
       MM_WEBHOOK: http://omni-mattermost-webhook:8066/hooks/omni-alerts
       N8N_WEBHOOK: http://omni-n8n:5678/webhook/audit-events
     healthcheck:
@@ -24,7 +24,6 @@ services:
       interval: 15s
       timeout: 5s
       retries: 5
-    mem_limit: 512m
     read_only: true
     tmpfs:
     - /tmp
@@ -68,7 +67,6 @@ services:
       interval: 15s
       timeout: 5s
       retries: 5
-    mem_limit: 256m
     restart: unless-stopped
     logging:
       driver: json-file

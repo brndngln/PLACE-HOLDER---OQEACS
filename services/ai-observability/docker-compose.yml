@@ -10,9 +10,6 @@ services:
       NEXTAUTH_URL: https://langfuse.${DOMAIN:-omni-quantum-quantum.local}
       NEXTAUTH_SECRET: ${LANGFUSE_SECRET:-omni-langfuse-secret}
       SALT: ${LANGFUSE_SALT:-omni-langfuse-salt}
-    depends_on:
-      omni-postgres:
-        condition: service_healthy
     healthcheck:
       test:
       - CMD

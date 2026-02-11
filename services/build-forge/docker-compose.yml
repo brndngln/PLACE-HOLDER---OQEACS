@@ -251,8 +251,6 @@ services:
       omni.quantum.critical: 'true'
     networks:
     - omni-quantum-network
-    profiles:
-    - with-postgres
     security_opt:
     - no-new-privileges:true
     cap_drop:
