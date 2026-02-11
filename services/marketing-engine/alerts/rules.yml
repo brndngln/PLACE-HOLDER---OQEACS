@@ -1,0 +1,11 @@
+groups:
+  - name: marketing-engine-alerts
+    rules:
+      - alert: MarketingEngineDown
+        expr: up{job="omni-marketing-engine"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "marketing-engine is down"
+          description: "No scrape targets available for omni-marketing-engine"

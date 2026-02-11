@@ -1,0 +1,92 @@
+version: "3.9"
+
+networks:
+  omni-quantum-network:
+    external: true
+
+volumes:
+  marketing_engine_data:
+    driver: local
+
+services:
+  marketing-engine:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILD_DATE: "${BUILD_DATE:-2026-02-11T00:00:00Z}"
+        VERSION: "${VERSION:-1.0.0}"
+    image: omni-marketing-engine:${VERSION:-1.0.0}
+    container_name: omni-marketing-engine
+    hostname: omni-marketing-engine
+    env_file:
+      - ../../.env
+    environment:
+      SERVICE_NAME: "marketing-engine"
+      SERVICE_PORT: "9640"
+      VERSION: "${VERSION:-1.0.0}"
+      LOG_LEVEL: "${LOG_LEVEL:-info}"
+      LOG_FORMAT: "json"
+      DATABASE_URL: "postgresql+asyncpg://${GI_DB_USER:-omni}:${GI_DB_PASSWORD}@omni-gi-postgres:5432/marketing_db"
+      REDIS_URL: "redis://:${REDIS_PASSWORD}@omni-redis:6379/16"
+      LITELLM_URL: "http://omni-litellm:4000"
+      LITELLM_API_KEY: "${LITELLM_API_KEY}"
+      QDRANT_URL: "http://omni-qdrant:6333"
+      QDRANT_COLLECTION: "marketing-engine"
+      LANGFUSE_HOST: "http://omni-langfuse:3000"
+      LANGFUSE_PUBLIC_KEY: "${LANGFUSE_PUBLIC_KEY}"
+      LANGFUSE_SECRET_KEY: "${LANGFUSE_SECRET_KEY}"
+      MATTERMOST_WEBHOOK_URL: "${MATTERMOST_GI_WEBHOOK_URL}"
+      MATTERMOST_CHANNEL: "omni-generation-intelligence"
+      MINIO_ENDPOINT: "omni-minio:9000"
+      MINIO_ACCESS_KEY: "${MINIO_ACCESS_KEY}"
+      MINIO_SECRET_KEY: "${MINIO_SECRET_KEY}"
+      MINIO_BUCKET: "marketing-assets"
+      MINIO_SECURE: "false"
+      LISTMONK_URL: "http://omni-listmonk:9000"
+      LISTMONK_API_USER: "${LISTMONK_API_USER}"
+      LISTMONK_API_PASSWORD: "${LISTMONK_API_PASSWORD}"
+      SOCIAL_MEDIA_URL: "http://omni-social-media:9641"
+    ports:
+      - "9640:9640"
+    volumes:
+      - marketing_engine_data:/app/data
+    networks:
+      - omni-quantum-network
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:9640/health')\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:size=256M
+    labels:
+      - "omni.quantum.component=marketing-engine"
+      - "omni.quantum.tier=generation-intelligence"
+      - "omni.quantum.system=38"
+      - "omni.quantum.phase=4"
+      - "omni.quantum.critical=true"
+      - "omni.quantum.port=9640"
+      - "prometheus.scrape=true"
+      - "prometheus.port=9640"
+      - "prometheus.path=/metrics"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        labels: "omni.quantum.component"
+        tag: "{{.Name}}"

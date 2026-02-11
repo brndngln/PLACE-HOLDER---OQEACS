@@ -1,0 +1,11 @@
+groups:
+  - name: social-media-alerts
+    rules:
+      - alert: SocialMediaDown
+        expr: up{job="omni-social-media"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "social-media is down"
+          description: "No scrape targets available for omni-social-media"
