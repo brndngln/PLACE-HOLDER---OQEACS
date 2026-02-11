@@ -22,7 +22,7 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       DATA_PATH: /app/data/attestations.json
       ATTESTATION_HMAC_KEY: ${ATTESTATION_HMAC_KEY:-change-me-in-env}
-      DEFAULT_BUILDER_ID: ${DEFAULT_BUILDER_ID:-omni.build-fabric/v1}
+      DEFAULT_BUILDER_ID: ${DEFAULT_BUILDER_ID:-omni-build-fabric/v1}
     ports:
       - "9653:9653"
     volumes:
