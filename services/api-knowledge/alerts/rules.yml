@@ -1,0 +1,11 @@
+groups:
+  - name: api-knowledge-alerts
+    rules:
+      - alert: ApiKnowledgeServiceDown
+        expr: up{job="omni-api-knowledge"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API Integration Knowledge Base is down"
+          description: "No scrape targets available for omni-api-knowledge"

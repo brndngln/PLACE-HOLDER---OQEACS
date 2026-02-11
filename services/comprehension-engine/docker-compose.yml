@@ -1,0 +1,90 @@
+version: "3.9"
+
+networks:
+  omni-quantum-network:
+    external: true
+
+volumes:
+  comprehension_engine_data:
+    driver: local
+
+services:
+  comprehension-engine:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILD_DATE: "${BUILD_DATE:-2026-02-11T00:00:00Z}"
+        VERSION: "${VERSION:-1.0.0}"
+    image: omni-comprehension-engine:${VERSION:-1.0.0}
+    container_name: omni-comprehension-engine
+    hostname: omni-comprehension-engine
+    env_file:
+      - ../../.env
+    environment:
+      SERVICE_NAME: "comprehension-engine"
+      SERVICE_PORT: "9621"
+      VERSION: "${VERSION:-1.0.0}"
+      LOG_LEVEL: "${LOG_LEVEL:-info}"
+      LOG_FORMAT: "json"
+      DATABASE_URL: "postgresql+asyncpg://${GI_DB_USER:-omni}:${GI_DB_PASSWORD}@omni-gi-postgres:5432/comprehension_db"
+      REDIS_URL: "redis://:${REDIS_PASSWORD}@omni-redis:6379/11"
+      LITELLM_URL: "http://omni-litellm:4000"
+      LITELLM_API_KEY: "${LITELLM_API_KEY}"
+      QDRANT_URL: "http://omni-qdrant:6333"
+      QDRANT_COLLECTION: "comprehension-engine"
+      LANGFUSE_HOST: "http://omni-langfuse:3000"
+      LANGFUSE_PUBLIC_KEY: "${LANGFUSE_PUBLIC_KEY}"
+      LANGFUSE_SECRET_KEY: "${LANGFUSE_SECRET_KEY}"
+      MATTERMOST_WEBHOOK_URL: "${MATTERMOST_GI_WEBHOOK_URL}"
+      MATTERMOST_CHANNEL: "omni-generation-intelligence"
+      MINIO_ENDPOINT: "omni-minio:9000"
+      MINIO_ACCESS_KEY: "${MINIO_ACCESS_KEY}"
+      MINIO_SECRET_KEY: "${MINIO_SECRET_KEY}"
+      MINIO_BUCKET: "gi-comprehension-engine"
+      MINIO_SECURE: "false"
+      GITEA_URL: "http://omni-gitea:3000"
+      GITEA_TOKEN: "${GITEA_TOKEN}"
+    ports:
+      - "9621:9621"
+    volumes:
+      - comprehension_engine_data:/app/data
+    networks:
+      - omni-quantum-network
+    healthcheck:
+      test: ['CMD-SHELL', 'python -c "import urllib.request; urllib.request.urlopen(\"http://localhost:9621/health\")"']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:size=256M
+    labels:
+      - "omni.quantum.component=comprehension-engine"
+      - "omni.quantum.tier=generation-intelligence"
+      - "omni.quantum.system=2"
+      - "omni.quantum.phase=1"
+      - "omni.quantum.critical=true"
+      - "omni.quantum.port=9621"
+      - "prometheus.scrape=true"
+      - "prometheus.port=9621"
+      - "prometheus.path=/metrics"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        labels: "omni.quantum.component"
+        tag: "{{.Name}}"

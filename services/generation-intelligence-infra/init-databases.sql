@@ -1,0 +1,25 @@
+CREATE DATABASE comprehension_db;
+CREATE DATABASE hallucination_db;
+CREATE DATABASE template_db;
+CREATE DATABASE incremental_db;
+CREATE DATABASE parallel_db;
+CREATE DATABASE cost_db;
+CREATE DATABASE ui_intelligence_db;
+CREATE DATABASE api_knowledge_db;
+CREATE DATABASE docs_generator_db;
+CREATE DATABASE client_hub_db;
+CREATE DATABASE regression_db;
+CREATE DATABASE retrospective_db;
+
+GRANT ALL PRIVILEGES ON DATABASE comprehension_db TO omni;
+GRANT ALL PRIVILEGES ON DATABASE hallucination_db TO omni;
+GRANT ALL PRIVILEGES ON DATABASE template_db TO omni;
+GRANT ALL PRIVILEGES ON DATABASE incremental_db TO omni;
+GRANT ALL PRIVILEGES ON DATABASE parallel_db TO omni;
+GRANT ALL PRIVILEGES ON DATABASE cost_db TO omni;
+GRANT ALL PRIVILEGES ON DATABASE ui_intelligence_db TO omni;
+GRANT ALL PRIVILEGES ON DATABASE api_knowledge_db TO omni;
+GRANT ALL PRIVILEGES ON DATABASE docs_generator_db TO omni;
+GRANT ALL PRIVILEGES ON DATABASE client_hub_db TO omni;
+GRANT ALL PRIVILEGES ON DATABASE regression_db TO omni;
+GRANT ALL PRIVILEGES ON DATABASE retrospective_db TO omni;

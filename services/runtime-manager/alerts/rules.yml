@@ -1,0 +1,11 @@
+groups:
+  - name: runtime-manager-alerts
+    rules:
+      - alert: RuntimeManagerServiceDown
+        expr: up{job="omni-runtime-manager"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Language Runtime Manager is down"
+          description: "No scrape targets available for omni-runtime-manager"

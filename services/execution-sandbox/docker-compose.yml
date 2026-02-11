@@ -1,0 +1,94 @@
+version: "3.9"
+
+networks:
+  omni-quantum-network:
+    external: true
+
+volumes:
+  execution_sandbox_data:
+    driver: local
+  omni-sandbox-workspaces:
+    driver: local
+
+services:
+  execution-sandbox:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILD_DATE: "${BUILD_DATE:-2026-02-11T00:00:00Z}"
+        VERSION: "${VERSION:-1.0.0}"
+    image: omni-execution-sandbox:${VERSION:-1.0.0}
+    container_name: omni-execution-sandbox
+    hostname: omni-execution-sandbox
+    env_file:
+      - ../../.env
+    environment:
+      SERVICE_NAME: "execution-sandbox"
+      SERVICE_PORT: "9620"
+      VERSION: "${VERSION:-1.0.0}"
+      LOG_LEVEL: "${LOG_LEVEL:-info}"
+      LOG_FORMAT: "json"
+      DATABASE_URL: ""
+      REDIS_URL: "redis://:${REDIS_PASSWORD}@omni-redis:6379/10"
+      LITELLM_URL: "http://omni-litellm:4000"
+      LITELLM_API_KEY: "${LITELLM_API_KEY}"
+      QDRANT_URL: "http://omni-qdrant:6333"
+      QDRANT_COLLECTION: "execution-sandbox"
+      LANGFUSE_HOST: "http://omni-langfuse:3000"
+      LANGFUSE_PUBLIC_KEY: "${LANGFUSE_PUBLIC_KEY}"
+      LANGFUSE_SECRET_KEY: "${LANGFUSE_SECRET_KEY}"
+      MATTERMOST_WEBHOOK_URL: "${MATTERMOST_GI_WEBHOOK_URL}"
+      MATTERMOST_CHANNEL: "omni-generation-intelligence"
+      MINIO_ENDPOINT: "omni-minio:9000"
+      MINIO_ACCESS_KEY: "${MINIO_ACCESS_KEY}"
+      MINIO_SECRET_KEY: "${MINIO_SECRET_KEY}"
+      MINIO_BUCKET: "gi-execution-sandbox"
+      MINIO_SECURE: "false"
+      GITEA_URL: "http://omni-gitea:3000"
+      GITEA_TOKEN: "${GITEA_TOKEN}"
+    ports:
+      - "9620:9620"
+    volumes:
+      - execution_sandbox_data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - omni-sandbox-workspaces:/workspaces
+    networks:
+      - omni-quantum-network
+    healthcheck:
+      test: ['CMD-SHELL', 'python -c "import urllib.request; urllib.request.urlopen(\"http://localhost:9620/health\")"']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '4.0'
+        reservations:
+          memory: 1G
+          cpus: '1.0'
+    security_opt:
+      - no-new-privileges:true
+    read_only: false
+    tmpfs:
+      - /tmp:size=256M
+    labels:
+      - "omni.quantum.component=execution-sandbox"
+      - "omni.quantum.tier=generation-intelligence"
+      - "omni.quantum.system=1"
+      - "omni.quantum.phase=1"
+      - "omni.quantum.critical=true"
+      - "omni.quantum.port=9620"
+      - "prometheus.scrape=true"
+      - "prometheus.port=9620"
+      - "prometheus.path=/metrics"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        labels: "omni.quantum.component"
+        tag: "{{.Name}}"

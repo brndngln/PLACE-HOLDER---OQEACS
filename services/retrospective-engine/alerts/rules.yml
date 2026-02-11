@@ -1,0 +1,11 @@
+groups:
+  - name: retrospective-engine-alerts
+    rules:
+      - alert: RetrospectiveEngineServiceDown
+        expr: up{job="omni-retrospective-engine"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Retrospective Engine is down"
+          description: "No scrape targets available for omni-retrospective-engine"

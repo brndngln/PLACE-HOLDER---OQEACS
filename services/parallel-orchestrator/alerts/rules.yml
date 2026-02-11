@@ -1,0 +1,11 @@
+groups:
+  - name: parallel-orchestrator-alerts
+    rules:
+      - alert: ParallelOrchestratorServiceDown
+        expr: up{job="omni-parallel-orchestrator"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Parallel Task Orchestrator is down"
+          description: "No scrape targets available for omni-parallel-orchestrator"

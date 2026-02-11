@@ -1,0 +1,11 @@
+groups:
+  - name: client-hub-alerts
+    rules:
+      - alert: ClientHubServiceDown
+        expr: up{job="omni-client-hub"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Client Communication Hub is down"
+          description: "No scrape targets available for omni-client-hub"

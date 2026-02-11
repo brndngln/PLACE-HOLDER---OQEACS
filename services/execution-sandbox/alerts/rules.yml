@@ -1,0 +1,11 @@
+groups:
+  - name: execution-sandbox-alerts
+    rules:
+      - alert: ExecutionSandboxServiceDown
+        expr: up{job="omni-execution-sandbox"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Agent Execution Sandbox is down"
+          description: "No scrape targets available for omni-execution-sandbox"

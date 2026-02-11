@@ -1,0 +1,11 @@
+groups:
+  - name: template-library-alerts
+    rules:
+      - alert: TemplateLibraryServiceDown
+        expr: up{job="omni-template-library"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Project Template Library is down"
+          description: "No scrape targets available for omni-template-library"

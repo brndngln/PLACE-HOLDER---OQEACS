@@ -1,0 +1,11 @@
+groups:
+  - name: hallucination-detector-alerts
+    rules:
+      - alert: HallucinationDetectorServiceDown
+        expr: up{job="omni-hallucination-detector"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Hallucination Detection Layer is down"
+          description: "No scrape targets available for omni-hallucination-detector"

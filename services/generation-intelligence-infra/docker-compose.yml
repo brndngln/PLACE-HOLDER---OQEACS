@@ -1,0 +1,51 @@
+version: "3.9"
+
+networks:
+  omni-quantum-network:
+    external: true
+
+volumes:
+  gi_postgres_data:
+    driver: local
+
+services:
+  gi-postgres:
+    image: postgres:16-alpine
+    container_name: omni-gi-postgres
+    hostname: omni-gi-postgres
+    environment:
+      POSTGRES_USER: ${GI_DB_USER:-omni}
+      POSTGRES_PASSWORD: ${GI_DB_PASSWORD}
+      POSTGRES_DB: gi_admin
+    ports:
+      - "5433:5432"
+    volumes:
+      - gi_postgres_data:/var/lib/postgresql/data
+      - ./init-databases.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    networks:
+      - omni-quantum-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${GI_DB_USER:-omni}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 256M
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      - "omni.quantum.component=gi-postgres"
+      - "omni.quantum.tier=generation-intelligence"
+      - "omni.quantum.critical=true"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"

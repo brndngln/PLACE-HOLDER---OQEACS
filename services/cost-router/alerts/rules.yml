@@ -1,0 +1,11 @@
+groups:
+  - name: cost-router-alerts
+    rules:
+      - alert: CostRouterServiceDown
+        expr: up{job="omni-cost-router"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Cost Aware Task Router is down"
+          description: "No scrape targets available for omni-cost-router"

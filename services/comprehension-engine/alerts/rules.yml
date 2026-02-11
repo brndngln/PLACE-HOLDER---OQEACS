@@ -1,0 +1,11 @@
+groups:
+  - name: comprehension-engine-alerts
+    rules:
+      - alert: ComprehensionEngineServiceDown
+        expr: up{job="omni-comprehension-engine"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Codebase Comprehension Engine is down"
+          description: "No scrape targets available for omni-comprehension-engine"

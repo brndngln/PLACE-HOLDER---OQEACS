@@ -1,0 +1,11 @@
+groups:
+  - name: regression-intelligence-alerts
+    rules:
+      - alert: RegressionIntelligenceServiceDown
+        expr: up{job="omni-regression-intelligence"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Regression Intelligence is down"
+          description: "No scrape targets available for omni-regression-intelligence"

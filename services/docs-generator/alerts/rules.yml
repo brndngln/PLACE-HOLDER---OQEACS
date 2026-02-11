@@ -1,0 +1,11 @@
+groups:
+  - name: docs-generator-alerts
+    rules:
+      - alert: DocsGeneratorServiceDown
+        expr: up{job="omni-docs-generator"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Documentation Generator is down"
+          description: "No scrape targets available for omni-docs-generator"

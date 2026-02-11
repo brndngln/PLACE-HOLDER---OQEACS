@@ -1,0 +1,31 @@
+{
+  "title": "Documentation Generator Dashboard",
+  "tags": [
+    "omni",
+    "generation-intelligence",
+    "docs-generator"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "panels": [
+    {
+      "title": "Request Rate",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total[5m]))"
+        }
+      ]
+    },
+    {
+      "title": "Error Rate",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(http_errors_total[5m]))"
+        }
+      ]
+    }
+  ]
+}
