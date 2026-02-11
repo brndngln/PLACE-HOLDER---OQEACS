@@ -1,0 +1,12 @@
+groups:
+  - name: system-173.rules
+    rules:
+      - alert: System173Down
+        expr: up{job="system-173-knowledge-mcp-server"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-173-knowledge-mcp-server
+        annotations:
+          summary: "Knowledge MCP Server is down"
+          description: "system-173-knowledge-mcp-server has been unreachable for 5 minutes."

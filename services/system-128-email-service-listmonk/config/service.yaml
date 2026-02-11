@@ -1,0 +1,6 @@
+service:
+  id: 128
+  name: Email Service Listmonk
+  codename: email-service-listmonk
+  port: 10128
+  tier: wave-backlog

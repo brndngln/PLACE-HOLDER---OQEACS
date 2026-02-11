@@ -1,0 +1,12 @@
+groups:
+  - name: system-74.rules
+    rules:
+      - alert: System74Down
+        expr: up{job="system-74-spec-driven-development"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-74-spec-driven-development
+        annotations:
+          summary: "Spec-Driven Development is down"
+          description: "system-74-spec-driven-development has been unreachable for 5 minutes."

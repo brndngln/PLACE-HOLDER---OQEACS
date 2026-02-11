@@ -1,0 +1,12 @@
+groups:
+  - name: system-62.rules
+    rules:
+      - alert: System62Down
+        expr: up{job="system-62-sourcegraph-integration"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-62-sourcegraph-integration
+        annotations:
+          summary: "Sourcegraph Integration is down"
+          description: "system-62-sourcegraph-integration has been unreachable for 5 minutes."

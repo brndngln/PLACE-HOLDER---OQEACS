@@ -1,0 +1,12 @@
+groups:
+  - name: system-68.rules
+    rules:
+      - alert: System68Down
+        expr: up{job="system-68-mcp-docs-server"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-68-mcp-docs-server
+        annotations:
+          summary: "MCP Docs Server is down"
+          description: "system-68-mcp-docs-server has been unreachable for 5 minutes."

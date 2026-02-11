@@ -1,0 +1,12 @@
+groups:
+  - name: system-65.rules
+    rules:
+      - alert: System65Down
+        expr: up{job="system-65-context-compiler"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-65-context-compiler
+        annotations:
+          summary: "Context Compiler is down"
+          description: "system-65-context-compiler has been unreachable for 5 minutes."

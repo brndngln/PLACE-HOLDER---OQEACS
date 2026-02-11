@@ -1,0 +1,12 @@
+groups:
+  - name: system-170.rules
+    rules:
+      - alert: System170Down
+        expr: up{job="system-170-analysis-mcp-server"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-170-analysis-mcp-server
+        annotations:
+          summary: "Analysis MCP Server is down"
+          description: "system-170-analysis-mcp-server has been unreachable for 5 minutes."

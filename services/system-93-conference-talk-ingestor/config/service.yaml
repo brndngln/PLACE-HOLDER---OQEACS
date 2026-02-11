@@ -1,0 +1,6 @@
+service:
+  id: 93
+  name: Conference Talk Ingestor
+  codename: conference-talk-ingestor
+  port: 10093
+  tier: wave-backlog

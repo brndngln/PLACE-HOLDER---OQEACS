@@ -1,0 +1,12 @@
+groups:
+  - name: system-152.rules
+    rules:
+      - alert: System152Down
+        expr: up{job="system-152-ml-pipeline-mlflow"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-152-ml-pipeline-mlflow
+        annotations:
+          summary: "ML Pipeline MLflow is down"
+          description: "system-152-ml-pipeline-mlflow has been unreachable for 5 minutes."

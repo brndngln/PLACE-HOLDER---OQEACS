@@ -1,0 +1,12 @@
+groups:
+  - name: system-93.rules
+    rules:
+      - alert: System93Down
+        expr: up{job="system-93-conference-talk-ingestor"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-93-conference-talk-ingestor
+        annotations:
+          summary: "Conference Talk Ingestor is down"
+          description: "system-93-conference-talk-ingestor has been unreachable for 5 minutes."

@@ -1,0 +1,12 @@
+groups:
+  - name: system-79.rules
+    rules:
+      - alert: System79Down
+        expr: up{job="system-79-falco-runtime-security"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-79-falco-runtime-security
+        annotations:
+          summary: "Falco Runtime Security is down"
+          description: "system-79-falco-runtime-security has been unreachable for 5 minutes."

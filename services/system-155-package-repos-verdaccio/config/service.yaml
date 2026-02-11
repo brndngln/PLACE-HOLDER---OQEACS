@@ -1,0 +1,6 @@
+service:
+  id: 155
+  name: Package Repos Verdaccio
+  codename: package-repos-verdaccio
+  port: 10155
+  tier: wave-backlog

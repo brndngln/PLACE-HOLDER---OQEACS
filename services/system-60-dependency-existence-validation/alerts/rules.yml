@@ -1,0 +1,12 @@
+groups:
+  - name: system-60.rules
+    rules:
+      - alert: System60Down
+        expr: up{job="system-60-dependency-existence-validation"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-60-dependency-existence-validation
+        annotations:
+          summary: "Dependency Existence Validation is down"
+          description: "system-60-dependency-existence-validation has been unreachable for 5 minutes."

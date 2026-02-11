@@ -1,0 +1,6 @@
+service:
+  id: 61
+  name: Architecture Rule Enforcement
+  codename: architecture-rule-enforcement
+  port: 10061
+  tier: wave-backlog

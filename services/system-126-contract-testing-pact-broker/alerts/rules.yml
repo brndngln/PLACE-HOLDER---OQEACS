@@ -1,0 +1,12 @@
+groups:
+  - name: system-126.rules
+    rules:
+      - alert: System126Down
+        expr: up{job="system-126-contract-testing-pact-broker"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-126-contract-testing-pact-broker
+        annotations:
+          summary: "Contract Testing Pact Broker is down"
+          description: "system-126-contract-testing-pact-broker has been unreachable for 5 minutes."

@@ -1,0 +1,6 @@
+service:
+  id: 146
+  name: Container Resource Optimization
+  codename: container-resource-optimization
+  port: 10146
+  tier: wave-backlog

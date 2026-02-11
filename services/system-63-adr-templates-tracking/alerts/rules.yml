@@ -1,0 +1,12 @@
+groups:
+  - name: system-63.rules
+    rules:
+      - alert: System63Down
+        expr: up{job="system-63-adr-templates-tracking"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-63-adr-templates-tracking
+        annotations:
+          summary: "ADR Templates and Tracking is down"
+          description: "system-63-adr-templates-tracking has been unreachable for 5 minutes."

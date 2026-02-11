@@ -1,0 +1,6 @@
+service:
+  id: 133
+  name: Audit Logger
+  codename: audit-logger
+  port: 10133
+  tier: wave-backlog

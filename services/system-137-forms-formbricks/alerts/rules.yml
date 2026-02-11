@@ -1,0 +1,12 @@
+groups:
+  - name: system-137.rules
+    rules:
+      - alert: System137Down
+        expr: up{job="system-137-forms-formbricks"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-137-forms-formbricks
+        annotations:
+          summary: "Forms Formbricks is down"
+          description: "system-137-forms-formbricks has been unreachable for 5 minutes."

@@ -1,0 +1,12 @@
+groups:
+  - name: system-163.rules
+    rules:
+      - alert: System163Down
+        expr: up{job="system-163-slo-sli-sla-framework"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-163-slo-sli-sla-framework
+        annotations:
+          summary: "SLO SLI SLA Framework is down"
+          description: "system-163-slo-sli-sla-framework has been unreachable for 5 minutes."

@@ -1,0 +1,12 @@
+groups:
+  - name: system-141.rules
+    rules:
+      - alert: System141Down
+        expr: up{job="system-141-pipeline-parallelization"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-141-pipeline-parallelization
+        annotations:
+          summary: "Pipeline Parallelization is down"
+          description: "system-141-pipeline-parallelization has been unreachable for 5 minutes."

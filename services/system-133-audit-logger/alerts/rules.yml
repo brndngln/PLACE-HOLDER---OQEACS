@@ -1,0 +1,12 @@
+groups:
+  - name: system-133.rules
+    rules:
+      - alert: System133Down
+        expr: up{job="system-133-audit-logger"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-133-audit-logger
+        annotations:
+          summary: "Audit Logger is down"
+          description: "system-133-audit-logger has been unreachable for 5 minutes."

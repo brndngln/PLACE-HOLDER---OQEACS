@@ -1,0 +1,6 @@
+service:
+  id: 79
+  name: Falco Runtime Security
+  codename: falco-runtime-security
+  port: 10079
+  tier: wave-backlog

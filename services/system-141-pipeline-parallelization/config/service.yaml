@@ -1,0 +1,6 @@
+service:
+  id: 141
+  name: Pipeline Parallelization
+  codename: pipeline-parallelization
+  port: 10141
+  tier: wave-backlog

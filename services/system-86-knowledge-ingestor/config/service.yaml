@@ -1,0 +1,6 @@
+service:
+  id: 86
+  name: Knowledge Ingestor
+  codename: knowledge-ingestor
+  port: 10086
+  tier: wave-backlog

@@ -1,0 +1,12 @@
+groups:
+  - name: system-134.rules
+    rules:
+      - alert: System134Down
+        expr: up{job="system-134-search-engine-meilisearch"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-134-search-engine-meilisearch
+        annotations:
+          summary: "Search Engine Meilisearch is down"
+          description: "system-134-search-engine-meilisearch has been unreachable for 5 minutes."

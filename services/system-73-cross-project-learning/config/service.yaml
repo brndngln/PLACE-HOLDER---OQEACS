@@ -1,0 +1,6 @@
+service:
+  id: 73
+  name: Cross-Project Learning
+  codename: cross-project-learning
+  port: 10073
+  tier: wave-backlog

@@ -1,0 +1,6 @@
+service:
+  id: 140
+  name: Semantic Cache
+  codename: semantic-cache
+  port: 10140
+  tier: wave-backlog

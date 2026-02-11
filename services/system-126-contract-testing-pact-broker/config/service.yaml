@@ -1,0 +1,6 @@
+service:
+  id: 126
+  name: Contract Testing Pact Broker
+  codename: contract-testing-pact-broker
+  port: 10126
+  tier: wave-backlog

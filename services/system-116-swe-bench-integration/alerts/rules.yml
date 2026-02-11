@@ -1,0 +1,12 @@
+groups:
+  - name: system-116.rules
+    rules:
+      - alert: System116Down
+        expr: up{job="system-116-swe-bench-integration"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-116-swe-bench-integration
+        annotations:
+          summary: "SWE-bench Integration is down"
+          description: "system-116-swe-bench-integration has been unreachable for 5 minutes."

@@ -1,0 +1,12 @@
+groups:
+  - name: system-61.rules
+    rules:
+      - alert: System61Down
+        expr: up{job="system-61-architecture-rule-enforcement"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-61-architecture-rule-enforcement
+        annotations:
+          summary: "Architecture Rule Enforcement is down"
+          description: "system-61-architecture-rule-enforcement has been unreachable for 5 minutes."

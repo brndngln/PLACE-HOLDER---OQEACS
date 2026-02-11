@@ -1,0 +1,6 @@
+service:
+  id: 139
+  name: Translation Management Tolgee
+  codename: translation-management-tolgee
+  port: 10139
+  tier: wave-backlog

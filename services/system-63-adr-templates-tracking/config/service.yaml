@@ -1,0 +1,6 @@
+service:
+  id: 63
+  name: ADR Templates and Tracking
+  codename: adr-templates-tracking
+  port: 10063
+  tier: wave-backlog

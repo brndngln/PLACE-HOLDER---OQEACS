@@ -1,0 +1,6 @@
+service:
+  id: 89
+  name: GraphRAG Pattern Library
+  codename: graphrag-pattern-library
+  port: 10089
+  tier: wave-backlog

@@ -1,0 +1,6 @@
+service:
+  id: 145
+  name: Connection Pooling PgBouncer
+  codename: connection-pooling-pgbouncer
+  port: 10145
+  tier: wave-backlog

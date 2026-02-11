@@ -1,0 +1,12 @@
+groups:
+  - name: system-171.rules
+    rules:
+      - alert: System171Down
+        expr: up{job="system-171-test-mcp-server"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-171-test-mcp-server
+        annotations:
+          summary: "Test MCP Server is down"
+          description: "system-171-test-mcp-server has been unreachable for 5 minutes."

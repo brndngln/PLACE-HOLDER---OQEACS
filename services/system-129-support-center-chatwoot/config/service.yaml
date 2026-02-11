@@ -1,0 +1,6 @@
+service:
+  id: 129
+  name: Support Center Chatwoot
+  codename: support-center-chatwoot
+  port: 10129
+  tier: wave-backlog

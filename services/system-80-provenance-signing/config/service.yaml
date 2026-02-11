@@ -1,0 +1,6 @@
+service:
+  id: 80
+  name: Provenance and Signing
+  codename: provenance-signing
+  port: 10080
+  tier: wave-backlog

@@ -1,0 +1,12 @@
+groups:
+  - name: system-129.rules
+    rules:
+      - alert: System129Down
+        expr: up{job="system-129-support-center-chatwoot"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-129-support-center-chatwoot
+        annotations:
+          summary: "Support Center Chatwoot is down"
+          description: "system-129-support-center-chatwoot has been unreachable for 5 minutes."

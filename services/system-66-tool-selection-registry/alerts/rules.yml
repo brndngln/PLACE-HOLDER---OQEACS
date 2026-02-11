@@ -1,0 +1,12 @@
+groups:
+  - name: system-66.rules
+    rules:
+      - alert: System66Down
+        expr: up{job="system-66-tool-selection-registry"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-66-tool-selection-registry
+        annotations:
+          summary: "Tool Selection Registry is down"
+          description: "system-66-tool-selection-registry has been unreachable for 5 minutes."

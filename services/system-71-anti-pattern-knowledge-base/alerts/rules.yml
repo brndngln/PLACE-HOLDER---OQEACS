@@ -1,0 +1,12 @@
+groups:
+  - name: system-71.rules
+    rules:
+      - alert: System71Down
+        expr: up{job="system-71-anti-pattern-knowledge-base"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-71-anti-pattern-knowledge-base
+        annotations:
+          summary: "Anti-Pattern Knowledge Base is down"
+          description: "system-71-anti-pattern-knowledge-base has been unreachable for 5 minutes."

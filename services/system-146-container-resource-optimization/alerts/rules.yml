@@ -1,0 +1,12 @@
+groups:
+  - name: system-146.rules
+    rules:
+      - alert: System146Down
+        expr: up{job="system-146-container-resource-optimization"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-146-container-resource-optimization
+        annotations:
+          summary: "Container Resource Optimization is down"
+          description: "system-146-container-resource-optimization has been unreachable for 5 minutes."

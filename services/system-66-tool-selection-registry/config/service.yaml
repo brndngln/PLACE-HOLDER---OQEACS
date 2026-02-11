@@ -1,0 +1,6 @@
+service:
+  id: 66
+  name: Tool Selection Registry
+  codename: tool-selection-registry
+  port: 10066
+  tier: wave-backlog

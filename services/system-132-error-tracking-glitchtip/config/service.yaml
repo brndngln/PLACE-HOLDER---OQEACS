@@ -1,0 +1,6 @@
+service:
+  id: 132
+  name: Error Tracking GlitchTip
+  codename: error-tracking-glitchtip
+  port: 10132
+  tier: wave-backlog

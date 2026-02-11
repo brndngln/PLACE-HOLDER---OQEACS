@@ -1,0 +1,12 @@
+groups:
+  - name: system-86.rules
+    rules:
+      - alert: System86Down
+        expr: up{job="system-86-knowledge-ingestor"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-86-knowledge-ingestor
+        annotations:
+          summary: "Knowledge Ingestor is down"
+          description: "system-86-knowledge-ingestor has been unreachable for 5 minutes."

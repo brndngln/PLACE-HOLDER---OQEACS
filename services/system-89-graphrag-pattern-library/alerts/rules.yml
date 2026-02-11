@@ -1,0 +1,12 @@
+groups:
+  - name: system-89.rules
+    rules:
+      - alert: System89Down
+        expr: up{job="system-89-graphrag-pattern-library"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-89-graphrag-pattern-library
+        annotations:
+          summary: "GraphRAG Pattern Library is down"
+          description: "system-89-graphrag-pattern-library has been unreachable for 5 minutes."

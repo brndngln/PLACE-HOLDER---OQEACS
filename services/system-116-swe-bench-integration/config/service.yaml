@@ -1,0 +1,6 @@
+service:
+  id: 116
+  name: SWE-bench Integration
+  codename: swe-bench-integration
+  port: 10116
+  tier: wave-backlog

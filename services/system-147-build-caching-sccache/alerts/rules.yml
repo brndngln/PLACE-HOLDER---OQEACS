@@ -1,0 +1,12 @@
+groups:
+  - name: system-147.rules
+    rules:
+      - alert: System147Down
+        expr: up{job="system-147-build-caching-sccache"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-147-build-caching-sccache
+        annotations:
+          summary: "Build Caching Sccache is down"
+          description: "system-147-build-caching-sccache has been unreachable for 5 minutes."

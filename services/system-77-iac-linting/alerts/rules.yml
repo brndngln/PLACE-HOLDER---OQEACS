@@ -1,0 +1,12 @@
+groups:
+  - name: system-77.rules
+    rules:
+      - alert: System77Down
+        expr: up{job="system-77-iac-linting"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-77-iac-linting
+        annotations:
+          summary: "IaC Linting is down"
+          description: "system-77-iac-linting has been unreachable for 5 minutes."

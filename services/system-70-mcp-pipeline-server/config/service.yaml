@@ -1,0 +1,6 @@
+service:
+  id: 70
+  name: MCP Pipeline Server
+  codename: mcp-pipeline-server
+  port: 10070
+  tier: wave-backlog

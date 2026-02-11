@@ -1,0 +1,6 @@
+service:
+  id: 137
+  name: Forms Formbricks
+  codename: forms-formbricks
+  port: 10137
+  tier: wave-backlog

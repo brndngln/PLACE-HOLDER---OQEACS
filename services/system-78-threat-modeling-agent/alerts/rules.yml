@@ -1,0 +1,12 @@
+groups:
+  - name: system-78.rules
+    rules:
+      - alert: System78Down
+        expr: up{job="system-78-threat-modeling-agent"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-78-threat-modeling-agent
+        annotations:
+          summary: "Threat Modeling Agent is down"
+          description: "system-78-threat-modeling-agent has been unreachable for 5 minutes."

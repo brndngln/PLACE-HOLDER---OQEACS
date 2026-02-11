@@ -1,0 +1,12 @@
+groups:
+  - name: system-144.rules
+    rules:
+      - alert: System144Down
+        expr: up{job="system-144-continuous-benchmarking"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-144-continuous-benchmarking
+        annotations:
+          summary: "Continuous Benchmarking is down"
+          description: "system-144-continuous-benchmarking has been unreachable for 5 minutes."

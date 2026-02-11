@@ -1,0 +1,12 @@
+groups:
+  - name: system-73.rules
+    rules:
+      - alert: System73Down
+        expr: up{job="system-73-cross-project-learning"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-73-cross-project-learning
+        annotations:
+          summary: "Cross-Project Learning is down"
+          description: "system-73-cross-project-learning has been unreachable for 5 minutes."

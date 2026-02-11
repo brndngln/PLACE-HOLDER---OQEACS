@@ -1,0 +1,6 @@
+service:
+  id: 57
+  name: Tier 3 Deep Verification
+  codename: tier3-deep-verification
+  port: 10057
+  tier: wave-backlog

@@ -1,0 +1,6 @@
+service:
+  id: 78
+  name: Threat Modeling Agent
+  codename: threat-modeling-agent
+  port: 10078
+  tier: wave-backlog

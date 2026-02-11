@@ -1,0 +1,12 @@
+groups:
+  - name: system-53.rules
+    rules:
+      - alert: System53Down
+        expr: up{job="system-53-code-scorer-service"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-53-code-scorer-service
+        annotations:
+          summary: "Code Scorer Service is down"
+          description: "system-53-code-scorer-service has been unreachable for 5 minutes."

@@ -1,0 +1,12 @@
+groups:
+  - name: system-140.rules
+    rules:
+      - alert: System140Down
+        expr: up{job="system-140-semantic-cache"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-140-semantic-cache
+        annotations:
+          summary: "Semantic Cache is down"
+          description: "system-140-semantic-cache has been unreachable for 5 minutes."

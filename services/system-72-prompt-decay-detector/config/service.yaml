@@ -1,0 +1,6 @@
+service:
+  id: 72
+  name: Prompt Decay Detector
+  codename: prompt-decay-detector
+  port: 10072
+  tier: wave-backlog

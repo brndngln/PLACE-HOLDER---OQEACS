@@ -1,0 +1,12 @@
+groups:
+  - name: system-136.rules
+    rules:
+      - alert: System136Down
+        expr: up{job="system-136-webhooks-svix"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-136-webhooks-svix
+        annotations:
+          summary: "Webhooks Svix is down"
+          description: "system-136-webhooks-svix has been unreachable for 5 minutes."

@@ -1,0 +1,12 @@
+groups:
+  - name: system-172.rules
+    rules:
+      - alert: System172Down
+        expr: up{job="system-172-deploy-mcp-server"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-172-deploy-mcp-server
+        annotations:
+          summary: "Deploy MCP Server is down"
+          description: "system-172-deploy-mcp-server has been unreachable for 5 minutes."

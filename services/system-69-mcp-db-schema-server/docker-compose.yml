@@ -1,0 +1,52 @@
+version: '3.9'
+
+networks:
+  omni-quantum-network:
+    external: true
+
+services:
+  system-69-mcp-db-schema-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: omni-system-69-mcp-db-schema-server:1.0.0
+    container_name: omni-system-69-mcp-db-schema-server
+    env_file:
+      - ../../.env
+    environment:
+      SERVICE_NAME: system-69-mcp-db-schema-server
+      SERVICE_ID: '69'
+      SERVICE_PORT: '10069'
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_FORMAT: json
+    ports:
+      - '10069:10069'
+    networks:
+      - omni-quantum-network
+    healthcheck:
+      test: ['CMD', 'python', '-c', "import urllib.request; urllib.request.urlopen('http://localhost:10069/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 128M
+          cpus: '0.25'
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:size=128M
+    labels:
+      omni.quantum.component: system-69-mcp-db-schema-server
+      omni.quantum.tier: wave-backlog
+      omni.quantum.critical: 'false'
+      omni.quantum.system: '69'

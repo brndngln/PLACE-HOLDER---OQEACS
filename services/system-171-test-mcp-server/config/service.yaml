@@ -1,0 +1,6 @@
+service:
+  id: 171
+  name: Test MCP Server
+  codename: test-mcp-server
+  port: 10171
+  tier: wave-backlog

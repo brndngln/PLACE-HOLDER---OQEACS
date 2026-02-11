@@ -1,0 +1,12 @@
+groups:
+  - name: system-69.rules
+    rules:
+      - alert: System69Down
+        expr: up{job="system-69-mcp-db-schema-server"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-69-mcp-db-schema-server
+        annotations:
+          summary: "MCP DB Schema Server is down"
+          description: "system-69-mcp-db-schema-server has been unreachable for 5 minutes."

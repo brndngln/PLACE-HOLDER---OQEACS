@@ -1,0 +1,6 @@
+service:
+  id: 95
+  name: Embedding Pipeline Batch
+  codename: embedding-pipeline-batch
+  port: 10095
+  tier: wave-backlog

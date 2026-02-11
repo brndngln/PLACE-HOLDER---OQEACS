@@ -1,0 +1,52 @@
+version: '3.9'
+
+networks:
+  omni-quantum-network:
+    external: true
+
+services:
+  system-93-conference-talk-ingestor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: omni-system-93-conference-talk-ingestor:1.0.0
+    container_name: omni-system-93-conference-talk-ingestor
+    env_file:
+      - ../../.env
+    environment:
+      SERVICE_NAME: system-93-conference-talk-ingestor
+      SERVICE_ID: '93'
+      SERVICE_PORT: '10093'
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_FORMAT: json
+    ports:
+      - '10093:10093'
+    networks:
+      - omni-quantum-network
+    healthcheck:
+      test: ['CMD', 'python', '-c', "import urllib.request; urllib.request.urlopen('http://localhost:10093/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 128M
+          cpus: '0.25'
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:size=128M
+    labels:
+      omni.quantum.component: system-93-conference-talk-ingestor
+      omni.quantum.tier: wave-backlog
+      omni.quantum.critical: 'false'
+      omni.quantum.system: '93'

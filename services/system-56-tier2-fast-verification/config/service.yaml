@@ -1,0 +1,6 @@
+service:
+  id: 56
+  name: Tier 2 Fast Verification
+  codename: tier2-fast-verification
+  port: 10056
+  tier: wave-backlog

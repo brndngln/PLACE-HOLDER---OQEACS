@@ -1,0 +1,6 @@
+service:
+  id: 134
+  name: Search Engine Meilisearch
+  codename: search-engine-meilisearch
+  port: 10134
+  tier: wave-backlog

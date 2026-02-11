@@ -1,0 +1,6 @@
+service:
+  id: 60
+  name: Dependency Existence Validation
+  codename: dependency-existence-validation
+  port: 10060
+  tier: wave-backlog

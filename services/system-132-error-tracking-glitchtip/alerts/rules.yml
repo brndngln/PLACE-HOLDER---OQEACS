@@ -1,0 +1,12 @@
+groups:
+  - name: system-132.rules
+    rules:
+      - alert: System132Down
+        expr: up{job="system-132-error-tracking-glitchtip"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-132-error-tracking-glitchtip
+        annotations:
+          summary: "Error Tracking GlitchTip is down"
+          description: "system-132-error-tracking-glitchtip has been unreachable for 5 minutes."

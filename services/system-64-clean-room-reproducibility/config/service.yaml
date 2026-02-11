@@ -1,0 +1,6 @@
+service:
+  id: 64
+  name: Clean-Room Reproducibility
+  codename: clean-room-reproducibility
+  port: 10064
+  tier: wave-backlog

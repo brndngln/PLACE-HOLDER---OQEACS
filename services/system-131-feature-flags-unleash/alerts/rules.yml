@@ -1,0 +1,12 @@
+groups:
+  - name: system-131.rules
+    rules:
+      - alert: System131Down
+        expr: up{job="system-131-feature-flags-unleash"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-131-feature-flags-unleash
+        annotations:
+          summary: "Feature Flags Unleash is down"
+          description: "system-131-feature-flags-unleash has been unreachable for 5 minutes."

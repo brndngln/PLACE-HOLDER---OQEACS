@@ -1,0 +1,6 @@
+service:
+  id: 154
+  name: DB Management CloudBeaver
+  codename: db-management-cloudbeaver
+  port: 10154
+  tier: wave-backlog

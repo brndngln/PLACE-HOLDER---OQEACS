@@ -1,0 +1,6 @@
+service:
+  id: 165
+  name: Diagram Generation
+  codename: diagram-generation
+  port: 10165
+  tier: wave-backlog

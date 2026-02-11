@@ -1,0 +1,12 @@
+groups:
+  - name: system-120.rules
+    rules:
+      - alert: System120Down
+        expr: up{job="system-120-jepsen-distributed-testing"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-120-jepsen-distributed-testing
+        annotations:
+          summary: "Jepsen Distributed Testing is down"
+          description: "system-120-jepsen-distributed-testing has been unreachable for 5 minutes."

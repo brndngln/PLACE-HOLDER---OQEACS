@@ -1,0 +1,6 @@
+service:
+  id: 59
+  name: Semantic Intent Verification
+  codename: semantic-intent-verification
+  port: 10059
+  tier: wave-backlog

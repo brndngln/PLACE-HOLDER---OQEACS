@@ -1,0 +1,12 @@
+groups:
+  - name: system-148.rules
+    rules:
+      - alert: System148Down
+        expr: up{job="system-148-cost-tracking-dashboard"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-148-cost-tracking-dashboard
+        annotations:
+          summary: "Cost Tracking Dashboard is down"
+          description: "system-148-cost-tracking-dashboard has been unreachable for 5 minutes."

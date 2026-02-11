@@ -1,0 +1,12 @@
+groups:
+  - name: system-70.rules
+    rules:
+      - alert: System70Down
+        expr: up{job="system-70-mcp-pipeline-server"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-70-mcp-pipeline-server
+        annotations:
+          summary: "MCP Pipeline Server is down"
+          description: "system-70-mcp-pipeline-server has been unreachable for 5 minutes."

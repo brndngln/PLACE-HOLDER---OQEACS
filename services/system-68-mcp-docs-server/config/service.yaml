@@ -1,0 +1,6 @@
+service:
+  id: 68
+  name: MCP Docs Server
+  codename: mcp-docs-server
+  port: 10068
+  tier: wave-backlog

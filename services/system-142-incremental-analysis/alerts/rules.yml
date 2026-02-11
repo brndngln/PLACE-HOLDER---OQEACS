@@ -1,0 +1,12 @@
+groups:
+  - name: system-142.rules
+    rules:
+      - alert: System142Down
+        expr: up{job="system-142-incremental-analysis"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-142-incremental-analysis
+        annotations:
+          summary: "Incremental Analysis is down"
+          description: "system-142-incremental-analysis has been unreachable for 5 minutes."

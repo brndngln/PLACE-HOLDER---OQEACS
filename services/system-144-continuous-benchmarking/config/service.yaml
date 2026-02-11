@@ -1,0 +1,6 @@
+service:
+  id: 144
+  name: Continuous Benchmarking
+  codename: continuous-benchmarking
+  port: 10144
+  tier: wave-backlog

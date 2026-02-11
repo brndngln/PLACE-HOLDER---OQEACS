@@ -1,0 +1,6 @@
+service:
+  id: 65
+  name: Context Compiler
+  codename: context-compiler
+  port: 10065
+  tier: wave-backlog

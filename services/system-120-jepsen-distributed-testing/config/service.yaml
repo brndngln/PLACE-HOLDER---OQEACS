@@ -1,0 +1,6 @@
+service:
+  id: 120
+  name: Jepsen Distributed Testing
+  codename: jepsen-distributed-testing
+  port: 10120
+  tier: wave-backlog

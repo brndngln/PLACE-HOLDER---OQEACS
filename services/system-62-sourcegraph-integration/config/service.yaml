@@ -1,0 +1,6 @@
+service:
+  id: 62
+  name: Sourcegraph Integration
+  codename: sourcegraph-integration
+  port: 10062
+  tier: wave-backlog

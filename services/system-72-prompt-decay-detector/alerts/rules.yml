@@ -1,0 +1,12 @@
+groups:
+  - name: system-72.rules
+    rules:
+      - alert: System72Down
+        expr: up{job="system-72-prompt-decay-detector"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-72-prompt-decay-detector
+        annotations:
+          summary: "Prompt Decay Detector is down"
+          description: "system-72-prompt-decay-detector has been unreachable for 5 minutes."

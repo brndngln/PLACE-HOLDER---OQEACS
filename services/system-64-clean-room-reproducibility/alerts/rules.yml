@@ -1,0 +1,12 @@
+groups:
+  - name: system-64.rules
+    rules:
+      - alert: System64Down
+        expr: up{job="system-64-clean-room-reproducibility"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-64-clean-room-reproducibility
+        annotations:
+          summary: "Clean-Room Reproducibility is down"
+          description: "system-64-clean-room-reproducibility has been unreachable for 5 minutes."

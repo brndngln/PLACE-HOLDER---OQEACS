@@ -1,0 +1,12 @@
+groups:
+  - name: system-59.rules
+    rules:
+      - alert: System59Down
+        expr: up{job="system-59-semantic-intent-verification"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-59-semantic-intent-verification
+        annotations:
+          summary: "Semantic Intent Verification is down"
+          description: "system-59-semantic-intent-verification has been unreachable for 5 minutes."

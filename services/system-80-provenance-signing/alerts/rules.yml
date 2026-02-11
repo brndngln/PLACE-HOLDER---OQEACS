@@ -1,0 +1,12 @@
+groups:
+  - name: system-80.rules
+    rules:
+      - alert: System80Down
+        expr: up{job="system-80-provenance-signing"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-80-provenance-signing
+        annotations:
+          summary: "Provenance and Signing is down"
+          description: "system-80-provenance-signing has been unreachable for 5 minutes."

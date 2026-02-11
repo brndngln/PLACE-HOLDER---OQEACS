@@ -1,0 +1,6 @@
+service:
+  id: 71
+  name: Anti-Pattern Knowledge Base
+  codename: anti-pattern-knowledge-base
+  port: 10071
+  tier: wave-backlog

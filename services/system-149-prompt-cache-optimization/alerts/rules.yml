@@ -1,0 +1,12 @@
+groups:
+  - name: system-149.rules
+    rules:
+      - alert: System149Down
+        expr: up{job="system-149-prompt-cache-optimization"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-149-prompt-cache-optimization
+        annotations:
+          summary: "Prompt Cache Optimization is down"
+          description: "system-149-prompt-cache-optimization has been unreachable for 5 minutes."

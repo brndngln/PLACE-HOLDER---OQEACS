@@ -1,0 +1,12 @@
+groups:
+  - name: system-95.rules
+    rules:
+      - alert: System95Down
+        expr: up{job="system-95-embedding-pipeline-batch"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-95-embedding-pipeline-batch
+        annotations:
+          summary: "Embedding Pipeline Batch is down"
+          description: "system-95-embedding-pipeline-batch has been unreachable for 5 minutes."

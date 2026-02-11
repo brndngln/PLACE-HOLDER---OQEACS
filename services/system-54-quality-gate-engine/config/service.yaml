@@ -1,0 +1,6 @@
+service:
+  id: 54
+  name: Quality Gate Engine
+  codename: quality-gate-engine
+  port: 10054
+  tier: wave-backlog

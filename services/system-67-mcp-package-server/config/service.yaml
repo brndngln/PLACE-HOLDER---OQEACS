@@ -1,0 +1,6 @@
+service:
+  id: 67
+  name: MCP Package Server
+  codename: mcp-package-server
+  port: 10067
+  tier: wave-backlog

@@ -1,0 +1,12 @@
+groups:
+  - name: system-159.rules
+    rules:
+      - alert: System159Down
+        expr: up{job="system-159-auto-documentation-generator"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-159-auto-documentation-generator
+        annotations:
+          summary: "Auto Documentation Generator is down"
+          description: "system-159-auto-documentation-generator has been unreachable for 5 minutes."

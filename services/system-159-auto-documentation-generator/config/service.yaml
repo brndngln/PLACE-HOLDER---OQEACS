@@ -1,0 +1,6 @@
+service:
+  id: 159
+  name: Auto Documentation Generator
+  codename: auto-documentation-generator
+  port: 10159
+  tier: wave-backlog

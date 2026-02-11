@@ -1,0 +1,6 @@
+service:
+  id: 77
+  name: IaC Linting
+  codename: iac-linting
+  port: 10077
+  tier: wave-backlog

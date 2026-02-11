@@ -1,0 +1,6 @@
+service:
+  id: 173
+  name: Knowledge MCP Server
+  codename: knowledge-mcp-server
+  port: 10173
+  tier: wave-backlog

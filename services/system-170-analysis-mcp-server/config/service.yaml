@@ -1,0 +1,6 @@
+service:
+  id: 170
+  name: Analysis MCP Server
+  codename: analysis-mcp-server
+  port: 10170
+  tier: wave-backlog

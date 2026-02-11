@@ -1,0 +1,6 @@
+service:
+  id: 172
+  name: Deploy MCP Server
+  codename: deploy-mcp-server
+  port: 10172
+  tier: wave-backlog

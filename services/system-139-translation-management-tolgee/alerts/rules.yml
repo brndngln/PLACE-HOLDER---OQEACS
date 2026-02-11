@@ -1,0 +1,12 @@
+groups:
+  - name: system-139.rules
+    rules:
+      - alert: System139Down
+        expr: up{job="system-139-translation-management-tolgee"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-139-translation-management-tolgee
+        annotations:
+          summary: "Translation Management Tolgee is down"
+          description: "system-139-translation-management-tolgee has been unreachable for 5 minutes."

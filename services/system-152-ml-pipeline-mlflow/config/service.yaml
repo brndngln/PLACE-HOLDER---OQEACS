@@ -1,0 +1,6 @@
+service:
+  id: 152
+  name: ML Pipeline MLflow
+  codename: ml-pipeline-mlflow
+  port: 10152
+  tier: wave-backlog

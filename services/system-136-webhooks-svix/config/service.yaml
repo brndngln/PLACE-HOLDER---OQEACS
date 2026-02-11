@@ -1,0 +1,6 @@
+service:
+  id: 136
+  name: Webhooks Svix
+  codename: webhooks-svix
+  port: 10136
+  tier: wave-backlog

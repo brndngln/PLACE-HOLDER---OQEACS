@@ -1,0 +1,12 @@
+groups:
+  - name: system-154.rules
+    rules:
+      - alert: System154Down
+        expr: up{job="system-154-db-management-cloudbeaver"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: system-154-db-management-cloudbeaver
+        annotations:
+          summary: "DB Management CloudBeaver is down"
+          description: "system-154-db-management-cloudbeaver has been unreachable for 5 minutes."

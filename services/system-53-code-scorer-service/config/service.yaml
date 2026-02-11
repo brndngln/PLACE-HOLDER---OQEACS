@@ -1,0 +1,6 @@
+service:
+  id: 53
+  name: Code Scorer Service
+  codename: code-scorer-service
+  port: 10053
+  tier: wave-backlog
