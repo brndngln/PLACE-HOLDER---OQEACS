@@ -1,0 +1,11 @@
+groups:
+  - name: temporal-orchestrator-alerts
+    rules:
+      - alert: TemporalOrchestratorDown
+        expr: up{job="omni-temporal-orchestrator"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Temporal Orchestrator is down"
+          description: "No healthy scrape targets for omni-temporal-orchestrator"

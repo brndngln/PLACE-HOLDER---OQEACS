@@ -1,0 +1,11 @@
+groups:
+  - name: policy-engine-alerts
+    rules:
+      - alert: PolicyEngineDown
+        expr: up{job="omni-policy-engine"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Policy Engine down"
+          description: "No scrape target for omni-policy-engine"

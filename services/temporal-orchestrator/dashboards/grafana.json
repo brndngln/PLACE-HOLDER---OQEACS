@@ -1,0 +1,28 @@
+{
+  "title": "Temporal Orchestrator",
+  "tags": ["omni", "temporal", "orchestration"],
+  "timezone": "browser",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "HTTP Request Rate",
+      "targets": [
+        {
+          "expr": "rate(temporal_orchestrator_http_requests_total[5m])",
+          "legendFormat": "{{method}} {{path}}"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Active Requests",
+      "targets": [
+        {
+          "expr": "temporal_orchestrator_http_requests_active"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "version": 1
+}

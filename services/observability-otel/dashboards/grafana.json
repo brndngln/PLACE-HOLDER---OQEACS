@@ -1,0 +1,19 @@
+{
+  "title": "Observability OTel",
+  "tags": ["omni", "otel", "observability"],
+  "timezone": "browser",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "HTTP Rate",
+      "targets": [
+        {
+          "expr": "rate(observability_otel_http_requests_total[5m])",
+          "legendFormat": "{{method}} {{path}}"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "version": 1
+}

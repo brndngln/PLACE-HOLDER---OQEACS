@@ -1,0 +1,54 @@
+networks:
+  omni-quantum-network:
+    external: true
+
+volumes:
+  attestation_hub_data:
+    driver: local
+
+services:
+  attestation-hub:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: omni-attestation-hub:${VERSION:-1.0.0}
+    container_name: omni-attestation-hub
+    hostname: omni-attestation-hub
+    env_file:
+      - ../../.env
+    environment:
+      SERVICE_NAME: attestation-hub
+      SERVICE_PORT: "9653"
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      DATA_PATH: /app/data/attestations.json
+      ATTESTATION_HMAC_KEY: ${ATTESTATION_HMAC_KEY:-change-me-in-env}
+      DEFAULT_BUILDER_ID: ${DEFAULT_BUILDER_ID:-omni.build-fabric/v1}
+    ports:
+      - "9653:9653"
+    volumes:
+      - attestation_hub_data:/app/data
+    networks:
+      - omni-quantum-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; r=httpx.get('http://localhost:9653/health', timeout=5.0); raise SystemExit(0 if r.status_code==200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+        reservations:
+          memory: 256M
+          cpus: "0.25"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    labels:
+      omni.quantum.component: attestation-hub
+      omni.quantum.tier: supply-chain
+      omni.quantum.critical: "true"

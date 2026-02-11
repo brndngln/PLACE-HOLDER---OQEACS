@@ -1,6 +1,6 @@
 """
 Omni Quantum Elite — Service Registry
-Filesystem-aligned registry for all 36 systems.
+Filesystem-aligned registry for all registered systems.
 """
 
 from dataclasses import dataclass, field
@@ -574,6 +574,66 @@ SERVICES: list[ServiceDef] = [
         env_key="CODER_URL",
         health_path="/healthz",
         tags=["development", "workspaces"],
+    ),
+    ServiceDef(
+        id=37,
+        name="temporal-orchestrator",
+        codename="temporal-orchestrator",
+        compose_path="services/temporal-orchestrator/docker-compose.yml",
+        container_name="omni-temporal-orchestrator",
+        port=9650,
+        tier=Tier.HIGH,
+        healthcheck_url="http://omni-temporal-orchestrator:9650/health",
+        description="Durable workflow orchestration control plane",
+        env_key="TEMPORAL_ORCHESTRATOR_URL",
+        health_path="/health",
+        tags=["orchestration", "workflows", "durability"],
+        depends_on=[9],
+    ),
+    ServiceDef(
+        id=38,
+        name="observability-otel",
+        codename="observability-otel",
+        compose_path="services/observability-otel/docker-compose.yml",
+        container_name="omni-observability-otel",
+        port=9651,
+        tier=Tier.HIGH,
+        healthcheck_url="http://omni-observability-otel:9651/health",
+        description="OpenTelemetry instrumentation and collector control plane",
+        env_key="OBSERVABILITY_OTEL_URL",
+        health_path="/health",
+        tags=["observability", "telemetry", "tracing"],
+        depends_on=[5],
+    ),
+    ServiceDef(
+        id=39,
+        name="policy-engine",
+        codename="policy-engine",
+        compose_path="services/policy-engine/docker-compose.yml",
+        container_name="omni-policy-engine",
+        port=9652,
+        tier=Tier.CRITICAL,
+        healthcheck_url="http://omni-policy-engine:9652/health",
+        description="Centralized policy decisions with OPA/Rego",
+        env_key="POLICY_ENGINE_URL",
+        health_path="/health",
+        tags=["security", "policy", "governance"],
+        depends_on=[2, 4],
+    ),
+    ServiceDef(
+        id=40,
+        name="attestation-hub",
+        codename="attestation-hub",
+        compose_path="services/attestation-hub/docker-compose.yml",
+        container_name="omni-attestation-hub",
+        port=9653,
+        tier=Tier.HIGH,
+        healthcheck_url="http://omni-attestation-hub:9653/health",
+        description="Supply chain provenance and SBOM attestation service",
+        env_key="ATTESTATION_HUB_URL",
+        health_path="/health",
+        tags=["security", "supply-chain", "attestations"],
+        depends_on=[35, 39],
     ),
 ]
 

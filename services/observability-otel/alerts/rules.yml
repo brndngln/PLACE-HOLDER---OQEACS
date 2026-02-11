@@ -1,0 +1,11 @@
+groups:
+  - name: observability-otel-alerts
+    rules:
+      - alert: ObservabilityOtelDown
+        expr: up{job="omni-observability-otel"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Observability OTel service is down"
+          description: "No scrape targets for omni-observability-otel"

@@ -1,0 +1,19 @@
+{
+  "title": "Attestation Hub",
+  "tags": ["omni", "supply-chain", "attestations"],
+  "timezone": "browser",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Request Rate",
+      "targets": [
+        {
+          "expr": "rate(attestation_hub_http_requests_total[5m])",
+          "legendFormat": "{{method}} {{path}}"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "version": 1
+}

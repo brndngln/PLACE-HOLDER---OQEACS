@@ -1,0 +1,11 @@
+groups:
+  - name: attestation-hub-alerts
+    rules:
+      - alert: AttestationHubDown
+        expr: up{job="omni-attestation-hub"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Attestation Hub down"
+          description: "No scrape target for omni-attestation-hub"

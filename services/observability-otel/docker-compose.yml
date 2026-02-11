@@ -1,0 +1,94 @@
+networks:
+  omni-quantum-network:
+    external: true
+
+volumes:
+  observability_otel_data:
+    driver: local
+
+services:
+  observability-otel:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: omni-observability-otel:${VERSION:-1.0.0}
+    container_name: omni-observability-otel
+    hostname: omni-observability-otel
+    env_file:
+      - ../../.env
+    environment:
+      SERVICE_NAME: observability-otel
+      SERVICE_PORT: "9651"
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      DATA_PATH: /app/data/state.json
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://omni-otel-collector:4318
+      OTEL_COLLECTOR_URL: http://omni-otel-collector:13133
+    ports:
+      - "9651:9651"
+    volumes:
+      - observability_otel_data:/app/data
+    networks:
+      - omni-quantum-network
+    depends_on:
+      otel-collector:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; r=httpx.get('http://localhost:9651/health', timeout=5.0); raise SystemExit(0 if r.status_code==200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+        reservations:
+          memory: 256M
+          cpus: "0.25"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    labels:
+      omni.quantum.component: observability-otel
+      omni.quantum.tier: observability
+      omni.quantum.critical: "true"
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.107.0
+    container_name: omni-otel-collector
+    hostname: omni-otel-collector
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      - ./config/otel-collector.yaml:/etc/otelcol-contrib/config.yaml:ro
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+      - "9656:13133"
+    networks:
+      - omni-quantum-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:13133/ >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+        reservations:
+          memory: 256M
+          cpus: "0.25"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    labels:
+      omni.quantum.component: otel-collector
+      omni.quantum.tier: observability
+      omni.quantum.critical: "true"

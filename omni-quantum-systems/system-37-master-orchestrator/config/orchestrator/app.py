@@ -1,11 +1,11 @@
 """
 Omni Quantum Elite — Master Orchestrator API
 =============================================
-The unified control plane for all 36 systems.
+The unified control plane for all registered systems.
 
 Endpoints:
   GET  /health                  — Orchestrator health
-  GET  /api/v1/status           — Full platform status (all 36 systems)
+  GET  /api/v1/status           — Full platform status (all registered systems)
   GET  /api/v1/status/{id}      — Single system status
   GET  /api/v1/overview         — Executive summary
   GET  /api/v1/topology         — Dependency graph
@@ -161,7 +161,7 @@ async def check_service_health(svc: ServiceDef) -> dict:
 
 
 async def check_all_services() -> dict[int, dict]:
-    """Check all 36 services concurrently."""
+    """Check all registered services concurrently."""
     tasks = [check_service_health(svc) for svc in SERVICES]
     results = await asyncio.gather(*tasks, return_exceptions=True)
     statuses = {}
@@ -347,7 +347,7 @@ async def get_all_status(
     tier: str | None = Query(None, description="Filter by tier: critical, high, standard"),
     tag: str | None = Query(None, description="Filter by tag"),
 ):
-    """Full platform status — all 36 systems."""
+    """Full platform status for all registered systems."""
     statuses = dict(service_statuses)
 
     if not statuses:
