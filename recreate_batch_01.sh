@@ -49,3 +49,5 @@ python omni-quantum-systems/hardening/scripts/validate_compose_conformance.py
 python omni-quantum-systems/hardening/scripts/validate_sdk_conformance.py
 python omni-quantum-systems/hardening/scripts/validate_runtime_contracts.py
 python -m pytest -q omni-quantum-systems/hardening/tests/test_hardening_validators.py
+```
+EOF
