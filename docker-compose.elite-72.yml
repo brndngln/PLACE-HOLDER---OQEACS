@@ -1,0 +1,3388 @@
+services:
+  omni-uncertainty-planner:
+    profiles: ['agent-intelligence', 'all']
+    build:
+      context: ./services/system-1-uncertainty-planner
+      dockerfile: Dockerfile
+    container_name: omni-uncertainty-planner
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-uncertainty-planner
+      - SERVICE_PORT=9851
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9851:9851'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9851/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '1'
+      omni.quantum.tier: 'CRITICAL'
+      omni.quantum.category: 'agent-intelligence'
+      prometheus.scrape: 'true'
+      prometheus.port: '9851'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '2.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-uncertainty-planner'
+
+  omni-patch-tree:
+    profiles: ['agent-intelligence', 'all']
+    build:
+      context: ./services/system-2-patch-tree
+      dockerfile: Dockerfile
+    container_name: omni-patch-tree
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-patch-tree
+      - SERVICE_PORT=9852
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9852:9852'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9852/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '2'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'agent-intelligence'
+      prometheus.scrape: 'true'
+      prometheus.port: '9852'
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-patch-tree'
+
+  omni-agent-memory-bus:
+    profiles: ['agent-intelligence', 'all']
+    build:
+      context: ./services/system-3-agent-memory-bus
+      dockerfile: Dockerfile
+    container_name: omni-agent-memory-bus
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-agent-memory-bus
+      - SERVICE_PORT=9853
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9853:9853'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9853/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '3'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'agent-intelligence'
+      prometheus.scrape: 'true'
+      prometheus.port: '9853'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-agent-memory-bus'
+
+  omni-tool-policy:
+    profiles: ['agent-intelligence', 'all']
+    build:
+      context: ./services/system-4-tool-policy
+      dockerfile: Dockerfile
+    container_name: omni-tool-policy
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-tool-policy
+      - SERVICE_PORT=9854
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9854:9854'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9854/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '4'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'agent-intelligence'
+      prometheus.scrape: 'true'
+      prometheus.port: '9854'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-tool-policy'
+
+  omni-escalation-router:
+    profiles: ['agent-intelligence', 'all']
+    build:
+      context: ./services/system-5-escalation-router
+      dockerfile: Dockerfile
+    container_name: omni-escalation-router
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-escalation-router
+      - SERVICE_PORT=9855
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9855:9855'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9855/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '5'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'agent-intelligence'
+      prometheus.scrape: 'true'
+      prometheus.port: '9855'
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-escalation-router'
+
+  omni-spec-clarifier:
+    profiles: ['agent-intelligence', 'all']
+    build:
+      context: ./services/system-6-spec-clarifier
+      dockerfile: Dockerfile
+    container_name: omni-spec-clarifier
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-spec-clarifier
+      - SERVICE_PORT=9856
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9856:9856'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9856/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '6'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'agent-intelligence'
+      prometheus.scrape: 'true'
+      prometheus.port: '9856'
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-spec-clarifier'
+
+  omni-redteam-agent:
+    profiles: ['agent-intelligence', 'all']
+    build:
+      context: ./services/system-7-redteam-agent
+      dockerfile: Dockerfile
+    container_name: omni-redteam-agent
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-redteam-agent
+      - SERVICE_PORT=9857
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9857:9857'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9857/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '7'
+      omni.quantum.tier: 'CRITICAL'
+      omni.quantum.category: 'agent-intelligence'
+      prometheus.scrape: 'true'
+      prometheus.port: '9857'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '2.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-redteam-agent'
+
+  omni-lsp-refactor:
+    profiles: ['code-generation', 'all']
+    build:
+      context: ./services/system-8-lsp-refactor
+      dockerfile: Dockerfile
+    container_name: omni-lsp-refactor
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-lsp-refactor
+      - SERVICE_PORT=9801
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9801:9801'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9801/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '8'
+      omni.quantum.tier: 'CRITICAL'
+      omni.quantum.category: 'code-generation'
+      prometheus.scrape: 'true'
+      prometheus.port: '9801'
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-lsp-refactor'
+
+  omni-buildgraph-planner:
+    profiles: ['code-generation', 'all']
+    build:
+      context: ./services/system-9-buildgraph-planner
+      dockerfile: Dockerfile
+    container_name: omni-buildgraph-planner
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-buildgraph-planner
+      - SERVICE_PORT=9802
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9802:9802'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9802/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '9'
+      omni.quantum.tier: 'CRITICAL'
+      omni.quantum.category: 'code-generation'
+      prometheus.scrape: 'true'
+      prometheus.port: '9802'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '2.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-buildgraph-planner'
+
+  omni-compile-loop:
+    profiles: ['code-generation', 'all']
+    build:
+      context: ./services/system-10-compile-loop
+      dockerfile: Dockerfile
+    container_name: omni-compile-loop
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-compile-loop
+      - SERVICE_PORT=9803
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9803:9803'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9803/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '10'
+      omni.quantum.tier: 'CRITICAL'
+      omni.quantum.category: 'code-generation'
+      prometheus.scrape: 'true'
+      prometheus.port: '9803'
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-compile-loop'
+
+  omni-contract-synth:
+    profiles: ['code-generation', 'all']
+    build:
+      context: ./services/system-11-contract-synth
+      dockerfile: Dockerfile
+    container_name: omni-contract-synth
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-contract-synth
+      - SERVICE_PORT=9804
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9804:9804'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9804/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '11'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'code-generation'
+      prometheus.scrape: 'true'
+      prometheus.port: '9804'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-contract-synth'
+
+  omni-ffi-wasm-gen:
+    profiles: ['code-generation', 'all']
+    build:
+      context: ./services/system-12-ffi-wasm-gen
+      dockerfile: Dockerfile
+    container_name: omni-ffi-wasm-gen
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-ffi-wasm-gen
+      - SERVICE_PORT=9805
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9805:9805'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9805/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '12'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'code-generation'
+      prometheus.scrape: 'true'
+      prometheus.port: '9805'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-ffi-wasm-gen'
+
+  omni-lifetime-reasoner:
+    profiles: ['code-generation', 'all']
+    build:
+      context: ./services/system-13-lifetime-reasoner
+      dockerfile: Dockerfile
+    container_name: omni-lifetime-reasoner
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-lifetime-reasoner
+      - SERVICE_PORT=9806
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9806:9806'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9806/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '13'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'code-generation'
+      prometheus.scrape: 'true'
+      prometheus.port: '9806'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-lifetime-reasoner'
+
+  omni-query-plan-gen:
+    profiles: ['code-generation', 'all']
+    build:
+      context: ./services/system-14-query-plan-gen
+      dockerfile: Dockerfile
+    container_name: omni-query-plan-gen
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-query-plan-gen
+      - SERVICE_PORT=9807
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9807:9807'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9807/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '14'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'code-generation'
+      prometheus.scrape: 'true'
+      prometheus.port: '9807'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-query-plan-gen'
+
+  omni-algo-selector:
+    profiles: ['code-generation', 'all']
+    build:
+      context: ./services/system-15-algo-selector
+      dockerfile: Dockerfile
+    container_name: omni-algo-selector
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-algo-selector
+      - SERVICE_PORT=9808
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9808:9808'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9808/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '15'
+      omni.quantum.tier: 'MEDIUM'
+      omni.quantum.category: 'code-generation'
+      prometheus.scrape: 'true'
+      prometheus.port: '9808'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.75'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-algo-selector'
+
+  omni-cpg-analyzer:
+    profiles: ['qa-verification', 'all']
+    build:
+      context: ./services/system-16-cpg-analyzer
+      dockerfile: Dockerfile
+    container_name: omni-cpg-analyzer
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-cpg-analyzer
+      - SERVICE_PORT=9821
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9821:9821'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9821/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '16'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'qa-verification'
+      prometheus.scrape: 'true'
+      prometheus.port: '9821'
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-cpg-analyzer'
+
+  omni-abstract-verify:
+    profiles: ['qa-verification', 'all']
+    build:
+      context: ./services/system-17-abstract-verify
+      dockerfile: Dockerfile
+    container_name: omni-abstract-verify
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-abstract-verify
+      - SERVICE_PORT=9822
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9822:9822'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9822/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '17'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'qa-verification'
+      prometheus.scrape: 'true'
+      prometheus.port: '9822'
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-abstract-verify'
+
+  omni-concurrency-static:
+    profiles: ['qa-verification', 'all']
+    build:
+      context: ./services/system-18-concurrency-static
+      dockerfile: Dockerfile
+    container_name: omni-concurrency-static
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-concurrency-static
+      - SERVICE_PORT=9823
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9823:9823'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9823/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '18'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'qa-verification'
+      prometheus.scrape: 'true'
+      prometheus.port: '9823'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-concurrency-static'
+
+  omni-sanitizer-orch:
+    profiles: ['qa-verification', 'all']
+    build:
+      context: ./services/system-19-sanitizer-orch
+      dockerfile: Dockerfile
+    container_name: omni-sanitizer-orch
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-sanitizer-orch
+      - SERVICE_PORT=9824
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9824:9824'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9824/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '19'
+      omni.quantum.tier: 'CRITICAL'
+      omni.quantum.category: 'qa-verification'
+      prometheus.scrape: 'true'
+      prometheus.port: '9824'
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-sanitizer-orch'
+
+  omni-api-fuzz-stateful:
+    profiles: ['qa-verification', 'all']
+    build:
+      context: ./services/system-20-api-fuzz-stateful
+      dockerfile: Dockerfile
+    container_name: omni-api-fuzz-stateful
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-api-fuzz-stateful
+      - SERVICE_PORT=9825
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9825:9825'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9825/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '20'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'qa-verification'
+      prometheus.scrape: 'true'
+      prometheus.port: '9825'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-api-fuzz-stateful'
+
+  omni-native-fuzz-cluster:
+    profiles: ['qa-verification', 'all']
+    build:
+      context: ./services/system-21-native-fuzz-cluster
+      dockerfile: Dockerfile
+    container_name: omni-native-fuzz-cluster
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-native-fuzz-cluster
+      - SERVICE_PORT=9826
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9826:9826'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9826/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '21'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'qa-verification'
+      prometheus.scrape: 'true'
+      prometheus.port: '9826'
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-native-fuzz-cluster'
+
+  omni-diff-oracle:
+    profiles: ['qa-verification', 'all']
+    build:
+      context: ./services/system-22-diff-oracle
+      dockerfile: Dockerfile
+    container_name: omni-diff-oracle
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-diff-oracle
+      - SERVICE_PORT=9827
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9827:9827'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9827/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '22'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'qa-verification'
+      prometheus.scrape: 'true'
+      prometheus.port: '9827'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-diff-oracle'
+
+  omni-crypto-harness:
+    profiles: ['qa-verification', 'all']
+    build:
+      context: ./services/system-23-crypto-harness
+      dockerfile: Dockerfile
+    container_name: omni-crypto-harness
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-crypto-harness
+      - SERVICE_PORT=9828
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9828:9828'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9828/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '23'
+      omni.quantum.tier: 'CRITICAL'
+      omni.quantum.category: 'qa-verification'
+      prometheus.scrape: 'true'
+      prometheus.port: '9828'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '2.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-crypto-harness'
+
+  omni-vuln-graph:
+    profiles: ['knowledge-intelligence', 'all']
+    build:
+      context: ./services/system-24-vuln-graph
+      dockerfile: Dockerfile
+    container_name: omni-vuln-graph
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-vuln-graph
+      - SERVICE_PORT=9841
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9841:9841'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9841/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '24'
+      omni.quantum.tier: 'CRITICAL'
+      omni.quantum.category: 'knowledge-intelligence'
+      prometheus.scrape: 'true'
+      prometheus.port: '9841'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '2.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-vuln-graph'
+
+  omni-dep-trust:
+    profiles: ['knowledge-intelligence', 'all']
+    build:
+      context: ./services/system-25-dep-trust
+      dockerfile: Dockerfile
+    container_name: omni-dep-trust
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-dep-trust
+      - SERVICE_PORT=9842
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9842:9842'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9842/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '25'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'knowledge-intelligence'
+      prometheus.scrape: 'true'
+      prometheus.port: '9842'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-dep-trust'
+
+  omni-migration-diff:
+    profiles: ['knowledge-intelligence', 'all']
+    build:
+      context: ./services/system-26-migration-diff
+      dockerfile: Dockerfile
+    container_name: omni-migration-diff
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-migration-diff
+      - SERVICE_PORT=9843
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9843:9843'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9843/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '26'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'knowledge-intelligence'
+      prometheus.scrape: 'true'
+      prometheus.port: '9843'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-migration-diff'
+
+  omni-rag-eval:
+    profiles: ['knowledge-intelligence', 'all']
+    build:
+      context: ./services/system-27-rag-eval
+      dockerfile: Dockerfile
+    container_name: omni-rag-eval
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-rag-eval
+      - SERVICE_PORT=9844
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9844:9844'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9844/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '27'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'knowledge-intelligence'
+      prometheus.scrape: 'true'
+      prometheus.port: '9844'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-rag-eval'
+
+  omni-context-compress:
+    profiles: ['knowledge-intelligence', 'all']
+    build:
+      context: ./services/system-28-context-compress
+      dockerfile: Dockerfile
+    container_name: omni-context-compress
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-context-compress
+      - SERVICE_PORT=9845
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9845:9845'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9845/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '28'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'knowledge-intelligence'
+      prometheus.scrape: 'true'
+      prometheus.port: '9845'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-context-compress'
+
+  omni-knowledge-trust:
+    profiles: ['knowledge-intelligence', 'all']
+    build:
+      context: ./services/system-29-knowledge-trust
+      dockerfile: Dockerfile
+    container_name: omni-knowledge-trust
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-knowledge-trust
+      - SERVICE_PORT=9846
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9846:9846'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9846/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '29'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'knowledge-intelligence'
+      prometheus.scrape: 'true'
+      prometheus.port: '9846'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-knowledge-trust'
+
+  omni-repro-miner:
+    profiles: ['knowledge-intelligence', 'all']
+    build:
+      context: ./services/system-30-repro-miner
+      dockerfile: Dockerfile
+    container_name: omni-repro-miner
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-repro-miner
+      - SERVICE_PORT=9847
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9847:9847'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9847/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '30'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'knowledge-intelligence'
+      prometheus.scrape: 'true'
+      prometheus.port: '9847'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-repro-miner'
+
+  omni-fhir-pack:
+    profiles: ['domain-packs', 'all']
+    build:
+      context: ./services/system-31-fhir-pack
+      dockerfile: Dockerfile
+    container_name: omni-fhir-pack
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-fhir-pack
+      - SERVICE_PORT=9867
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9867:9867'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9867/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '31'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'domain-packs'
+      prometheus.scrape: 'true'
+      prometheus.port: '9867'
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-fhir-pack'
+
+  omni-finance-rules-pack:
+    profiles: ['domain-packs', 'all']
+    build:
+      context: ./services/system-32-finance-rules-pack
+      dockerfile: Dockerfile
+    container_name: omni-finance-rules-pack
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-finance-rules-pack
+      - SERVICE_PORT=9868
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9868:9868'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9868/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '32'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'domain-packs'
+      prometheus.scrape: 'true'
+      prometheus.port: '9868'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-finance-rules-pack'
+
+  omni-identity-pack:
+    profiles: ['domain-packs', 'all']
+    build:
+      context: ./services/system-33-identity-pack
+      dockerfile: Dockerfile
+    container_name: omni-identity-pack
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-identity-pack
+      - SERVICE_PORT=9869
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9869:9869'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9869/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '33'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'domain-packs'
+      prometheus.scrape: 'true'
+      prometheus.port: '9869'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-identity-pack'
+
+  omni-chain-pack:
+    profiles: ['domain-packs', 'all']
+    build:
+      context: ./services/system-34-chain-pack
+      dockerfile: Dockerfile
+    container_name: omni-chain-pack
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-chain-pack
+      - SERVICE_PORT=9862
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9862:9862'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9862/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '34'
+      omni.quantum.tier: 'MEDIUM'
+      omni.quantum.category: 'domain-packs'
+      prometheus.scrape: 'true'
+      prometheus.port: '9862'
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '0.75'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-chain-pack'
+
+  omni-iot-pack:
+    profiles: ['domain-packs', 'all']
+    build:
+      context: ./services/system-35-iot-pack
+      dockerfile: Dockerfile
+    container_name: omni-iot-pack
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-iot-pack
+      - SERVICE_PORT=9861
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9861:9861'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9861/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '35'
+      omni.quantum.tier: 'MEDIUM'
+      omni.quantum.category: 'domain-packs'
+      prometheus.scrape: 'true'
+      prometheus.port: '9861'
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '0.75'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-iot-pack'
+
+  omni-extension-pack:
+    profiles: ['domain-packs', 'all']
+    build:
+      context: ./services/system-36-extension-pack
+      dockerfile: Dockerfile
+    container_name: omni-extension-pack
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-extension-pack
+      - SERVICE_PORT=9864
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9864:9864'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9864/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '36'
+      omni.quantum.tier: 'MEDIUM'
+      omni.quantum.category: 'domain-packs'
+      prometheus.scrape: 'true'
+      prometheus.port: '9864'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.75'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-extension-pack'
+
+  omni-desktop-pack:
+    profiles: ['domain-packs', 'all']
+    build:
+      context: ./services/system-37-desktop-pack
+      dockerfile: Dockerfile
+    container_name: omni-desktop-pack
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-desktop-pack
+      - SERVICE_PORT=9865
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9865:9865'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9865/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '37'
+      omni.quantum.tier: 'MEDIUM'
+      omni.quantum.category: 'domain-packs'
+      prometheus.scrape: 'true'
+      prometheus.port: '9865'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.75'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-desktop-pack'
+
+  omni-webrtc-pack:
+    profiles: ['domain-packs', 'all']
+    build:
+      context: ./services/system-38-webrtc-pack
+      dockerfile: Dockerfile
+    container_name: omni-webrtc-pack
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-webrtc-pack
+      - SERVICE_PORT=9866
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9866:9866'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9866/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '38'
+      omni.quantum.tier: 'MEDIUM'
+      omni.quantum.category: 'domain-packs'
+      prometheus.scrape: 'true'
+      prometheus.port: '9866'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.75'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-webrtc-pack'
+
+  omni-elt-pack:
+    profiles: ['domain-packs', 'all']
+    build:
+      context: ./services/system-39-elt-pack
+      dockerfile: Dockerfile
+    container_name: omni-elt-pack
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-elt-pack
+      - SERVICE_PORT=9870
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9870:9870'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9870/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '39'
+      omni.quantum.tier: 'MEDIUM'
+      omni.quantum.category: 'domain-packs'
+      prometheus.scrape: 'true'
+      prometheus.port: '9870'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.75'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-elt-pack'
+
+  omni-game-pack:
+    profiles: ['domain-packs', 'all']
+    build:
+      context: ./services/system-40-game-pack
+      dockerfile: Dockerfile
+    container_name: omni-game-pack
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-game-pack
+      - SERVICE_PORT=9863
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9863:9863'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9863/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '40'
+      omni.quantum.tier: 'LOW'
+      omni.quantum.category: 'domain-packs'
+      prometheus.scrape: 'true'
+      prometheus.port: '9863'
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '0.50'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-game-pack'
+
+  omni-lineage-explorer:
+    profiles: ['developer-experience', 'all']
+    build:
+      context: ./services/system-41-lineage-explorer
+      dockerfile: Dockerfile
+    container_name: omni-lineage-explorer
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-lineage-explorer
+      - SERVICE_PORT=9881
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9881:9881'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9881/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '41'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'developer-experience'
+      prometheus.scrape: 'true'
+      prometheus.port: '9881'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-lineage-explorer'
+
+  omni-semantic-diff:
+    profiles: ['developer-experience', 'all']
+    build:
+      context: ./services/system-42-semantic-diff
+      dockerfile: Dockerfile
+    container_name: omni-semantic-diff
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-semantic-diff
+      - SERVICE_PORT=9882
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9882:9882'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9882/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '42'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'developer-experience'
+      prometheus.scrape: 'true'
+      prometheus.port: '9882'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-semantic-diff'
+
+  omni-rca-synth:
+    profiles: ['developer-experience', 'all']
+    build:
+      context: ./services/system-43-rca-synth
+      dockerfile: Dockerfile
+    container_name: omni-rca-synth
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-rca-synth
+      - SERVICE_PORT=9883
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9883:9883'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9883/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '43'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'developer-experience'
+      prometheus.scrape: 'true'
+      prometheus.port: '9883'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-rca-synth'
+
+  omni-bug-replay:
+    profiles: ['developer-experience', 'all']
+    build:
+      context: ./services/system-44-bug-replay
+      dockerfile: Dockerfile
+    container_name: omni-bug-replay
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-bug-replay
+      - SERVICE_PORT=9884
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9884:9884'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9884/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '44'
+      omni.quantum.tier: 'MEDIUM'
+      omni.quantum.category: 'developer-experience'
+      prometheus.scrape: 'true'
+      prometheus.port: '9884'
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '0.75'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-bug-replay'
+
+  omni-minrepro:
+    profiles: ['developer-experience', 'all']
+    build:
+      context: ./services/system-45-minrepro
+      dockerfile: Dockerfile
+    container_name: omni-minrepro
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-minrepro
+      - SERVICE_PORT=9885
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9885:9885'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9885/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '45'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'developer-experience'
+      prometheus.scrape: 'true'
+      prometheus.port: '9885'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-minrepro'
+
+  omni-preview-env:
+    profiles: ['developer-experience', 'all']
+    build:
+      context: ./services/system-46-preview-env
+      dockerfile: Dockerfile
+    container_name: omni-preview-env
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-preview-env
+      - SERVICE_PORT=9886
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9886:9886'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9886/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '46'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'developer-experience'
+      prometheus.scrape: 'true'
+      prometheus.port: '9886'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-preview-env'
+
+  omni-handoff-compiler:
+    profiles: ['developer-experience', 'all']
+    build:
+      context: ./services/system-47-handoff-compiler
+      dockerfile: Dockerfile
+    container_name: omni-handoff-compiler
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-handoff-compiler
+      - SERVICE_PORT=9887
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9887:9887'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9887/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '47'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'developer-experience'
+      prometheus.scrape: 'true'
+      prometheus.port: '9887'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-handoff-compiler'
+
+  omni-generation-lineage:
+    profiles: ['developer-experience', 'all']
+    build:
+      context: ./services/system-48-generation-lineage
+      dockerfile: Dockerfile
+    container_name: omni-generation-lineage
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-generation-lineage
+      - SERVICE_PORT=9888
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9888:9888'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9888/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '48'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'developer-experience'
+      prometheus.scrape: 'true'
+      prometheus.port: '9888'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-generation-lineage'
+
+  omni-k8s-target:
+    profiles: ['infrastructure-ops', 'all']
+    build:
+      context: ./services/system-49-k8s-target
+      dockerfile: Dockerfile
+    container_name: omni-k8s-target
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-k8s-target
+      - SERVICE_PORT=9891
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9891:9891'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9891/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '49'
+      omni.quantum.tier: 'CRITICAL'
+      omni.quantum.category: 'infrastructure-ops'
+      prometheus.scrape: 'true'
+      prometheus.port: '9891'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '2.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-k8s-target'
+
+  omni-progressive-delivery:
+    profiles: ['infrastructure-ops', 'all']
+    build:
+      context: ./services/system-50-progressive-delivery
+      dockerfile: Dockerfile
+    container_name: omni-progressive-delivery
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-progressive-delivery
+      - SERVICE_PORT=9892
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9892:9892'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9892/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '50'
+      omni.quantum.tier: 'CRITICAL'
+      omni.quantum.category: 'infrastructure-ops'
+      prometheus.scrape: 'true'
+      prometheus.port: '9892'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '2.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-progressive-delivery'
+
+  omni-mesh-identity:
+    profiles: ['infrastructure-ops', 'all']
+    build:
+      context: ./services/system-51-mesh-identity
+      dockerfile: Dockerfile
+    container_name: omni-mesh-identity
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-mesh-identity
+      - SERVICE_PORT=9893
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9893:9893'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9893/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '51'
+      omni.quantum.tier: 'CRITICAL'
+      omni.quantum.category: 'infrastructure-ops'
+      prometheus.scrape: 'true'
+      prometheus.port: '9893'
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-mesh-identity'
+
+  omni-admission-guard:
+    profiles: ['infrastructure-ops', 'all']
+    build:
+      context: ./services/system-52-admission-guard
+      dockerfile: Dockerfile
+    container_name: omni-admission-guard
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-admission-guard
+      - SERVICE_PORT=9894
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9894:9894'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9894/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '52'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'infrastructure-ops'
+      prometheus.scrape: 'true'
+      prometheus.port: '9894'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-admission-guard'
+
+  omni-ebpf-forensics:
+    profiles: ['infrastructure-ops', 'all']
+    build:
+      context: ./services/system-53-ebpf-forensics
+      dockerfile: Dockerfile
+    container_name: omni-ebpf-forensics
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-ebpf-forensics
+      - SERVICE_PORT=9895
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9895:9895'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9895/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '53'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'infrastructure-ops'
+      prometheus.scrape: 'true'
+      prometheus.port: '9895'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-ebpf-forensics'
+
+  omni-cost-optimizer:
+    profiles: ['infrastructure-ops', 'all']
+    build:
+      context: ./services/system-54-cost-optimizer
+      dockerfile: Dockerfile
+    container_name: omni-cost-optimizer
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-cost-optimizer
+      - SERVICE_PORT=9896
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9896:9896'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9896/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '54'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'infrastructure-ops'
+      prometheus.scrape: 'true'
+      prometheus.port: '9896'
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-cost-optimizer'
+
+  omni-slo-framework:
+    profiles: ['infrastructure-ops', 'all']
+    build:
+      context: ./services/system-55-slo-framework
+      dockerfile: Dockerfile
+    container_name: omni-slo-framework
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-slo-framework
+      - SERVICE_PORT=9897
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9897:9897'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9897/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '55'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'infrastructure-ops'
+      prometheus.scrape: 'true'
+      prometheus.port: '9897'
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-slo-framework'
+
+  omni-elite-architecture-fitness:
+    profiles: ['developer-experience', 'all']
+    build:
+      context: ./services/system-56-elite-architecture-fitness
+      dockerfile: Dockerfile
+    container_name: omni-elite-architecture-fitness
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-elite-architecture-fitness
+      - SERVICE_PORT=9901
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9901:9901'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9901/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '56'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'developer-experience'
+      prometheus.scrape: 'true'
+      prometheus.port: '9901'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-elite-architecture-fitness'
+
+  omni-elite-error-pattern-intel:
+    profiles: ['developer-experience', 'all']
+    build:
+      context: ./services/system-57-elite-error-pattern-intel
+      dockerfile: Dockerfile
+    container_name: omni-elite-error-pattern-intel
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-elite-error-pattern-intel
+      - SERVICE_PORT=9902
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9902:9902'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9902/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '57'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'developer-experience'
+      prometheus.scrape: 'true'
+      prometheus.port: '9902'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-elite-error-pattern-intel'
+
+  omni-elite-tier2-fast-verification:
+    profiles: ['qa-verification', 'all']
+    build:
+      context: ./services/system-58-elite-tier2-fast-verification
+      dockerfile: Dockerfile
+    container_name: omni-elite-tier2-fast-verification
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-elite-tier2-fast-verification
+      - SERVICE_PORT=9903
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9903:9903'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9903/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '58'
+      omni.quantum.tier: 'CRITICAL'
+      omni.quantum.category: 'qa-verification'
+      prometheus.scrape: 'true'
+      prometheus.port: '9903'
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-elite-tier2-fast-verification'
+
+  omni-elite-semantic-intent-verification:
+    profiles: ['developer-experience', 'all']
+    build:
+      context: ./services/system-59-elite-semantic-intent-verification
+      dockerfile: Dockerfile
+    container_name: omni-elite-semantic-intent-verification
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-elite-semantic-intent-verification
+      - SERVICE_PORT=9904
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9904:9904'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9904/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '59'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'developer-experience'
+      prometheus.scrape: 'true'
+      prometheus.port: '9904'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-elite-semantic-intent-verification'
+
+  omni-elite-dependency-existence-validation:
+    profiles: ['knowledge-intelligence', 'all']
+    build:
+      context: ./services/system-60-elite-dependency-existence-validation
+      dockerfile: Dockerfile
+    container_name: omni-elite-dependency-existence-validation
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-elite-dependency-existence-validation
+      - SERVICE_PORT=9905
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9905:9905'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9905/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '60'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'knowledge-intelligence'
+      prometheus.scrape: 'true'
+      prometheus.port: '9905'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-elite-dependency-existence-validation'
+
+  omni-elite-architecture-rule-enforcement:
+    profiles: ['developer-experience', 'all']
+    build:
+      context: ./services/system-61-elite-architecture-rule-enforcement
+      dockerfile: Dockerfile
+    container_name: omni-elite-architecture-rule-enforcement
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-elite-architecture-rule-enforcement
+      - SERVICE_PORT=9906
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9906:9906'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9906/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '61'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'developer-experience'
+      prometheus.scrape: 'true'
+      prometheus.port: '9906'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-elite-architecture-rule-enforcement'
+
+  omni-elite-cross-repo-intel:
+    profiles: ['knowledge-intelligence', 'all']
+    build:
+      context: ./services/system-62-elite-cross-repo-intel
+      dockerfile: Dockerfile
+    container_name: omni-elite-cross-repo-intel
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-elite-cross-repo-intel
+      - SERVICE_PORT=9907
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9907:9907'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9907/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '62'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'knowledge-intelligence'
+      prometheus.scrape: 'true'
+      prometheus.port: '9907'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-elite-cross-repo-intel'
+
+  omni-elite-adr-tracking:
+    profiles: ['developer-experience', 'all']
+    build:
+      context: ./services/system-63-elite-adr-tracking
+      dockerfile: Dockerfile
+    container_name: omni-elite-adr-tracking
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-elite-adr-tracking
+      - SERVICE_PORT=9908
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9908:9908'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9908/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '63'
+      omni.quantum.tier: 'MEDIUM'
+      omni.quantum.category: 'developer-experience'
+      prometheus.scrape: 'true'
+      prometheus.port: '9908'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.75'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-elite-adr-tracking'
+
+  omni-elite-clean-room-reproducibility:
+    profiles: ['qa-verification', 'all']
+    build:
+      context: ./services/system-64-elite-clean-room-reproducibility
+      dockerfile: Dockerfile
+    container_name: omni-elite-clean-room-reproducibility
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-elite-clean-room-reproducibility
+      - SERVICE_PORT=9909
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9909:9909'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9909/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '64'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'qa-verification'
+      prometheus.scrape: 'true'
+      prometheus.port: '9909'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-elite-clean-room-reproducibility'
+
+  omni-elite-design-intelligence:
+    profiles: ['developer-experience', 'all']
+    build:
+      context: ./services/system-65-elite-design-intelligence
+      dockerfile: Dockerfile
+    container_name: omni-elite-design-intelligence
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-elite-design-intelligence
+      - SERVICE_PORT=9910
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9910:9910'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9910/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '65'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'developer-experience'
+      prometheus.scrape: 'true'
+      prometheus.port: '9910'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-elite-design-intelligence'
+
+  omni-elite-database-intelligence:
+    profiles: ['knowledge-intelligence', 'all']
+    build:
+      context: ./services/system-66-elite-database-intelligence
+      dockerfile: Dockerfile
+    container_name: omni-elite-database-intelligence
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-elite-database-intelligence
+      - SERVICE_PORT=9911
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9911:9911'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9911/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '66'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'knowledge-intelligence'
+      prometheus.scrape: 'true'
+      prometheus.port: '9911'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-elite-database-intelligence'
+
+  omni-elite-runtime-drift-detector:
+    profiles: ['infrastructure-ops', 'all']
+    build:
+      context: ./services/system-67-elite-runtime-drift-detector
+      dockerfile: Dockerfile
+    container_name: omni-elite-runtime-drift-detector
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-elite-runtime-drift-detector
+      - SERVICE_PORT=9912
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9912:9912'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9912/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '67'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'infrastructure-ops'
+      prometheus.scrape: 'true'
+      prometheus.port: '9912'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-elite-runtime-drift-detector'
+
+  omni-elite-mcp-orchestrator:
+    profiles: ['infrastructure-ops', 'all']
+    build:
+      context: ./services/system-68-elite-mcp-orchestrator
+      dockerfile: Dockerfile
+    container_name: omni-elite-mcp-orchestrator
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-elite-mcp-orchestrator
+      - SERVICE_PORT=9913
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9913:9913'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9913/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '68'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'infrastructure-ops'
+      prometheus.scrape: 'true'
+      prometheus.port: '9913'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-elite-mcp-orchestrator'
+
+  omni-elite-prompt-circuit-breaker:
+    profiles: ['agent-intelligence', 'all']
+    build:
+      context: ./services/system-69-elite-prompt-circuit-breaker
+      dockerfile: Dockerfile
+    container_name: omni-elite-prompt-circuit-breaker
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-elite-prompt-circuit-breaker
+      - SERVICE_PORT=9914
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9914:9914'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9914/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '69'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'agent-intelligence'
+      prometheus.scrape: 'true'
+      prometheus.port: '9914'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-elite-prompt-circuit-breaker'
+
+  omni-elite-test-signal-fusion:
+    profiles: ['qa-verification', 'all']
+    build:
+      context: ./services/system-70-elite-test-signal-fusion
+      dockerfile: Dockerfile
+    container_name: omni-elite-test-signal-fusion
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-elite-test-signal-fusion
+      - SERVICE_PORT=9915
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9915:9915'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9915/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '70'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'qa-verification'
+      prometheus.scrape: 'true'
+      prometheus.port: '9915'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-elite-test-signal-fusion'
+
+  omni-elite-chaos-guard:
+    profiles: ['infrastructure-ops', 'all']
+    build:
+      context: ./services/system-71-elite-chaos-guard
+      dockerfile: Dockerfile
+    container_name: omni-elite-chaos-guard
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-elite-chaos-guard
+      - SERVICE_PORT=9916
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9916:9916'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9916/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '71'
+      omni.quantum.tier: 'HIGH'
+      omni.quantum.category: 'infrastructure-ops'
+      prometheus.scrape: 'true'
+      prometheus.port: '9916'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-elite-chaos-guard'
+
+  omni-elite-release-readiness:
+    profiles: ['infrastructure-ops', 'all']
+    build:
+      context: ./services/system-72-elite-release-readiness
+      dockerfile: Dockerfile
+    container_name: omni-elite-release-readiness
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-elite-release-readiness
+      - SERVICE_PORT=9917
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - '9917:9917'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9917/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: '72'
+      omni.quantum.tier: 'CRITICAL'
+      omni.quantum.category: 'infrastructure-ops'
+      prometheus.scrape: 'true'
+      prometheus.port: '9917'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '2.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        tag: 'omni-elite-release-readiness'
+
+networks:
+  omni-quantum-network:
+    external: true

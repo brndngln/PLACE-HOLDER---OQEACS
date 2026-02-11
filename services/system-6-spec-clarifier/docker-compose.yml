@@ -1,0 +1,50 @@
+services:
+  omni-spec-clarifier:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: omni-spec-clarifier
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-spec-clarifier
+      - SERVICE_PORT=9856
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - "9856:9856"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9856/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: "6"
+      omni.quantum.tier: "HIGH"
+      omni.quantum.category: "agent-intelligence"
+      prometheus.scrape: "true"
+      prometheus.port: "9856"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "1.0"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "omni-spec-clarifier"
+
+networks:
+  omni-quantum-network:
+    external: true

@@ -1,0 +1,780 @@
+{
+  "summary": {
+    "generated_at": "2026-02-11T12:10:11.892695+00:00",
+    "total_services": 55,
+    "healthy": 55,
+    "unhealthy": 0
+  },
+  "results": [
+    {
+      "service": "omni-uncertainty-planner",
+      "port": 9851,
+      "url": "http://localhost:9851/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 100.09,
+      "response": {
+        "status": "healthy",
+        "service": "omni-uncertainty-planner",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-patch-tree",
+      "port": 9852,
+      "url": "http://localhost:9852/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 3.26,
+      "response": {
+        "status": "healthy",
+        "service": "omni-patch-tree",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-agent-memory-bus",
+      "port": 9853,
+      "url": "http://localhost:9853/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 3.48,
+      "response": {
+        "status": "healthy",
+        "service": "omni-agent-memory-bus",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-tool-policy",
+      "port": 9854,
+      "url": "http://localhost:9854/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 2.58,
+      "response": {
+        "status": "healthy",
+        "service": "omni-tool-policy",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-escalation-router",
+      "port": 9855,
+      "url": "http://localhost:9855/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 2.84,
+      "response": {
+        "status": "healthy",
+        "service": "omni-escalation-router",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-spec-clarifier",
+      "port": 9856,
+      "url": "http://localhost:9856/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 3.75,
+      "response": {
+        "status": "healthy",
+        "service": "omni-spec-clarifier",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-redteam-agent",
+      "port": 9857,
+      "url": "http://localhost:9857/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 2.44,
+      "response": {
+        "status": "healthy",
+        "service": "omni-redteam-agent",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-lsp-refactor",
+      "port": 9801,
+      "url": "http://localhost:9801/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 2.37,
+      "response": {
+        "status": "healthy",
+        "service": "omni-lsp-refactor",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-buildgraph-planner",
+      "port": 9802,
+      "url": "http://localhost:9802/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 2.59,
+      "response": {
+        "status": "healthy",
+        "service": "omni-buildgraph-planner",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-compile-loop",
+      "port": 9803,
+      "url": "http://localhost:9803/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 2.6,
+      "response": {
+        "status": "healthy",
+        "service": "omni-compile-loop",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-contract-synth",
+      "port": 9804,
+      "url": "http://localhost:9804/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 3.47,
+      "response": {
+        "status": "healthy",
+        "service": "omni-contract-synth",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-ffi-wasm-gen",
+      "port": 9805,
+      "url": "http://localhost:9805/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 6.43,
+      "response": {
+        "status": "healthy",
+        "service": "omni-ffi-wasm-gen",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-lifetime-reasoner",
+      "port": 9806,
+      "url": "http://localhost:9806/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 5.97,
+      "response": {
+        "status": "healthy",
+        "service": "omni-lifetime-reasoner",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-query-plan-gen",
+      "port": 9807,
+      "url": "http://localhost:9807/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 6.05,
+      "response": {
+        "status": "healthy",
+        "service": "omni-query-plan-gen",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-algo-selector",
+      "port": 9808,
+      "url": "http://localhost:9808/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 3.18,
+      "response": {
+        "status": "healthy",
+        "service": "omni-algo-selector",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-cpg-analyzer",
+      "port": 9821,
+      "url": "http://localhost:9821/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 2.55,
+      "response": {
+        "status": "healthy",
+        "service": "omni-cpg-analyzer",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-abstract-verify",
+      "port": 9822,
+      "url": "http://localhost:9822/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 2.82,
+      "response": {
+        "status": "healthy",
+        "service": "omni-abstract-verify",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-concurrency-static",
+      "port": 9823,
+      "url": "http://localhost:9823/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 2.39,
+      "response": {
+        "status": "healthy",
+        "service": "omni-concurrency-static",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-sanitizer-orch",
+      "port": 9824,
+      "url": "http://localhost:9824/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 2.12,
+      "response": {
+        "status": "healthy",
+        "service": "omni-sanitizer-orch",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-api-fuzz-stateful",
+      "port": 9825,
+      "url": "http://localhost:9825/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 2.47,
+      "response": {
+        "status": "healthy",
+        "service": "omni-api-fuzz-stateful",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-native-fuzz-cluster",
+      "port": 9826,
+      "url": "http://localhost:9826/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 2.71,
+      "response": {
+        "status": "healthy",
+        "service": "omni-native-fuzz-cluster",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-diff-oracle",
+      "port": 9827,
+      "url": "http://localhost:9827/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 2.82,
+      "response": {
+        "status": "healthy",
+        "service": "omni-diff-oracle",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-crypto-harness",
+      "port": 9828,
+      "url": "http://localhost:9828/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 2.85,
+      "response": {
+        "status": "healthy",
+        "service": "omni-crypto-harness",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-vuln-graph",
+      "port": 9841,
+      "url": "http://localhost:9841/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 2.01,
+      "response": {
+        "status": "healthy",
+        "service": "omni-vuln-graph",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-dep-trust",
+      "port": 9842,
+      "url": "http://localhost:9842/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 1.93,
+      "response": {
+        "status": "healthy",
+        "service": "omni-dep-trust",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-migration-diff",
+      "port": 9843,
+      "url": "http://localhost:9843/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 1.85,
+      "response": {
+        "status": "healthy",
+        "service": "omni-migration-diff",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-rag-eval",
+      "port": 9844,
+      "url": "http://localhost:9844/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 1.89,
+      "response": {
+        "status": "healthy",
+        "service": "omni-rag-eval",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-context-compress",
+      "port": 9845,
+      "url": "http://localhost:9845/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 1.84,
+      "response": {
+        "status": "healthy",
+        "service": "omni-context-compress",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-knowledge-trust",
+      "port": 9846,
+      "url": "http://localhost:9846/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 3.22,
+      "response": {
+        "status": "healthy",
+        "service": "omni-knowledge-trust",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-repro-miner",
+      "port": 9847,
+      "url": "http://localhost:9847/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 2.63,
+      "response": {
+        "status": "healthy",
+        "service": "omni-repro-miner",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-fhir-pack",
+      "port": 9867,
+      "url": "http://localhost:9867/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 2.49,
+      "response": {
+        "status": "healthy",
+        "service": "omni-fhir-pack",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-finance-rules-pack",
+      "port": 9868,
+      "url": "http://localhost:9868/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 2.57,
+      "response": {
+        "status": "healthy",
+        "service": "omni-finance-rules-pack",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-identity-pack",
+      "port": 9869,
+      "url": "http://localhost:9869/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 1.85,
+      "response": {
+        "status": "healthy",
+        "service": "omni-identity-pack",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-chain-pack",
+      "port": 9862,
+      "url": "http://localhost:9862/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 1.86,
+      "response": {
+        "status": "healthy",
+        "service": "omni-chain-pack",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-iot-pack",
+      "port": 9861,
+      "url": "http://localhost:9861/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 1.97,
+      "response": {
+        "status": "healthy",
+        "service": "omni-iot-pack",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-extension-pack",
+      "port": 9864,
+      "url": "http://localhost:9864/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 1.93,
+      "response": {
+        "status": "healthy",
+        "service": "omni-extension-pack",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-desktop-pack",
+      "port": 9865,
+      "url": "http://localhost:9865/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 1.94,
+      "response": {
+        "status": "healthy",
+        "service": "omni-desktop-pack",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-webrtc-pack",
+      "port": 9866,
+      "url": "http://localhost:9866/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 1.75,
+      "response": {
+        "status": "healthy",
+        "service": "omni-webrtc-pack",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-elt-pack",
+      "port": 9870,
+      "url": "http://localhost:9870/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 1.91,
+      "response": {
+        "status": "healthy",
+        "service": "omni-elt-pack",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-game-pack",
+      "port": 9863,
+      "url": "http://localhost:9863/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 1.84,
+      "response": {
+        "status": "healthy",
+        "service": "omni-game-pack",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-lineage-explorer",
+      "port": 9881,
+      "url": "http://localhost:9881/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 1.72,
+      "response": {
+        "status": "healthy",
+        "service": "omni-lineage-explorer",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-semantic-diff",
+      "port": 9882,
+      "url": "http://localhost:9882/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 1.8,
+      "response": {
+        "status": "healthy",
+        "service": "omni-semantic-diff",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-rca-synth",
+      "port": 9883,
+      "url": "http://localhost:9883/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 1.87,
+      "response": {
+        "status": "healthy",
+        "service": "omni-rca-synth",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-bug-replay",
+      "port": 9884,
+      "url": "http://localhost:9884/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 1.83,
+      "response": {
+        "status": "healthy",
+        "service": "omni-bug-replay",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-minrepro",
+      "port": 9885,
+      "url": "http://localhost:9885/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 2.33,
+      "response": {
+        "status": "healthy",
+        "service": "omni-minrepro",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-preview-env",
+      "port": 9886,
+      "url": "http://localhost:9886/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 2.72,
+      "response": {
+        "status": "healthy",
+        "service": "omni-preview-env",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-handoff-compiler",
+      "port": 9887,
+      "url": "http://localhost:9887/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 2.18,
+      "response": {
+        "status": "healthy",
+        "service": "omni-handoff-compiler",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-generation-lineage",
+      "port": 9888,
+      "url": "http://localhost:9888/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 2.46,
+      "response": {
+        "status": "healthy",
+        "service": "omni-generation-lineage",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-k8s-target",
+      "port": 9891,
+      "url": "http://localhost:9891/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 1.83,
+      "response": {
+        "status": "healthy",
+        "service": "omni-k8s-target",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-progressive-delivery",
+      "port": 9892,
+      "url": "http://localhost:9892/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 1.88,
+      "response": {
+        "status": "healthy",
+        "service": "omni-progressive-delivery",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-mesh-identity",
+      "port": 9893,
+      "url": "http://localhost:9893/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 1.79,
+      "response": {
+        "status": "healthy",
+        "service": "omni-mesh-identity",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-admission-guard",
+      "port": 9894,
+      "url": "http://localhost:9894/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 1.82,
+      "response": {
+        "status": "healthy",
+        "service": "omni-admission-guard",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-ebpf-forensics",
+      "port": 9895,
+      "url": "http://localhost:9895/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 1.79,
+      "response": {
+        "status": "healthy",
+        "service": "omni-ebpf-forensics",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-cost-optimizer",
+      "port": 9896,
+      "url": "http://localhost:9896/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 1.97,
+      "response": {
+        "status": "healthy",
+        "service": "omni-cost-optimizer",
+        "version": "1.0.0"
+      },
+      "error": null
+    },
+    {
+      "service": "omni-slo-framework",
+      "port": 9897,
+      "url": "http://localhost:9897/health",
+      "ok": true,
+      "status_code": 200,
+      "latency_ms": 1.75,
+      "response": {
+        "status": "healthy",
+        "service": "omni-slo-framework",
+        "version": "1.0.0"
+      },
+      "error": null
+    }
+  ]
+}

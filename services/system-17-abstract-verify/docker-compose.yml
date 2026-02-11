@@ -1,0 +1,50 @@
+services:
+  omni-abstract-verify:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: omni-abstract-verify
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-abstract-verify
+      - SERVICE_PORT=9822
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - "9822:9822"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9822/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: "17"
+      omni.quantum.tier: "HIGH"
+      omni.quantum.category: "qa-verification"
+      prometheus.scrape: "true"
+      prometheus.port: "9822"
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: "1.0"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "omni-abstract-verify"
+
+networks:
+  omni-quantum-network:
+    external: true

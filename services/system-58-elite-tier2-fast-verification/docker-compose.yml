@@ -1,0 +1,50 @@
+services:
+  omni-elite-tier2-fast-verification:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: omni-elite-tier2-fast-verification
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-elite-tier2-fast-verification
+      - SERVICE_PORT=9903
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - "9903:9903"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9903/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: "58"
+      omni.quantum.tier: "CRITICAL"
+      omni.quantum.category: "qa-verification"
+      prometheus.scrape: "true"
+      prometheus.port: "9903"
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "2.0"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "omni-elite-tier2-fast-verification"
+
+networks:
+  omni-quantum-network:
+    external: true

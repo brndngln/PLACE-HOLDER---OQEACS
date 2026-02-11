@@ -1,0 +1,50 @@
+services:
+  omni-contract-synth:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: omni-contract-synth
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=omni-contract-synth
+      - SERVICE_PORT=9804
+      - DATABASE_URL=postgresql://omni:${POSTGRES_PASSWORD:-omni}@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - LITELLM_URL=http://omni-litellm:4000
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - VAULT_ADDR=http://omni-vault:8200
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - "9804:9804"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9804/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - omni-quantum-network
+    labels:
+      omni.quantum.component: "11"
+      omni.quantum.tier: "HIGH"
+      omni.quantum.category: "code-generation"
+      prometheus.scrape: "true"
+      prometheus.port: "9804"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "omni-contract-synth"
+
+networks:
+  omni-quantum-network:
+    external: true
