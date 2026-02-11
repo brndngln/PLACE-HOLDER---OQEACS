@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   omni-litellm:
-    image: litellm/litellm:main
+    image: litellm/litellm:v1.56.0
     container_name: omni-litellm
     restart: unless-stopped
     command:
@@ -15,7 +15,7 @@ services:
     - 4000:4000
     environment:
       LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
-      DATABASE_URL: ${DATABASE_URL:-postgresql://litellm:litellm@omni-postgres:5432/litellm}
+      DATABASE_URL: ${LITELLM_DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://omni-redis:6379/2}
       LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
       LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
@@ -32,8 +32,8 @@ services:
       - curl
       - -sf
       - http://localhost:4000/health/liveliness
-      interval: 15s
-      timeout: 5s
+      interval: 30s
+      timeout: 10s
       retries: 5
       start_period: 30s
     deploy:
@@ -85,10 +85,10 @@ services:
       - curl
       - -sf
       - http://localhost:4001/health
-      interval: 15s
-      timeout: 5s
+      interval: 30s
+      timeout: 10s
       retries: 5
-      start_period: 15s
+      start_period: 30s
     deploy:
       resources:
         limits:

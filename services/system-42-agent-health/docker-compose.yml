@@ -9,7 +9,7 @@ services:
     environment:
       SERVICE_NAME: ${SERVICE_NAME:-agent-health}
       SERVICE_PORT: ${SERVICE_PORT:-9635}
-      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://omni:omni@omni-postgres:5432/omni_agent_health}
+      DATABASE_URL: ${AGENT_HEALTH_DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://omni-redis:6379/8}
       LITELLM_URL: ${LITELLM_URL:-http://omni-litellm:4000}
       MATTERMOST_WEBHOOK_URL: ${MATTERMOST_WEBHOOK_URL:-http://omni-mattermost:8065/hooks/agent-health}
@@ -24,7 +24,7 @@ services:
         - "import urllib.request; urllib.request.urlopen('http://localhost:9635/health')"
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 5
       start_period: 30s
     deploy:
       resources:
@@ -39,6 +39,11 @@ services:
       omni.quantum.tier: critical
       omni.quantum.critical: "true"
       omni.quantum.description: "Agent Health Monitor - poison pills, golden tests, drift detection"
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: "5"
     networks:
       - omni-quantum-network
     security_opt:

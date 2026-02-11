@@ -32,17 +32,17 @@ services:
       POSTGRES_PASSWORD: '{{ vault://secret/data/chatwoot#db_password }}'
       ENABLE_ACCOUNT_SIGNUP: 'false'
     ports:
-    - 3010:3000
+    - 3900:3000
     healthcheck:
       test:
       - CMD
       - wget
       - -qO-
       - http://localhost:3000/
-      interval: 20s
+      interval: 30s
       timeout: 10s
-      retries: 8
-      start_period: 40s
+      retries: 5
+      start_period: 30s
     restart: unless-stopped
     logging:
       driver: json-file
@@ -95,9 +95,10 @@ services:
       - bash
       - -lc
       - ps aux | grep -v grep | grep sidekiq
-      interval: 20s
+      interval: 30s
       timeout: 10s
       retries: 5
+      start_period: 30s
     restart: unless-stopped
     logging:
       driver: json-file

@@ -9,7 +9,7 @@ services:
     - 2112:2112
     environment:
     - CODER_ACCESS_URL=http://omni-coder:7080
-    - CODER_PG_CONNECTION_URL=postgres://coder:password@omni-postgres:5432/coder
+    - CODER_PG_CONNECTION_URL=${CODER_PG_CONNECTION_URL}
     - CODER_WILDCARD_ACCESS_URL=*.coder.omni-quantum.internal
     - CODER_TELEMETRY=false
     - CODER_EXPERIMENTS=*
@@ -35,6 +35,11 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: '5'
     depends_on:
     - omni-coder-init
     networks:
@@ -58,7 +63,7 @@ services:
     - CODER_URL=http://omni-coder:7080
     - CODER_ADMIN_EMAIL=admin@omni-quantum.internal
     - CODER_ADMIN_USERNAME=omni-admin
-    - CODER_ADMIN_PASSWORD=${CODER_ADMIN_PASSWORD:-OmniQuantum2024!}
+    - CODER_ADMIN_PASSWORD=${CODER_ADMIN_PASSWORD}
     - ORCHESTRATOR_URL=http://omni-orchestrator:9500
     - AUTHENTIK_URL=http://omni-authentik:9000
     - AUTHENTIK_TOKEN=${AUTHENTIK_TOKEN:-}
@@ -78,13 +83,18 @@ services:
       - exit 0
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 60s
+      retries: 5
+      start_period: 30s
     deploy:
       resources:
         limits:
           memory: 512M
           cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: '5'
     security_opt:
     - no-new-privileges:true
     cap_drop:

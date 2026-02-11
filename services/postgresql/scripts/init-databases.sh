@@ -23,6 +23,8 @@ DATABASES=(
   "posthog"
   "chatwoot"
   "glitchtip"
+  "omi"
+  "plane"
 )
 
 ensure_role() {

@@ -19,7 +19,7 @@ services:
       - pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 5
       start_period: 30s
     deploy:
       resources:
@@ -35,6 +35,11 @@ services:
       omni.quantum.component: postgres
       omni.quantum.tier: foundation
       omni.quantum.critical: 'true'
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: '5'
     networks:
     - omni-quantum-network
 volumes:

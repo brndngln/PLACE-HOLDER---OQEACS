@@ -4,12 +4,12 @@ services:
     container_name: omni-langfuse
     restart: unless-stopped
     ports:
-    - 3060:3000
+    - 3007:3000
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@omni-postgres:5432/langfuse
+      DATABASE_URL: ${LANGFUSE_DATABASE_URL}
       NEXTAUTH_URL: https://langfuse.${DOMAIN:-omni-quantum-quantum.local}
-      NEXTAUTH_SECRET: ${LANGFUSE_SECRET:-omni-langfuse-secret}
-      SALT: ${LANGFUSE_SALT:-omni-langfuse-salt}
+      NEXTAUTH_SECRET: ${LANGFUSE_SECRET}
+      SALT: ${LANGFUSE_SALT}
     healthcheck:
       test:
       - CMD
@@ -18,14 +18,20 @@ services:
       - -q
       - http://localhost:3000/api/public/health
       interval: 30s
-      timeout: 5s
+      timeout: 10s
       retries: 5
+      start_period: 30s
     networks:
     - omni-quantum-network
     labels:
       omni.quantum.component: langfuse
       omni.quantum.tier: development
       omni.quantum.critical: 'false'
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: '5'
     deploy:
       resources:
         limits:

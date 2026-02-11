@@ -5,7 +5,7 @@ services:
     container_name: omni-openhands-core
     restart: unless-stopped
     ports:
-    - 3000:3000
+    - 3100:3000
     environment:
     - LLM_BASE_URL=http://omni-litellm:4000/v1
     - LLM_MODEL=devstral-2:123b
@@ -53,6 +53,11 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: '5'
     networks:
     - omni-quantum-network
     labels:
@@ -113,8 +118,13 @@ services:
       - http://localhost:3001/health
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 15s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: '5'
     networks:
     - omni-quantum-network
     labels:
@@ -165,8 +175,13 @@ services:
       - http://localhost:3002/health
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 10s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: '5'
     networks:
     - omni-quantum-network
     labels:

@@ -9,7 +9,7 @@ services:
     environment:
       SERVICE_NAME: ${SERVICE_NAME:-self-testing}
       SERVICE_PORT: ${SERVICE_PORT:-9636}
-      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://omni:omni@omni-postgres:5432/omni_self_testing}
+      DATABASE_URL: ${SELF_TESTING_DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://omni-redis:6379/9}
       MATTERMOST_WEBHOOK_URL: ${MATTERMOST_WEBHOOK_URL:-http://omni-mattermost:8065/hooks/self-testing}
       SANDBOX_URL: ${SANDBOX_URL:-http://omni-sandbox:9620}
@@ -25,7 +25,7 @@ services:
         - "import urllib.request; urllib.request.urlopen('http://localhost:9636/health')"
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 5
       start_period: 30s
     deploy:
       resources:
@@ -40,6 +40,11 @@ services:
       omni.quantum.tier: critical
       omni.quantum.critical: "true"
       omni.quantum.description: "Self-Testing System - platform integration tests, health sweeps, quality scoring"
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: "5"
     networks:
       - omni-quantum-network
     security_opt:
