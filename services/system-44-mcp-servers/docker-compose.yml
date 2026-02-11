@@ -1,0 +1,245 @@
+services:
+  mcp-analysis:
+    build: .
+    image: omni-mcp-analysis:1.0.0
+    container_name: omni-mcp-analysis
+    restart: unless-stopped
+    command:
+      - python
+      - -m
+      - uvicorn
+      - src.mcp_servers.analysis:app
+      - --host
+      - "0.0.0.0"
+      - --port
+      - "8335"
+      - --workers
+      - "1"
+      - --log-level
+      - info
+    ports:
+      - "8335:8335"
+    environment:
+      SERVICE_NAME: ${SERVICE_NAME_ANALYSIS:-mcp-analysis}
+      SERVICE_PORT: ${SERVICE_PORT_ANALYSIS:-8335}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://omni:omni@omni-postgres:5432/omni_mcp_servers}
+      REDIS_URL: ${REDIS_URL:-redis://omni-redis:6379/12}
+      QDRANT_URL: ${QDRANT_URL:-http://omni-qdrant:6333}
+      LITELLM_URL: ${LITELLM_URL:-http://omni-litellm:4000}
+      MATTERMOST_WEBHOOK_URL: ${MATTERMOST_WEBHOOK_URL:-http://omni-mattermost:8065/hooks/mcp-servers}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      PYTHONUNBUFFERED: "1"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8335/health')"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          memory: 128M
+    labels:
+      omni.quantum.system: "44"
+      omni.quantum.component: mcp-analysis
+      omni.quantum.tier: development
+      omni.quantum.critical: "false"
+      omni.quantum.description: "MCP Analysis Server - code review, antipattern detection, complexity, security"
+    networks:
+      - omni-quantum-network
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  mcp-test:
+    build: .
+    image: omni-mcp-test:1.0.0
+    container_name: omni-mcp-test
+    restart: unless-stopped
+    command:
+      - python
+      - -m
+      - uvicorn
+      - src.mcp_servers.test_server:app
+      - --host
+      - "0.0.0.0"
+      - --port
+      - "8336"
+      - --workers
+      - "1"
+      - --log-level
+      - info
+    ports:
+      - "8336:8336"
+    environment:
+      SERVICE_NAME: ${SERVICE_NAME_TEST:-mcp-test}
+      SERVICE_PORT: ${SERVICE_PORT_TEST:-8336}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://omni:omni@omni-postgres:5432/omni_mcp_servers}
+      REDIS_URL: ${REDIS_URL:-redis://omni-redis:6379/12}
+      QDRANT_URL: ${QDRANT_URL:-http://omni-qdrant:6333}
+      LITELLM_URL: ${LITELLM_URL:-http://omni-litellm:4000}
+      MATTERMOST_WEBHOOK_URL: ${MATTERMOST_WEBHOOK_URL:-http://omni-mattermost:8065/hooks/mcp-servers}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      PYTHONUNBUFFERED: "1"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8336/health')"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          memory: 128M
+    labels:
+      omni.quantum.system: "44"
+      omni.quantum.component: mcp-test
+      omni.quantum.tier: development
+      omni.quantum.critical: "false"
+      omni.quantum.description: "MCP Test Server - test generation, coverage analysis, fixture creation"
+    networks:
+      - omni-quantum-network
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  mcp-deploy:
+    build: .
+    image: omni-mcp-deploy:1.0.0
+    container_name: omni-mcp-deploy
+    restart: unless-stopped
+    command:
+      - python
+      - -m
+      - uvicorn
+      - src.mcp_servers.deploy:app
+      - --host
+      - "0.0.0.0"
+      - --port
+      - "8337"
+      - --workers
+      - "1"
+      - --log-level
+      - info
+    ports:
+      - "8337:8337"
+    environment:
+      SERVICE_NAME: ${SERVICE_NAME_DEPLOY:-mcp-deploy}
+      SERVICE_PORT: ${SERVICE_PORT_DEPLOY:-8337}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://omni:omni@omni-postgres:5432/omni_mcp_servers}
+      REDIS_URL: ${REDIS_URL:-redis://omni-redis:6379/12}
+      QDRANT_URL: ${QDRANT_URL:-http://omni-qdrant:6333}
+      LITELLM_URL: ${LITELLM_URL:-http://omni-litellm:4000}
+      COOLIFY_URL: ${COOLIFY_URL:-http://omni-coolify:8000}
+      MATTERMOST_WEBHOOK_URL: ${MATTERMOST_WEBHOOK_URL:-http://omni-mattermost:8065/hooks/mcp-servers}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      PYTHONUNBUFFERED: "1"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8337/health')"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          memory: 128M
+    labels:
+      omni.quantum.system: "44"
+      omni.quantum.component: mcp-deploy
+      omni.quantum.tier: development
+      omni.quantum.critical: "false"
+      omni.quantum.description: "MCP Deploy Server - deployment readiness, status, rollback, logs"
+    networks:
+      - omni-quantum-network
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  mcp-knowledge:
+    build: .
+    image: omni-mcp-knowledge:1.0.0
+    container_name: omni-mcp-knowledge
+    restart: unless-stopped
+    command:
+      - python
+      - -m
+      - uvicorn
+      - src.mcp_servers.knowledge:app
+      - --host
+      - "0.0.0.0"
+      - --port
+      - "8338"
+      - --workers
+      - "1"
+      - --log-level
+      - info
+    ports:
+      - "8338:8338"
+    environment:
+      SERVICE_NAME: ${SERVICE_NAME_KNOWLEDGE:-mcp-knowledge}
+      SERVICE_PORT: ${SERVICE_PORT_KNOWLEDGE:-8338}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://omni:omni@omni-postgres:5432/omni_mcp_servers}
+      REDIS_URL: ${REDIS_URL:-redis://omni-redis:6379/12}
+      QDRANT_URL: ${QDRANT_URL:-http://omni-qdrant:6333}
+      LITELLM_URL: ${LITELLM_URL:-http://omni-litellm:4000}
+      MATTERMOST_WEBHOOK_URL: ${MATTERMOST_WEBHOOK_URL:-http://omni-mattermost:8065/hooks/mcp-servers}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      PYTHONUNBUFFERED: "1"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8338/health')"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          memory: 128M
+    labels:
+      omni.quantum.system: "44"
+      omni.quantum.component: mcp-knowledge
+      omni.quantum.tier: development
+      omni.quantum.critical: "false"
+      omni.quantum.description: "MCP Knowledge Server - semantic search, ADRs, code similarity, best practices"
+    networks:
+      - omni-quantum-network
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+networks:
+  omni-quantum-network:
+    external: true

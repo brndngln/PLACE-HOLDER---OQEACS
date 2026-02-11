@@ -1,0 +1,51 @@
+services:
+  agent-health:
+    build: .
+    image: omni-agent-health:1.0.0
+    container_name: omni-agent-health
+    restart: unless-stopped
+    ports:
+      - "9635:9635"
+    environment:
+      SERVICE_NAME: ${SERVICE_NAME:-agent-health}
+      SERVICE_PORT: ${SERVICE_PORT:-9635}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://omni:omni@omni-postgres:5432/omni_agent_health}
+      REDIS_URL: ${REDIS_URL:-redis://omni-redis:6379/8}
+      LITELLM_URL: ${LITELLM_URL:-http://omni-litellm:4000}
+      MATTERMOST_WEBHOOK_URL: ${MATTERMOST_WEBHOOK_URL:-http://omni-mattermost:8065/hooks/agent-health}
+      SANDBOX_URL: ${SANDBOX_URL:-http://omni-sandbox:9620}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      PYTHONUNBUFFERED: "1"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:9635/health')"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+        reservations:
+          memory: 256M
+    labels:
+      omni.quantum.system: "42"
+      omni.quantum.component: agent-health
+      omni.quantum.tier: critical
+      omni.quantum.critical: "true"
+      omni.quantum.description: "Agent Health Monitor - poison pills, golden tests, drift detection"
+    networks:
+      - omni-quantum-network
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+networks:
+  omni-quantum-network:
+    external: true

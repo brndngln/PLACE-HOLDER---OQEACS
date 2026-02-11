@@ -1,0 +1,58 @@
+version: '3.9'
+
+services:
+  omni-formal-verify:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: omni-formal-verify
+    restart: unless-stopped
+    networks:
+      - omni-quantum-network
+    ports:
+      - "9634:9634"
+    environment:
+      - SERVICE_NAME=formal-verification
+      - SERVICE_PORT=9634
+      - DATABASE_URL=postgresql://omni:omni@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL}
+      - LITELLM_URL=http://omni-litellm:4000
+      - PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus
+      - WORK_DIR=/app/data/workdir
+    volumes:
+      - formal-verify-data:/app/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9634/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    labels:
+      omni.quantum.component: "41"
+      omni.quantum.tier: "critical"
+      omni.quantum.critical: "true"
+      prometheus.scrape: "true"
+      prometheus.port: "9634"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "omni-formal-verify"
+    deploy:
+      resources:
+        limits:
+          cpus: "4.0"
+          memory: 4G
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+networks:
+  omni-quantum-network:
+    external: true
+
+volumes:
+  formal-verify-data:

@@ -1,0 +1,52 @@
+services:
+  self-testing:
+    build: .
+    image: omni-self-test:1.0.0
+    container_name: omni-self-test
+    restart: unless-stopped
+    ports:
+      - "9636:9636"
+    environment:
+      SERVICE_NAME: ${SERVICE_NAME:-self-testing}
+      SERVICE_PORT: ${SERVICE_PORT:-9636}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://omni:omni@omni-postgres:5432/omni_self_testing}
+      REDIS_URL: ${REDIS_URL:-redis://omni-redis:6379/9}
+      MATTERMOST_WEBHOOK_URL: ${MATTERMOST_WEBHOOK_URL:-http://omni-mattermost:8065/hooks/self-testing}
+      SANDBOX_URL: ${SANDBOX_URL:-http://omni-sandbox:9620}
+      SCORING_URL: ${SCORING_URL:-http://omni-scoring:9623}
+      RETROSPECTIVE_URL: ${RETROSPECTIVE_URL:-http://omni-retrospective:9633}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      PYTHONUNBUFFERED: "1"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:9636/health')"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+        reservations:
+          memory: 256M
+    labels:
+      omni.quantum.system: "43"
+      omni.quantum.component: self-testing
+      omni.quantum.tier: critical
+      omni.quantum.critical: "true"
+      omni.quantum.description: "Self-Testing System - platform integration tests, health sweeps, quality scoring"
+    networks:
+      - omni-quantum-network
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+networks:
+  omni-quantum-network:
+    external: true

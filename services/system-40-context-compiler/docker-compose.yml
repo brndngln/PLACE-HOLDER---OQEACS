@@ -1,0 +1,59 @@
+version: '3.9'
+
+services:
+  omni-context-compiler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: omni-context-compiler
+    restart: unless-stopped
+    networks:
+      - omni-quantum-network
+    ports:
+      - "8325:8325"
+    environment:
+      - SERVICE_NAME=context-compiler
+      - SERVICE_PORT=8325
+      - DATABASE_URL=postgresql://omni:omni@omni-postgres:5432/omni_quantum
+      - REDIS_URL=redis://omni-redis:6379/0
+      - QDRANT_URL=http://omni-qdrant:6333
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL}
+      - VAULT_ADDR=http://omni-vault:8200
+      - LITELLM_URL=http://omni-litellm:4000
+      - PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus
+    volumes:
+      - context-compiler-data:/app/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8325/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    labels:
+      omni.quantum.component: "40"
+      omni.quantum.tier: "critical"
+      omni.quantum.critical: "true"
+      prometheus.scrape: "true"
+      prometheus.port: "8325"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "omni-context-compiler"
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+networks:
+  omni-quantum-network:
+    external: true
+
+volumes:
+  context-compiler-data:

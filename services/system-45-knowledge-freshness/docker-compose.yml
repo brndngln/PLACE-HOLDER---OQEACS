@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  omni-freshness:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: omni-freshness
+    hostname: omni-freshness
+    ports:
+      - "8330:8330"
+    environment:
+      SERVICE_NAME: knowledge-freshness
+      SERVICE_PORT: "8330"
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://omni:omni@omni-postgres:5432/omni_freshness}
+      REDIS_URL: ${REDIS_URL:-redis://omni-redis:6379/10}
+      QDRANT_URL: ${QDRANT_URL:-http://omni-qdrant:6333}
+      LITELLM_URL: ${LITELLM_URL:-http://omni-litellm:4000}
+      MATTERMOST_WEBHOOK_URL: ${MATTERMOST_WEBHOOK_URL:-http://omni-mattermost-webhook:8066}
+      SCAN_INTERVAL_HOURS: ${SCAN_INTERVAL_HOURS:-6}
+      SECURITY_SCAN_INTERVAL_HOURS: ${SECURITY_SCAN_INTERVAL_HOURS:-1}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    networks:
+      - omni-quantum-network
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8330/health')"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+    labels:
+      omni.quantum.component: "45"
+      omni.quantum.service: "knowledge-freshness"
+      omni.quantum.tier: "critical"
+      omni.quantum.port: "8330"
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '5'
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+networks:
+  omni-quantum-network:
+    external: true
