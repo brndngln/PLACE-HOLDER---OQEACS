@@ -10,7 +10,7 @@ services:
     ports:
       - "9652:9652"
     env_file:
-      - .env
+      - ../../.env
     networks:
       - omni-quantum-network
     healthcheck:

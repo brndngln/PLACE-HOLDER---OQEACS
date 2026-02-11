@@ -1,0 +1,51 @@
+version: "3.8"
+
+services:
+  prompt-lab:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: omni-prompt-lab
+    ports:
+      - "9668:9668"
+    env_file:
+      - ../../.env
+    environment:
+      SERVICE_NAME: "omni-prompt-lab"
+      SERVICE_PORT: "9668"
+      LOG_LEVEL: "INFO"
+      DATABASE_URL: "postgresql+asyncpg://omni:${POSTGRES_PASSWORD}@omni-postgres:5432/system_68_prompt_lab"
+      REDIS_URL: "redis://:${REDIS_PASSWORD}@omni-redis:6379/0"
+      LITELLM_URL: "http://omni-litellm:4000"
+      MATTERMOST_WEBHOOK_URL: "${MATTERMOST_WEBHOOK_URL}"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9668/health').read()"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - omni-quantum-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    labels:
+      - "omni.quantum.component=system-68-prompt-lab"
+      - "omni.quantum.tier=intelligence"
+      - "omni.quantum.critical=false"
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+networks:
+  omni-quantum-network:
+    external: true
