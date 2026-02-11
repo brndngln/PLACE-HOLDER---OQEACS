@@ -16,76 +16,16 @@ run() {
   fi
 }
 
-declare -A ASSIGNED
-TIER0=()
-TIER1=()
-TIER2=()
-TIER3=()
-TIER4=()
-TIER5=()
-
-add_to_tier() {
-  local tier="$1"
-  local file="$2"
-  [[ -f "$file" ]] || return 0
-  ASSIGNED["$file"]=1
-  case "$tier" in
-    0) TIER0+=("$file") ;;
-    1) TIER1+=("$file") ;;
-    2) TIER2+=("$file") ;;
-    4) TIER4+=("$file") ;;
-    5) TIER5+=("$file") ;;
-  esac
-}
-
-build_tiers() {
-  mapfile -t ALL_COMPOSES < <(find services omni-quantum-systems -name docker-compose.yml | sort)
-
-  add_to_tier 0 services/postgresql/docker-compose.yml
-  add_to_tier 0 services/redis/docker-compose.yml
-  add_to_tier 0 services/object-store/docker-compose.yml
-
-  add_to_tier 1 services/cryptographic-fortress/docker-compose.yml
-  add_to_tier 1 services/security-nexus/docker-compose.yml
-  add_to_tier 1 services/observatory/docker-compose.yml
-  add_to_tier 1 services/log-nexus/docker-compose.yml
-  add_to_tier 1 services/gateway-sentinel/docker-compose.yml
-
-  add_to_tier 2 services/neural-network/docker-compose.yml
-  add_to_tier 2 services/ai-gateway/docker-compose.yml
-  add_to_tier 2 services/vector-memory/docker-compose.yml
-  add_to_tier 2 services/code-fortress/docker-compose.yml
-
-  add_to_tier 4 omni-quantum-systems/system-29-enhanced-monitoring/docker-compose.yml
-  add_to_tier 4 omni-quantum-systems/system-30-enhanced-logging/docker-compose.yml
-  add_to_tier 4 omni-quantum-systems/system-31-uptime-monitor/docker-compose.yml
-  add_to_tier 4 omni-quantum-systems/system-32-enhanced-backup/docker-compose.yml
-  add_to_tier 4 omni-quantum-systems/system-33-enhanced-secrets/docker-compose.yml
-  add_to_tier 4 omni-quantum-systems/system-34-enhanced-proxy/docker-compose.yml
-  add_to_tier 4 omni-quantum-systems/system-35-cicd-pipelines/docker-compose.yml
-  add_to_tier 4 omni-quantum-systems/system-36-dev-environments/docker-compose.yml
-
-  add_to_tier 5 omni-quantum-systems/system-37-master-orchestrator/docker-compose.yml
-
-  local f
-  for f in "${ALL_COMPOSES[@]}"; do
-    if [[ -z "${ASSIGNED[$f]:-}" ]]; then
-      TIER3+=("$f")
-    fi
-  done
-}
-
-down_tier() {
-  local tier_name="$1"
+down_group() {
+  local group_name="$1"
   shift
   local files=("$@")
 
-  log "${BLUE}=== ${tier_name} ===${NC}"
+  log "${BLUE}=== ${group_name} ===${NC}"
   local f
   for f in "${files[@]}"; do
-    if [[ -f "$f" ]]; then
-      run docker compose -f "$f" down
-    fi
+    [[ -f "$f" ]] || continue
+    run docker compose -f "$f" down
   done
 }
 
@@ -93,14 +33,102 @@ main() {
   command -v docker >/dev/null 2>&1 || { log "${RED}docker not found${NC}"; exit 1; }
   docker compose version >/dev/null 2>&1 || { log "${RED}docker compose plugin not found${NC}"; exit 1; }
 
-  build_tiers
+  # Reverse order of deploy-all groups
+  down_group "Group 16 - Master Orchestrator" \
+    omni-quantum-systems/system-37-master-orchestrator/docker-compose.yml \
+    services/master-orchestrator/docker-compose.yml
 
-  down_tier "Tier 5 - Master Orchestrator (37)" "${TIER5[@]}"
-  down_tier "Tier 4 - Enhanced Infrastructure (29-36)" "${TIER4[@]}"
-  down_tier "Tier 3 - Application Services" "${TIER3[@]}"
-  down_tier "Tier 2 - Core AI/Code" "${TIER2[@]}"
-  down_tier "Tier 1 - Security/Observability/Ingress" "${TIER1[@]}"
-  down_tier "Tier 0 - Foundation" "${TIER0[@]}"
+  down_group "Group 15 - Omi Bridge" \
+    services/omi-bridge/docker-compose.yml
+
+  down_group "Group 14 - Enhanced Infrastructure" \
+    omni-quantum-systems/system-29-enhanced-monitoring/docker-compose.yml \
+    omni-quantum-systems/system-30-enhanced-logging/docker-compose.yml \
+    omni-quantum-systems/system-31-uptime-monitor/docker-compose.yml \
+    omni-quantum-systems/system-32-enhanced-backup/docker-compose.yml \
+    omni-quantum-systems/system-33-enhanced-secrets/docker-compose.yml \
+    omni-quantum-systems/system-34-enhanced-proxy/docker-compose.yml \
+    omni-quantum-systems/system-35-cicd-pipelines/docker-compose.yml \
+    omni-quantum-systems/system-36-dev-environments/docker-compose.yml
+
+  down_group "Group 13 - Financial" \
+    financial/docker-compose.yml \
+    docker-compose.yml
+
+  down_group "Group 12 - Platform Ops" \
+    services/feedback-forms/docker-compose.yml \
+    services/npm-registry/docker-compose.yml \
+    services/db-admin/docker-compose.yml \
+    services/container-manager/docker-compose.yml
+
+  down_group "Group 11 - Integration & Validation" \
+    services/api-gateway/docker-compose.yml \
+    services/contract-testing/docker-compose.yml \
+    services/chaos-testing/docker-compose.yml \
+    services/ml-tracking/docker-compose.yml \
+    services/benchmarking/docker-compose.yml
+
+  down_group "Group 10 - Product Suite B" \
+    services/email-service/docker-compose.yml \
+    services/support-center/docker-compose.yml \
+    services/web-analytics/docker-compose.yml \
+    services/feature-flags/docker-compose.yml \
+    services/error-tracking/docker-compose.yml \
+    services/search-engine/docker-compose.yml \
+    services/audit-logger/docker-compose.yml \
+    services/translation-mgmt/docker-compose.yml
+
+  down_group "Group 9 - Product Suite A" \
+    services/deploy-engine/docker-compose.yml \
+    services/flow-builder/docker-compose.yml \
+    services/analytics-engine/docker-compose.yml \
+    services/schedule-manager/docker-compose.yml
+
+  down_group "Group 8 - Quality & Dev Tooling" \
+    services/code-scorer/docker-compose.yml \
+    services/gate-engine/docker-compose.yml \
+    services/context-compiler/docker-compose.yml \
+    services/sourcegraph/docker-compose.yml \
+    services/build-forge/docker-compose.yml \
+    services/code-forge/docker-compose.yml
+
+  down_group "Group 7 - Knowledge Layer" \
+    services/knowledge-ingestor/docker-compose.yml \
+    services/knowledge-freshness/docker-compose.yml \
+    services/semantic-cache/docker-compose.yml
+
+  down_group "Group 6 - AI Runtime & Agents" \
+    services/neural-network/docker-compose.yml \
+    services/ai-gateway/docker-compose.yml \
+    services/token-infinity/docker-compose.yml \
+    services/ai-coder-alpha/docker-compose.yml \
+    services/ai-coder-beta/docker-compose.yml \
+    services/ai-observability/docker-compose.yml
+
+  down_group "Group 5 - Comms & Automation" \
+    services/communication-hub/docker-compose.yml \
+    services/flow-architect/docker-compose.yml \
+    services/integration-hub/docker-compose.yml
+
+  down_group "Group 4 - Edge/Security" \
+    services/gateway-sentinel/docker-compose.yml \
+    services/security-nexus/docker-compose.yml \
+    services/security-shield/docker-compose.yml
+
+  down_group "Group 3 - Core Platform Dependencies" \
+    services/code-fortress/docker-compose.yml \
+    services/observatory/docker-compose.yml \
+    services/log-nexus/docker-compose.yml \
+    services/vector-memory/docker-compose.yml \
+    services/neo4j-graphrag/docker-compose.yml
+
+  down_group "Group 2 - Vault / Crypto" \
+    services/cryptographic-fortress/docker-compose.yml
+
+  down_group "Group 1 - Foundation Data Plane" \
+    services/postgresql/docker-compose.yml \
+    services/redis/docker-compose.yml \
+    services/object-store/docker-compose.yml
 
   log "${GREEN}Shutdown complete${NC}"
 }

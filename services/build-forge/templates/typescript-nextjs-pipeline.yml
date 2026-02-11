@@ -722,7 +722,7 @@ steps:
         author = os.environ.get("CI_COMMIT_AUTHOR", "unknown")
 
         payload = {
-            "channel": "deployments",
+            "channel": "omni-deployments",
             "username": "cicdbot",
             "icon_url": "https://woodpecker-ci.org/img/logo.svg",
             "text": (
@@ -859,7 +859,7 @@ steps:
         author = os.environ.get("CI_COMMIT_AUTHOR", "unknown")
 
         payload = {
-            "channel": "builds",
+            "channel": "omni-builds",
             "username": "cicdbot",
             "icon_url": "https://woodpecker-ci.org/img/logo.svg",
             "text": (
@@ -915,7 +915,7 @@ steps:
         author = os.environ.get("CI_COMMIT_AUTHOR", "unknown")
 
         payload = {
-            "channel": "builds",
+            "channel": "omni-builds",
             "username": "cicdbot",
             "icon_url": "https://woodpecker-ci.org/img/logo.svg",
             "text": (

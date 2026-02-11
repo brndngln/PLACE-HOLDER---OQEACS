@@ -262,7 +262,7 @@ def format_build_success(event: WoodpeckerWebhook) -> dict[str, Any]:
     )
 
     return {
-        "channel": "builds",
+        "channel": "omni-builds",
         "username": "cicdbot",
         "icon_url": "https://woodpecker-ci.org/img/logo.svg",
         "text": (
@@ -287,7 +287,7 @@ def format_build_failure(event: WoodpeckerWebhook) -> dict[str, Any]:
     stage_info = f" at stage `{event.stage}`" if event.stage else ""
 
     return {
-        "channel": "builds",
+        "channel": "omni-builds",
         "username": "cicdbot",
         "icon_url": "https://woodpecker-ci.org/img/logo.svg",
         "text": (
@@ -308,7 +308,7 @@ def format_build_error(event: WoodpeckerWebhook) -> dict[str, Any]:
     )
 
     return {
-        "channel": "builds",
+        "channel": "omni-builds",
         "username": "cicdbot",
         "icon_url": "https://woodpecker-ci.org/img/logo.svg",
         "text": (
@@ -331,7 +331,7 @@ def format_deploy_event(event: WoodpeckerWebhook) -> dict[str, Any]:
     status_icon = ":white_check_mark:" if event.status == PipelineStatus.success else ":x:"
 
     return {
-        "channel": "deployments",
+        "channel": "omni-deployments",
         "username": "cicdbot",
         "icon_url": "https://woodpecker-ci.org/img/logo.svg",
         "text": (
@@ -353,7 +353,7 @@ def format_approval_event(event: WoodpeckerWebhook) -> dict[str, Any]:
     )
 
     return {
-        "channel": "deployments",
+        "channel": "omni-deployments",
         "username": "cicdbot",
         "icon_url": "https://woodpecker-ci.org/img/logo.svg",
         "text": (
@@ -559,7 +559,7 @@ async def receive_woodpecker_webhook(event: WoodpeckerWebhook) -> dict[str, Any]
         mattermost_payload = format_build_error(event)
     elif event.status == PipelineStatus.killed:
         mattermost_payload = {
-            "channel": "builds",
+            "channel": "omni-builds",
             "username": "cicdbot",
             "icon_url": "https://woodpecker-ci.org/img/logo.svg",
             "text": (
