@@ -1,0 +1,12 @@
+groups:
+  - name: dast-penetration-testing.rules
+    rules:
+      - alert: System67Down
+        expr: up{job="dast-penetration-testing"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: dast-penetration-testing
+        annotations:
+          summary: "DAST Penetration Testing (ZAP) is down"
+          description: "dast-penetration-testing has been unreachable for 5 minutes."

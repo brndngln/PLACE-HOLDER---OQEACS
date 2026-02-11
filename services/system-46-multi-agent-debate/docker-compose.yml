@@ -1,0 +1,50 @@
+version: "3.8"
+
+services:
+  omni-debate-engine:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: omni-debate-engine
+    ports:
+      - "9650:9650"
+    environment:
+      - SERVICE_NAME=omni-debate-engine
+      - SERVICE_PORT=9650
+      - DATABASE_URL=postgresql+asyncpg://omni:omni@omni-postgres:5432/omni_debate
+      - REDIS_URL=redis://omni-redis:6379/14
+      - LITELLM_URL=http://omni-litellm:4000
+      - QDRANT_URL=http://omni-qdrant:6333
+      - MATTERMOST_WEBHOOK_URL=http://omni-mattermost:8065/hooks/debate-engine
+      - LOG_LEVEL=INFO
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; r = httpx.get('http://localhost:9650/health'); r.raise_for_status()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          cpus: "4"
+          memory: 4G
+    networks:
+      - omni-quantum-network
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - "omni.quantum.component=debate-engine"
+      - "omni.quantum.tier=intelligence"
+      - "omni.quantum.critical=true"
+
+networks:
+  omni-quantum-network:
+    external: true

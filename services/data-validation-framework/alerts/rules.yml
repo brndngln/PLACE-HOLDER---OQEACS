@@ -1,0 +1,12 @@
+groups:
+  - name: data-validation-framework.rules
+    rules:
+      - alert: System68Down
+        expr: up{job="data-validation-framework"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: data-validation-framework
+        annotations:
+          summary: "Data Validation Framework is down"
+          description: "data-validation-framework has been unreachable for 5 minutes."

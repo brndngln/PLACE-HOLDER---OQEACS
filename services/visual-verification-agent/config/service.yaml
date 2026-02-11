@@ -1,0 +1,6 @@
+service:
+  id: 71
+  name: Visual Verification Agent
+  codename: visual-verification-agent
+  port: 9671
+  tier: gap-remediation

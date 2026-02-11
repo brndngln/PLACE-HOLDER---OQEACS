@@ -1,0 +1,51 @@
+version: "3.8"
+
+services:
+  omni-semantic-code:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: omni-semantic-code
+    ports:
+      - "9651:9651"
+    environment:
+      - SERVICE_NAME=omni-semantic-code
+      - SERVICE_PORT=9651
+      - DATABASE_URL=postgresql+asyncpg://omni:omni@omni-postgres:5432/omni_semantic_code
+      - REDIS_URL=redis://omni-redis:6379/15
+      - LITELLM_URL=http://omni-litellm:4000
+      - QDRANT_URL=http://omni-qdrant:6333
+      - MATTERMOST_WEBHOOK_URL=http://omni-mattermost:8065/hooks/semantic-code
+      - TREE_SITTER_LANGUAGES=python,typescript,go,rust,java
+      - LOG_LEVEL=INFO
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; r = httpx.get('http://localhost:9651/health'); r.raise_for_status()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+    networks:
+      - omni-quantum-network
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - "omni.quantum.component=semantic-code-engine"
+      - "omni.quantum.tier=intelligence"
+      - "omni.quantum.critical=true"
+
+networks:
+  omni-quantum-network:
+    external: true

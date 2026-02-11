@@ -1,0 +1,57 @@
+version: '3.9'
+
+networks:
+  omni-quantum-network:
+    external: true
+
+services:
+  code-completion-tabby:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: omni-code-completion-tabby:1.0.0
+    container_name: omni-code-completion-tabby
+    env_file:
+      - ../../.env
+    environment:
+      SERVICE_NAME: code-completion-tabby
+      SERVICE_ID: '52'
+      SERVICE_PORT: '8320'
+      LOG_LEVEL: \info
+      LOG_FORMAT: json
+    ports:
+      - '8320:8320'
+    networks:
+      - omni-quantum-network
+    healthcheck:
+      test: ['CMD', 'python', '-c', "import urllib.request; urllib.request.urlopen('http://localhost:8320/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 128M
+          cpus: '0.25'
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:size=128M
+    labels:
+      omni.quantum.component: code-completion-tabby
+      omni.quantum.tier: gap-remediation
+      omni.quantum.critical: 'false'
+      omni.quantum.system: '52'
+    logging:
+      driver: json-file
+      options:
+        max-size: '50m'
+        max-file: '5'

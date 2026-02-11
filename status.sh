@@ -8,7 +8,7 @@ if ! command -v docker >/dev/null 2>&1; then
 fi
 
 echo
-for tier in foundation security development business critical high standard; do
+for tier in foundation security development business critical high standard gap-remediation; do
   echo "=== ${tier^^} TIER ==="
   docker ps -a --filter "label=omni.quantum.tier=${tier}" \
     --format '  {{.Names}} | {{.Status}} | {{.Ports}}' || true

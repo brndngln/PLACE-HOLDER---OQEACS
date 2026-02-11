@@ -1,0 +1,12 @@
+groups:
+  - name: domain-specific-intelligence.rules
+    rules:
+      - alert: System59Down
+        expr: up{job="domain-specific-intelligence"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: domain-specific-intelligence
+        annotations:
+          summary: "Domain Specific Intelligence is down"
+          description: "domain-specific-intelligence has been unreachable for 5 minutes."

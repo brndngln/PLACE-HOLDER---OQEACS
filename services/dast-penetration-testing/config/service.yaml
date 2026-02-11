@@ -1,0 +1,6 @@
+service:
+  id: 67
+  name: DAST Penetration Testing (ZAP)
+  codename: dast-penetration-testing
+  port: 8090
+  tier: gap-remediation

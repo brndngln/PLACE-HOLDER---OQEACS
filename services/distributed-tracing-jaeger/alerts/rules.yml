@@ -1,0 +1,12 @@
+groups:
+  - name: distributed-tracing-jaeger.rules
+    rules:
+      - alert: System64Down
+        expr: up{job="distributed-tracing-jaeger"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: distributed-tracing-jaeger
+        annotations:
+          summary: "Distributed Tracing (Jaeger) is down"
+          description: "distributed-tracing-jaeger has been unreachable for 5 minutes."

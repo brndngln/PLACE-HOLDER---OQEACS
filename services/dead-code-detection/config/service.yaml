@@ -1,0 +1,6 @@
+service:
+  id: 57
+  name: Dead Code Detection
+  codename: dead-code-detection
+  port: 9657
+  tier: gap-remediation

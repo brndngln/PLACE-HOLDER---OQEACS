@@ -1,0 +1,6 @@
+service:
+  id: 54
+  name: Database Design Intelligence
+  codename: database-design-intelligence
+  port: 9654
+  tier: gap-remediation

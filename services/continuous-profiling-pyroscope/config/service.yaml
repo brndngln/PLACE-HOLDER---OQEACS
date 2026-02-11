@@ -1,0 +1,6 @@
+service:
+  id: 51
+  name: Continuous Profiling (Pyroscope)
+  codename: continuous-profiling-pyroscope
+  port: 4040
+  tier: gap-remediation

@@ -1,0 +1,6 @@
+service:
+  id: 52
+  name: Code Completion (Tabby ML)
+  codename: code-completion-tabby
+  port: 8320
+  tier: gap-remediation

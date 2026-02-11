@@ -1,0 +1,43 @@
+version: "3.9"
+
+services:
+  omni-api-intelligence:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: omni-api-intelligence
+    restart: unless-stopped
+    ports:
+      - "9652:9652"
+    env_file:
+      - .env
+    networks:
+      - omni-quantum-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9652/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    labels:
+      com.omni.service: "system-48-api-intelligence"
+      com.omni.description: "Real-Time API Intelligence"
+      com.omni.port: "9652"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  omni-quantum-network:
+    external: true

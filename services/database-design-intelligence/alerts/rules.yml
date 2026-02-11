@@ -1,0 +1,12 @@
+groups:
+  - name: database-design-intelligence.rules
+    rules:
+      - alert: System54Down
+        expr: up{job="database-design-intelligence"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: database-design-intelligence
+        annotations:
+          summary: "Database Design Intelligence is down"
+          description: "database-design-intelligence has been unreachable for 5 minutes."

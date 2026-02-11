@@ -1,0 +1,6 @@
+service:
+  id: 62
+  name: Architecture Diagram Generation
+  codename: architecture-diagram-generation
+  port: 9662
+  tier: gap-remediation

@@ -1,0 +1,6 @@
+service:
+  id: 64
+  name: Distributed Tracing (Jaeger)
+  codename: distributed-tracing-jaeger
+  port: 16686
+  tier: gap-remediation

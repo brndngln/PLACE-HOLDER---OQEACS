@@ -66,7 +66,13 @@ main() {
     services/contract-testing/docker-compose.yml \
     services/chaos-testing/docker-compose.yml \
     services/ml-tracking/docker-compose.yml \
-    services/benchmarking/docker-compose.yml
+    services/benchmarking/docker-compose.yml \
+    services/distributed-tracing-jaeger/docker-compose.yml \
+    services/continuous-profiling-pyroscope/docker-compose.yml \
+    services/dast-penetration-testing/docker-compose.yml \
+    services/data-validation-framework/docker-compose.yml \
+    services/architecture-diagram-generation/docker-compose.yml \
+    services/visual-verification-agent/docker-compose.yml
 
   down_group "Group 10 - Product Suite B" \
     services/email-service/docker-compose.yml \
@@ -76,7 +82,8 @@ main() {
     services/error-tracking/docker-compose.yml \
     services/search-engine/docker-compose.yml \
     services/audit-logger/docker-compose.yml \
-    services/translation-mgmt/docker-compose.yml
+    services/translation-mgmt/docker-compose.yml \
+    services/agentic-sre-self-healing/docker-compose.yml
 
   down_group "Group 9 - Product Suite A" \
     services/deploy-engine/docker-compose.yml \
@@ -90,12 +97,17 @@ main() {
     services/context-compiler/docker-compose.yml \
     services/sourcegraph/docker-compose.yml \
     services/build-forge/docker-compose.yml \
-    services/code-forge/docker-compose.yml
+    services/code-forge/docker-compose.yml \
+    services/mutation-testing-engine/docker-compose.yml \
+    services/database-design-intelligence/docker-compose.yml \
+    services/dead-code-detection/docker-compose.yml
 
   down_group "Group 7 - Knowledge Layer" \
     services/knowledge-ingestor/docker-compose.yml \
     services/knowledge-freshness/docker-compose.yml \
-    services/semantic-cache/docker-compose.yml
+    services/semantic-cache/docker-compose.yml \
+    services/domain-specific-intelligence/docker-compose.yml \
+    services/hallucinated-dependency-protection/docker-compose.yml
 
   down_group "Group 6 - AI Runtime & Agents" \
     services/neural-network/docker-compose.yml \
@@ -103,7 +115,8 @@ main() {
     services/token-infinity/docker-compose.yml \
     services/ai-coder-alpha/docker-compose.yml \
     services/ai-coder-beta/docker-compose.yml \
-    services/ai-observability/docker-compose.yml
+    services/ai-observability/docker-compose.yml \
+    services/code-completion-tabby/docker-compose.yml
 
   down_group "Group 5 - Comms & Automation" \
     services/communication-hub/docker-compose.yml \

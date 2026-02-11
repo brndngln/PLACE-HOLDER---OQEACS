@@ -1,0 +1,12 @@
+groups:
+  - name: hallucinated-dependency-protection.rules
+    rules:
+      - alert: System72Down
+        expr: up{job="hallucinated-dependency-protection"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: hallucinated-dependency-protection
+        annotations:
+          summary: "Hallucinated Dependency Protection is down"
+          description: "hallucinated-dependency-protection has been unreachable for 5 minutes."

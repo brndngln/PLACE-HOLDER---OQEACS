@@ -1,0 +1,12 @@
+groups:
+  - name: mutation-testing-engine.rules
+    rules:
+      - alert: System46Down
+        expr: up{job="mutation-testing-engine"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: mutation-testing-engine
+        annotations:
+          summary: "Mutation Testing Engine is down"
+          description: "mutation-testing-engine has been unreachable for 5 minutes."

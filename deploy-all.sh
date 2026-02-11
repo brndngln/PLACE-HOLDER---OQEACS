@@ -131,13 +131,16 @@ main() {
     services/token-infinity/docker-compose.yml \
     services/ai-coder-alpha/docker-compose.yml \
     services/ai-coder-beta/docker-compose.yml \
-    services/ai-observability/docker-compose.yml
+    services/ai-observability/docker-compose.yml \
+    services/code-completion-tabby/docker-compose.yml
 
   # Group 7: Knowledge services
   up_group "Group 7 - Knowledge Layer" \
     services/knowledge-ingestor/docker-compose.yml \
     services/knowledge-freshness/docker-compose.yml \
-    services/semantic-cache/docker-compose.yml
+    services/semantic-cache/docker-compose.yml \
+    services/domain-specific-intelligence/docker-compose.yml \
+    services/hallucinated-dependency-protection/docker-compose.yml
 
   # Group 8: Code quality + dev infra
   up_group "Group 8 - Quality & Dev Tooling" \
@@ -146,7 +149,10 @@ main() {
     services/context-compiler/docker-compose.yml \
     services/sourcegraph/docker-compose.yml \
     services/build-forge/docker-compose.yml \
-    services/code-forge/docker-compose.yml
+    services/code-forge/docker-compose.yml \
+    services/mutation-testing-engine/docker-compose.yml \
+    services/database-design-intelligence/docker-compose.yml \
+    services/dead-code-detection/docker-compose.yml
 
   # Group 9: Coolify, Flowise, Superset, Cal.com
   up_group "Group 9 - Product Suite A" \
@@ -164,7 +170,8 @@ main() {
     services/error-tracking/docker-compose.yml \
     services/search-engine/docker-compose.yml \
     services/audit-logger/docker-compose.yml \
-    services/translation-mgmt/docker-compose.yml
+    services/translation-mgmt/docker-compose.yml \
+    services/agentic-sre-self-healing/docker-compose.yml
 
   # Group 11: Gateway/testing/ml/bench
   up_group "Group 11 - Integration & Validation" \
@@ -172,7 +179,13 @@ main() {
     services/contract-testing/docker-compose.yml \
     services/chaos-testing/docker-compose.yml \
     services/ml-tracking/docker-compose.yml \
-    services/benchmarking/docker-compose.yml
+    services/benchmarking/docker-compose.yml \
+    services/distributed-tracing-jaeger/docker-compose.yml \
+    services/continuous-profiling-pyroscope/docker-compose.yml \
+    services/dast-penetration-testing/docker-compose.yml \
+    services/data-validation-framework/docker-compose.yml \
+    services/architecture-diagram-generation/docker-compose.yml \
+    services/visual-verification-agent/docker-compose.yml
 
   # Group 12: Forms, package/admin, container mgmt
   up_group "Group 12 - Platform Ops" \

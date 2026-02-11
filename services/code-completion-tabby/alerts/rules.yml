@@ -1,0 +1,12 @@
+groups:
+  - name: code-completion-tabby.rules
+    rules:
+      - alert: System52Down
+        expr: up{job="code-completion-tabby"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: code-completion-tabby
+        annotations:
+          summary: "Code Completion (Tabby ML) is down"
+          description: "code-completion-tabby has been unreachable for 5 minutes."
