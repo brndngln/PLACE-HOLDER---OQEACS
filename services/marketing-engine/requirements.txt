@@ -25,4 +25,4 @@ beautifulsoup4==4.12.3
 markdown==3.7
 feedparser==6.0.11
 croniter==3.0.3
-pillow==11.1.0
+pillow==12.1.0

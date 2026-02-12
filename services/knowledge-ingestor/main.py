@@ -33,7 +33,7 @@ from markdownify import markdownify
 from minio import Minio
 from prometheus_client import Counter, Gauge, Histogram, generate_latest
 from pydantic import BaseModel, Field
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, PointStruct, VectorParams
 from starlette.responses import Response
