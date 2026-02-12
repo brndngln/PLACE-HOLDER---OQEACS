@@ -41,6 +41,7 @@ services:
         max-file: '5'
         tag: '{{.Name}}'
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     labels:
       prometheus.scrape: 'true'
@@ -92,6 +93,7 @@ services:
         max-file: '5'
         tag: '{{.Name}}'
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     labels:
       prometheus.scrape: 'true'
@@ -142,6 +144,7 @@ services:
         max-file: '5'
         tag: '{{.Name}}'
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     labels:
       prometheus.scrape: 'true'
@@ -195,6 +198,7 @@ services:
         max-file: '5'
         tag: '{{.Name}}'
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     labels:
       prometheus.scrape: 'true'
@@ -241,6 +245,7 @@ services:
         max-file: '5'
         tag: '{{.Name}}'
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     labels:
       omni.quantum.component: karma
@@ -291,6 +296,7 @@ services:
         max-file: '5'
         tag: '{{.Name}}'
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     labels:
       prometheus.scrape: 'true'
@@ -341,6 +347,7 @@ services:
         max-file: '5'
         tag: '{{.Name}}'
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     labels:
       prometheus.scrape: 'true'
@@ -388,6 +395,7 @@ services:
         max-file: '5'
         tag: '{{.Name}}'
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     labels:
       prometheus.scrape: 'true'

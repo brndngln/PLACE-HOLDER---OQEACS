@@ -58,6 +58,7 @@ services:
       retries: 5
       start_period: 30s
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     labels:
       omni.quantum.component: swe-agent-core
@@ -124,6 +125,7 @@ services:
       retries: 5
       start_period: 20s
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     labels:
       omni.quantum.component: swe-agent-task-handler
@@ -174,6 +176,7 @@ services:
       retries: 3
       start_period: 15s
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     labels:
       omni.quantum.component: swe-agent-issue-intake
@@ -187,6 +190,7 @@ services:
     image: ghcr.io/berriai/litellm:v1.60.8
     container_name: omni-litellm
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     profiles:
     - external
@@ -216,6 +220,7 @@ services:
     image: gitea/gitea:1.22.6
     container_name: omni-gitea
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     profiles:
     - external
@@ -245,6 +250,7 @@ services:
     image: qdrant/qdrant:v1.13.4
     container_name: omni-qdrant
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     profiles:
     - external
@@ -274,6 +280,7 @@ services:
     image: langfuse/langfuse:2.95.0
     container_name: omni-langfuse
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     profiles:
     - external
@@ -303,6 +310,7 @@ services:
     image: omni-code-scorer:1.0.0
     container_name: omni-code-scorer
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     profiles:
     - external
@@ -332,6 +340,7 @@ services:
     image: omni-gate-engine:1.0.0
     container_name: omni-gate-engine
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     profiles:
     - external
@@ -361,6 +370,7 @@ services:
     image: omni-token-infinity:1.0.0
     container_name: omni-token-infinity
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     profiles:
     - external
@@ -390,6 +400,7 @@ services:
     image: sourcegraph/server:5.5.3
     container_name: omni-sourcegraph
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     profiles:
     - external

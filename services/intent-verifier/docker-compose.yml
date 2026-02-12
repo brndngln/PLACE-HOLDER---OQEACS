@@ -4,6 +4,7 @@ services:
     image: omni-intent-verifier:1.0.0
     container_name: omni-intent-verifier
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     ports:
     - 8352:8352

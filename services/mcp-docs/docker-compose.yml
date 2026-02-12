@@ -9,6 +9,7 @@ services:
     - QDRANT_PORT=${QDRANT_PORT:-6333}
     - DOC_COLLECTION=${DOC_COLLECTION:-framework_docs}
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     ports:
     - 8328:8328

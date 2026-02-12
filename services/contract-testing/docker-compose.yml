@@ -43,6 +43,7 @@ services:
       omni.quantum.tier: business
       omni.quantum.critical: 'false'
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     deploy:
       resources:
@@ -80,6 +81,7 @@ services:
     volumes:
     - pact-postgres-data:/var/lib/postgresql/data
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     deploy:
       resources:
@@ -94,7 +96,7 @@ services:
     build: ./contract-generator
     container_name: omni-contract-generator
     ports:
-    - 9293:9293
+    - 9394:9293
     environment:
       PACT_BROKER_URL: http://omni-pact-broker:9292
       PACT_BROKER_USERNAME: ${PACT_BROKER_BASIC_AUTH_USERNAME}
@@ -121,6 +123,7 @@ services:
       omni.quantum.tier: business
       omni.quantum.critical: 'false'
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     deploy:
       resources:

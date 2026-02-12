@@ -58,6 +58,7 @@ services:
       omni.quantum.tier: foundation
       omni.quantum.critical: 'true'
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     security_opt:
     - no-new-privileges:true
@@ -114,6 +115,7 @@ services:
       omni-litellm:
         condition: service_healthy
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     security_opt:
     - no-new-privileges:true

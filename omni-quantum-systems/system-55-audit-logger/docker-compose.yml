@@ -45,6 +45,7 @@ services:
     volumes:
     - audit-buffer-data:/var/lib/audit-logger
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     deploy:
       resources:
@@ -81,6 +82,7 @@ services:
     - audit-postgres-data:/var/lib/postgresql/data
     - ./scripts/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     deploy:
       resources:

@@ -43,6 +43,8 @@ services:
       omni.quantum.tier: business
       omni.quantum.critical: "true"
 
+    networks:
+      - omni-quantum-network
   omni-invoice-collection-engine:
     <<: *financial-common
     container_name: omni-invoice-collection-engine
@@ -60,6 +62,8 @@ services:
       omni.quantum.tier: business
       omni.quantum.critical: "true"
 
+    networks:
+      - omni-quantum-network
   omni-contractor-payroll-vault:
     <<: *financial-common
     container_name: omni-contractor-payroll-vault
@@ -77,6 +81,8 @@ services:
       omni.quantum.tier: business
       omni.quantum.critical: "true"
 
+    networks:
+      - omni-quantum-network
   omni-bank-reconciliation-engine:
     <<: *financial-common
     container_name: omni-bank-reconciliation-engine
@@ -94,6 +100,8 @@ services:
       omni.quantum.tier: business
       omni.quantum.critical: "true"
 
+    networks:
+      - omni-quantum-network
   omni-expense-intelligence:
     <<: *financial-common
     container_name: omni-expense-intelligence
@@ -111,6 +119,8 @@ services:
       omni.quantum.tier: business
       omni.quantum.critical: "false"
 
+    networks:
+      - omni-quantum-network
   omni-customer-intelligence-hub:
     <<: *financial-common
     container_name: omni-customer-intelligence-hub
@@ -128,6 +138,8 @@ services:
       omni.quantum.tier: business
       omni.quantum.critical: "false"
 
+    networks:
+      - omni-quantum-network
   omni-omniscient-dashboard:
     <<: *financial-common
     container_name: omni-omniscient-dashboard
@@ -145,6 +157,8 @@ services:
       omni.quantum.tier: business
       omni.quantum.critical: "false"
 
+    networks:
+      - omni-quantum-network
   omni-neural-alert-engine:
     <<: *financial-common
     container_name: omni-neural-alert-engine
@@ -166,6 +180,8 @@ services:
       omni.quantum.tier: business
       omni.quantum.critical: "false"
 
+    networks:
+      - omni-quantum-network
   omni-financial-grafana:
     image: grafana/grafana:11.4.0
     container_name: omni-financial-grafana

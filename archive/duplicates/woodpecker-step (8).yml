@@ -1,6 +1,6 @@
 steps:
   iac-lint:
-    image: omni-iac-lint:latest
+    image: omni-iac-lint:1.0.0
     commands:
       - /app/lint.sh
     when:

@@ -9,6 +9,7 @@ services:
     - QDRANT_PORT=${QDRANT_PORT:-6333}
     - ANTI_COLLECTION=${ANTI_COLLECTION:-anti_patterns}
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     ports:
     - 8331:8331

@@ -25,6 +25,7 @@ services:
     - ingestor_workspace:/workspace
     - ingestor_temp:/tmp/ingestor
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     deploy:
       resources:

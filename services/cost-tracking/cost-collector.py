@@ -20,7 +20,7 @@ from pydantic import BaseModel
 
 logger = structlog.get_logger()
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://fortress:quantum_elite_2024@omni-postgres:5432/financial_fortress")
+DATABASE_URL = os.getenv("DATABASE_URL", "${DATABASE_URL}")
 LANGFUSE_URL = os.getenv("LANGFUSE_URL", "http://omni-langfuse:3000")
 MINIO_URL = os.getenv("MINIO_URL", "http://omni-minio:9000")
 

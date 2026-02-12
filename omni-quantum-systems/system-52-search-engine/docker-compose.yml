@@ -39,6 +39,7 @@ services:
     volumes:
     - meili_data:/meili_data
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     deploy:
       resources:
@@ -89,6 +90,7 @@ services:
       meilisearch:
         condition: service_healthy
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     deploy:
       resources:

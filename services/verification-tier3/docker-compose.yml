@@ -15,6 +15,7 @@ services:
       timeout: 5s
       retries: 3
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     deploy:
       resources:

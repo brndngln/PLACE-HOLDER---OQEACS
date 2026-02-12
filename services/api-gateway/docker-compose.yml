@@ -58,6 +58,7 @@ services:
     - kong-tmp:/tmp
     - ./developer-portal:/developer-portal:ro
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     deploy:
       resources:
@@ -95,6 +96,7 @@ services:
     volumes:
     - kong-postgres-data:/var/lib/postgresql/data
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     deploy:
       resources:

@@ -3,6 +3,7 @@ services:
     image: sourcegraph/server:5.1.6
     container_name: omni-sourcegraph-v2
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     ports:
     - 7081:7080

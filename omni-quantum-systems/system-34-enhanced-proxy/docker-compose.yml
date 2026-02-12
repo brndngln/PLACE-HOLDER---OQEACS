@@ -31,10 +31,10 @@ services:
     - --log.level=INFO
     - --ping=true
     ports:
-    - 80:80
-    - 443:443
-    - 8080:8080
-    - 8899:8899
+    - 18080:80
+    - 18443:443
+    - 18081:8080
+    - 18899:8899
     volumes:
     - /var/run/docker.sock:/var/run/docker.sock:ro
     - traefik-letsencrypt:/letsencrypt
@@ -60,6 +60,7 @@ services:
         max-file: '5'
         tag: '{{.Name}}'
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     labels:
       prometheus.scrape: 'true'
@@ -103,6 +104,7 @@ services:
         max-file: '5'
         tag: '{{.Name}}'
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     labels:
       prometheus.scrape: 'true'

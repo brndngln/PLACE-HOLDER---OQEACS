@@ -23,6 +23,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     labels:
       omni.quantum.component: nango

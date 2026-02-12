@@ -21,6 +21,7 @@ services:
       omni.quantum.tier: development
       omni.quantum.critical: 'false'
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     logging:
       driver: json-file

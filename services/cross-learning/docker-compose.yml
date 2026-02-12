@@ -2,7 +2,7 @@ services:
   cross-learning:
     build: .
     image: omni-cross-learning:1.0.0
-    container_name: cross-learning
+    container_name: omni-cross-learning
     environment:
     - QDRANT_HOST=${QDRANT_HOST:-omni-qdrant}
     - QDRANT_PORT=${QDRANT_PORT:-6333}
@@ -13,6 +13,7 @@ services:
     ports:
     - 8334:8334
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     healthcheck:
       test:

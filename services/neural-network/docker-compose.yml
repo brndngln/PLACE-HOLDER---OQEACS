@@ -29,6 +29,7 @@ services:
       timeout: 10s
       retries: 5
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     labels:
       omni.quantum.component: ollama
@@ -71,6 +72,7 @@ services:
       timeout: 10s
       retries: 3
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     labels:
       omni.quantum.component: model-manager

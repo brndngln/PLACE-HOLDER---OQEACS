@@ -50,14 +50,14 @@ steps:
       - pytest tests/unit -v --tb=short --cov=src --cov-report=term-missing
     
   sast:
-    image: returntocorp/semgrep:latest
+    image: returntocorp/semgrep:1.86.0
     group: tier2
     depends_on: [lint, typecheck, format-check]
     commands:
       - semgrep scan --config=auto --error --json --output=semgrep-results.json .
     
   secret-scan:
-    image: zricethezav/gitleaks:latest
+    image: zricethezav/gitleaks:v8.18.4
     group: tier2
     depends_on: [lint, typecheck, format-check]
     commands:
@@ -89,7 +89,7 @@ steps:
   # ═══════════════════════════════════════════════════════════════
   
   security-review:
-    image: aquasec/trivy:latest
+    image: aquasec/trivy:0.52.1
     depends_on: [integration-tests, mutation-testing]
     commands:
       - trivy fs . --severity HIGH,CRITICAL --exit-code 1
@@ -101,10 +101,10 @@ steps:
       - /var/run/docker.sock:/var/run/docker.sock
     commands:
       - docker build -t ${CI_REPO_NAME}:${CI_COMMIT_SHA:0:8} .
-      - docker tag ${CI_REPO_NAME}:${CI_COMMIT_SHA:0:8} ${CI_REPO_NAME}:latest
+      - docker tag ${CI_REPO_NAME}:${CI_COMMIT_SHA:0:8} ${CI_REPO_NAME}:${CI_COMMIT_SHA}
 
   deploy-preview:
-    image: curlimages/curl:latest
+    image: curlimages/curl:8.8.0
     depends_on: [build-image]
     commands:
       - |

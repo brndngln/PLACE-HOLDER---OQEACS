@@ -35,6 +35,7 @@ services:
     - verdaccio_conf:/verdaccio/conf
     - ./config/config.yaml:/verdaccio/conf/config.yaml:ro
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     deploy:
       resources:

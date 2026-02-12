@@ -18,6 +18,7 @@ services:
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
       MAX_CACHE_ENTRIES: ${MAX_CACHE_ENTRIES:-50000}
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     depends_on:
       omni-semantic-cache-redis:
@@ -65,6 +66,7 @@ services:
     volumes:
     - semantic_cache_redis_data:/data
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     deploy:
       resources:

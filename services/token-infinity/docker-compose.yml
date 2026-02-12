@@ -52,6 +52,7 @@ services:
       omni.quantum.tier: business
       omni.quantum.critical: 'false'
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     security_opt:
     - no-new-privileges:true
@@ -109,6 +110,7 @@ services:
       omni.quantum.tier: business
       omni.quantum.critical: 'false'
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     security_opt:
     - no-new-privileges:true

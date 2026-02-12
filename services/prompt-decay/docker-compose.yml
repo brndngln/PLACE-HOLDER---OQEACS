@@ -13,6 +13,7 @@ services:
     - GOLDEN_TESTS_FILE=${GOLDEN_TESTS_FILE:-}
     - ENABLE_SCHEDULER=${ENABLE_SCHEDULER:-true}
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     ports:
     - 8333:8333

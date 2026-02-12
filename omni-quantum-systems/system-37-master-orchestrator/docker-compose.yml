@@ -32,7 +32,7 @@ services:
       omni.quantum.tier: business
       omni.quantum.critical: 'true'
     ports:
-    - 9500:9500
+    - 19500:9500
     environment:
       ORCHESTRATOR_PORT: '9500'
       ORCHESTRATOR_HOST: 0.0.0.0
@@ -90,6 +90,7 @@ services:
     - orchestrator-data:/data
     - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     healthcheck:
       test:
@@ -126,11 +127,12 @@ services:
       omni.quantum.tier: business
       omni.quantum.critical: 'false'
     ports:
-    - 9501:9501
+    - 19501:9501
     environment:
       ORCHESTRATOR_URL: http://omni-orchestrator:9500
       DASHBOARD_PORT: '9501'
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     depends_on:
       omni-orchestrator:
@@ -174,6 +176,7 @@ services:
       MATTERMOST_TOKEN: ${MATTERMOST_BOT_TOKEN:-}
       BOT_CHANNEL: omni-control
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     depends_on:
       omni-orchestrator:
@@ -212,13 +215,14 @@ services:
       omni.quantum.tier: business
       omni.quantum.critical: 'false'
     ports:
-    - 9502:9502
+    - 19502:9502
     environment:
       ORCHESTRATOR_URL: http://omni-orchestrator:9500
       LITELLM_URL: http://omni-litellm:4000
       OMI_WEBHOOK: ${OMI_WEBHOOK_URL:-}
       VOICE_BRIDGE_PORT: '9502'
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     depends_on:
       omni-orchestrator:
@@ -262,6 +266,7 @@ services:
       MATTERMOST_WEBHOOK: ${MATTERMOST_WEBHOOK_URL:-}
       OMI_WEBHOOK: ${OMI_WEBHOOK_URL:-}
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     depends_on:
       omni-orchestrator:

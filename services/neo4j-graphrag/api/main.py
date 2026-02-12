@@ -63,7 +63,7 @@ logger = structlog.get_logger("neo4j_graphrag.pattern_query_api")
 # ---------------------------------------------------------------------------
 NEO4J_URI: str = os.getenv("NEO4J_URI", "bolt://omni-neo4j:7687")
 NEO4J_USER: str = os.getenv("NEO4J_USER", "neo4j")
-NEO4J_PASSWORD: str = os.getenv("NEO4J_PASSWORD", "quantum_elite_2024")
+NEO4J_PASSWORD: str = os.getenv("NEO4J_PASSWORD", "${NEO4J_PASSWORD}")
 
 SERVICE_NAME: str = "neo4j-graphrag-api"
 SERVICE_VERSION: str = "1.0.0"

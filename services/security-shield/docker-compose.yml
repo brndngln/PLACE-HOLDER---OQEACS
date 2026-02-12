@@ -45,6 +45,7 @@ services:
       omni.quantum.tier: development
       omni.quantum.critical: 'false'
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     security_opt:
     - no-new-privileges:true
@@ -88,6 +89,7 @@ services:
       omni-crowdsec:
         condition: service_healthy
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     security_opt:
     - no-new-privileges:true

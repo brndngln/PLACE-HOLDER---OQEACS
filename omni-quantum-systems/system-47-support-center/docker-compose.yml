@@ -59,6 +59,7 @@ services:
       chatwoot-redis:
         condition: service_healthy
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     deploy:
       resources:
@@ -113,6 +114,7 @@ services:
       chatwoot-web:
         condition: service_started
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     deploy:
       resources:
@@ -150,6 +152,7 @@ services:
     volumes:
     - chatwoot-postgres-data:/var/lib/postgresql/data
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     deploy:
       resources:
@@ -188,6 +191,7 @@ services:
     volumes:
     - chatwoot-redis-data:/data
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     deploy:
       resources:

@@ -75,6 +75,7 @@ services:
         max-file: '5'
         tag: '{{.Name}}'
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     security_opt:
     - no-new-privileges:true
@@ -131,6 +132,7 @@ services:
         max-file: '5'
         tag: '{{.Name}}'
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     security_opt:
     - no-new-privileges:true

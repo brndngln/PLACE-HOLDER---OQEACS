@@ -10,7 +10,7 @@ services:
     networks:
       - omni-quantum-network
     ports:
-      - "8325:8325"
+      - "18325:8325"
     environment:
       - SERVICE_NAME=context-compiler
       - SERVICE_PORT=8325

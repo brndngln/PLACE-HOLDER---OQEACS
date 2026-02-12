@@ -32,6 +32,7 @@ services:
       retries: 5
     restart: unless-stopped
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     labels:
       omni.quantum.component: mcp-orchestrator
@@ -78,6 +79,7 @@ services:
       retries: 5
     restart: unless-stopped
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     labels:
       omni.quantum.component: mcp-knowledge
@@ -121,6 +123,7 @@ services:
       retries: 5
     restart: unless-stopped
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     labels:
       omni.quantum.component: mcp-automation
@@ -164,6 +167,7 @@ services:
       retries: 5
     restart: unless-stopped
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     labels:
       omni.quantum.component: mcp-financial

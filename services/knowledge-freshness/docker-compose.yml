@@ -18,6 +18,7 @@ services:
     volumes:
     - ../knowledge-ingestor/config:/app/config:ro
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     deploy:
       resources:

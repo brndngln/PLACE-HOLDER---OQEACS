@@ -26,6 +26,7 @@ services:
       timeout: 5s
       retries: 3
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     labels:
       omni.quantum.component: prometheus
@@ -57,6 +58,7 @@ services:
       omni-prometheus:
         condition: service_healthy
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     labels:
       omni.quantum.component: grafana

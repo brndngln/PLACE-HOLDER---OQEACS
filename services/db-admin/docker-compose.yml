@@ -35,6 +35,7 @@ services:
     - cloudbeaver_data:/opt/cloudbeaver/workspace
     - ./saved-queries:/opt/cloudbeaver/workspace/GlobalConfiguration/.dbeaver/saved-queries:ro
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     deploy:
       resources:

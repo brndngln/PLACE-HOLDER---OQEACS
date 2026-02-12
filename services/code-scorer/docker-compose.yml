@@ -4,6 +4,7 @@ services:
     image: omni-code-scorer:1.0.0
     container_name: omni-code-scorer
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     environment:
       QDRANT_HOST: ${QDRANT_HOST:-omni-qdrant}

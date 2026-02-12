@@ -4,6 +4,7 @@ services:
     image: omni-gate-engine:1.0.0
     container_name: omni-gate-engine-v2
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     ports:
     - 8361:8351

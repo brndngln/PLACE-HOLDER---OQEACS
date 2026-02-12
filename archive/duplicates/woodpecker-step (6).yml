@@ -1,14 +1,14 @@
 ---
 kind: pipeline
-name: dependency_check
+name: arch_enforcer
 
 steps:
-  dep-checker:
+  enforce:
     image: python:3.11-slim
     pull: true
     commands:
-      - pip install astroid==3.1.0 || true
-      - python check_dependencies.py
+      - pip install --no-cache-dir PyYAML==6.0
+      - python scripts/enforce.py --rules rules.yml .
     when:
       event:
         - push

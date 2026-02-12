@@ -9,7 +9,7 @@ services:
     image: ghcr.io/bencherdev/bencher:v0.4.22
     container_name: omni-bencher
     ports:
-    - 9293:3000
+    - 9393:3000
     environment:
       BENCHER_API_TOKEN: ${BENCHER_API_TOKEN}
       BENCHER_HOST: http://omni-bencher:3000
@@ -33,6 +33,7 @@ services:
       omni.quantum.tier: business
       omni.quantum.critical: 'false'
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     deploy:
       resources:
@@ -75,6 +76,7 @@ services:
       omni.quantum.tier: business
       omni.quantum.critical: 'false'
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     deploy:
       resources:

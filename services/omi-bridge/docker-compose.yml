@@ -27,6 +27,7 @@ services:
           memory: 256M
           cpus: '0.25'
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     labels:
       omni.quantum.component: omi-bridge

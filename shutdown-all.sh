@@ -35,8 +35,7 @@ main() {
 
   # Reverse order of deploy-all groups
   down_group "Group 16 - Master Orchestrator" \
-    omni-quantum-systems/system-37-master-orchestrator/docker-compose.yml \
-    services/master-orchestrator/docker-compose.yml
+    systems/system-37-master-orchestrator/docker-compose.yml
 
   down_group "Group 15 - Omi Bridge" \
     services/omi-bridge/docker-compose.yml
@@ -52,8 +51,7 @@ main() {
     omni-quantum-systems/system-36-dev-environments/docker-compose.yml
 
   down_group "Group 13 - Financial" \
-    financial/docker-compose.yml \
-    docker-compose.yml
+    financial/docker-compose.yml
 
   down_group "Group 12 - Platform Ops" \
     services/feedback-forms/docker-compose.yml \
@@ -75,14 +73,14 @@ main() {
     services/visual-verification-agent/docker-compose.yml
 
   down_group "Group 10 - Product Suite B" \
-    services/email-service/docker-compose.yml \
-    services/support-center/docker-compose.yml \
-    services/web-analytics/docker-compose.yml \
-    services/feature-flags/docker-compose.yml \
-    services/error-tracking/docker-compose.yml \
-    services/search-engine/docker-compose.yml \
-    services/audit-logger/docker-compose.yml \
-    services/translation-mgmt/docker-compose.yml \
+    omni-quantum-systems/system-45-email-service/docker-compose.yml \
+    omni-quantum-systems/system-47-support-center/docker-compose.yml \
+    omni-quantum-systems/system-48-web-analytics/docker-compose.yml \
+    omni-quantum-systems/system-50-feature-flags/docker-compose.yml \
+    omni-quantum-systems/system-51-error-tracking/docker-compose.yml \
+    omni-quantum-systems/system-52-search-engine/docker-compose.yml \
+    omni-quantum-systems/system-55-audit-logger/docker-compose.yml \
+    omni-quantum-systems/system-58-translation-management/docker-compose.yml \
     services/agentic-sre-self-healing/docker-compose.yml
 
   down_group "Group 9 - Product Suite A" \
@@ -120,7 +118,7 @@ main() {
 
   down_group "Group 5 - Comms & Automation" \
     services/communication-hub/docker-compose.yml \
-    services/flow-architect/docker-compose.yml \
+    services/workflow-engine/docker-compose.yml \
     services/integration-hub/docker-compose.yml
 
   down_group "Group 4 - Edge/Security" \
@@ -139,8 +137,7 @@ main() {
     services/cryptographic-fortress/docker-compose.yml
 
   down_group "Group 1 - Foundation Data Plane" \
-    services/postgresql/docker-compose.yml \
-    services/redis/docker-compose.yml \
+    docker-compose.yml \
     services/object-store/docker-compose.yml
 
   log "${GREEN}Shutdown complete${NC}"

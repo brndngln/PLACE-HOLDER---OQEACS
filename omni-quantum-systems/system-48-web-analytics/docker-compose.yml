@@ -48,6 +48,7 @@ services:
     volumes:
     - plausible-data:/var/lib/plausible
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     deploy:
       resources:
@@ -83,6 +84,7 @@ services:
     volumes:
     - plausible-clickhouse-data:/var/lib/clickhouse
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     deploy:
       resources:
@@ -120,6 +122,7 @@ services:
     volumes:
     - plausible-postgres-data:/var/lib/postgresql/data
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     deploy:
       resources:

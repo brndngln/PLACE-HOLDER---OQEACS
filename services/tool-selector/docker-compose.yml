@@ -9,6 +9,7 @@ services:
     - QDRANT_PORT=${QDRANT_PORT:-6333}
     - TOOL_COLLECTION=${TOOL_COLLECTION:-tool_descriptions}
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     ports:
     - 8326:8326

@@ -43,6 +43,7 @@ services:
       tolgee-postgres:
         condition: service_healthy
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     deploy:
       resources:
@@ -80,6 +81,7 @@ services:
     volumes:
     - tolgee-postgres-data:/var/lib/postgresql/data
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     deploy:
       resources:

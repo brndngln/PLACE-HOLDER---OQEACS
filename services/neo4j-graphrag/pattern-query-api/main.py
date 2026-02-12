@@ -62,7 +62,7 @@ logger = structlog.get_logger("neo4j_graphrag.pattern_query_api_v2")
 # ---------------------------------------------------------------------------
 NEO4J_URI: str = os.getenv("NEO4J_URI", "bolt://omni-neo4j:7687")
 NEO4J_USER: str = os.getenv("NEO4J_USER", "neo4j")
-NEO4J_PASSWORD: str = os.getenv("NEO4J_PASSWORD", "quantum_elite_2024")
+NEO4J_PASSWORD: str = os.getenv("NEO4J_PASSWORD", "${NEO4J_PASSWORD}")
 LITELLM_URL: str = os.getenv("LITELLM_URL", "http://omni-litellm:4000")
 LITELLM_MODEL: str = os.getenv("LITELLM_MODEL", "gpt-4o-mini")
 

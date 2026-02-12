@@ -57,6 +57,7 @@ services:
     - listmonk-data:/listmonk/uploads
     - ./config/listmonk-config.toml:/listmonk/config.toml:ro
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     deploy:
       resources:
@@ -94,6 +95,7 @@ services:
     volumes:
     - listmonk-postgres-data:/var/lib/postgresql/data
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     deploy:
       resources:

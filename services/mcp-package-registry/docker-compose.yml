@@ -10,6 +10,7 @@ services:
     - REDIS_DB=${REDIS_DB:-0}
     - REDIS_PASSWORD=${REDIS_PASSWORD:-}
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     ports:
     - 8327:8327

@@ -47,6 +47,7 @@ services:
       glitchtip-redis:
         condition: service_healthy
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     deploy:
       resources:
@@ -89,6 +90,7 @@ services:
       omni.quantum.tier: business
       omni.quantum.critical: 'false'
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     deploy:
       resources:
@@ -126,6 +128,7 @@ services:
     volumes:
     - glitchtip-postgres-data:/var/lib/postgresql/data
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     deploy:
       resources:
@@ -160,6 +163,7 @@ services:
     volumes:
     - glitchtip-redis-data:/data
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     deploy:
       resources:

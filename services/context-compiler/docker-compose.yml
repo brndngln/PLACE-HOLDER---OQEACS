@@ -9,6 +9,7 @@ services:
     - QDRANT_PORT=${QDRANT_PORT:-6333}
     - CODE_ROOT=${CODE_ROOT:-/workspace}
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     ports:
     - 8325:8325

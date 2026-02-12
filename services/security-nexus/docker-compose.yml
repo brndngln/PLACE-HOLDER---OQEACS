@@ -28,6 +28,7 @@ services:
       omni.quantum.tier: security
       omni.quantum.critical: 'true'
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     security_opt:
     - no-new-privileges:true
@@ -63,6 +64,7 @@ services:
       omni.quantum.tier: security
       omni.quantum.critical: 'true'
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     security_opt:
     - no-new-privileges:true
@@ -133,6 +135,7 @@ services:
       omni-authentik-redis:
         condition: service_healthy
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     security_opt:
     - no-new-privileges:true
@@ -177,6 +180,7 @@ services:
       omni-authentik-redis:
         condition: service_healthy
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     healthcheck:
       test:

@@ -2,7 +2,7 @@ services:
   spec-generator:
     build: .
     image: omni-spec-generator:1.0.0
-    container_name: spec-generator
+    container_name: omni-spec-generator
     environment:
     - QDRANT_HOST=${QDRANT_HOST:-omni-qdrant}
     - QDRANT_PORT=${QDRANT_PORT:-6333}
@@ -13,6 +13,7 @@ services:
     ports:
     - 8332:8332
     networks:
+      - omni-quantum-network
     - omni-quantum-network
     healthcheck:
       test:
