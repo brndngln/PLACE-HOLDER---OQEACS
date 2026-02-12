@@ -34,21 +34,21 @@ main() {
   docker compose version >/dev/null 2>&1 || { log "${RED}docker compose plugin not found${NC}"; exit 1; }
 
   # Reverse order of deploy-all groups
-  down_group "Group 16 - Master Orchestrator" \
-    systems/system-37-master-orchestrator/docker-compose.yml
+  down_group "Group 16 - Omni Command" \
+    systems/system-37-omni-command/docker-compose.yml
 
   down_group "Group 15 - Omi Bridge" \
     services/omi-bridge/docker-compose.yml
 
   down_group "Group 14 - Enhanced Infrastructure" \
-    omni-quantum-systems/system-29-enhanced-monitoring/docker-compose.yml \
-    omni-quantum-systems/system-30-enhanced-logging/docker-compose.yml \
-    omni-quantum-systems/system-31-uptime-monitor/docker-compose.yml \
-    omni-quantum-systems/system-32-enhanced-backup/docker-compose.yml \
-    omni-quantum-systems/system-33-enhanced-secrets/docker-compose.yml \
-    omni-quantum-systems/system-34-enhanced-proxy/docker-compose.yml \
-    omni-quantum-systems/system-35-cicd-pipelines/docker-compose.yml \
-    omni-quantum-systems/system-36-dev-environments/docker-compose.yml
+    systems/system-29-pulse-command-pro/docker-compose.yml \
+    systems/system-30-log-nexus-pro/docker-compose.yml \
+    systems/system-31-guardian-eye/docker-compose.yml \
+    systems/system-32-backup-fortress-pro/docker-compose.yml \
+    systems/system-33-crypto-fortress-pro/docker-compose.yml \
+    systems/system-34-gateway-sentinel-pro/docker-compose.yml \
+    systems/system-35-build-forge/docker-compose.yml \
+    systems/system-36-code-forge/docker-compose.yml
 
   down_group "Group 13 - Financial" \
     financial/docker-compose.yml
@@ -73,14 +73,14 @@ main() {
     services/visual-verification-agent/docker-compose.yml
 
   down_group "Group 10 - Product Suite B" \
-    omni-quantum-systems/system-45-email-service/docker-compose.yml \
-    omni-quantum-systems/system-47-support-center/docker-compose.yml \
-    omni-quantum-systems/system-48-web-analytics/docker-compose.yml \
-    omni-quantum-systems/system-50-feature-flags/docker-compose.yml \
-    omni-quantum-systems/system-51-error-tracking/docker-compose.yml \
-    omni-quantum-systems/system-52-search-engine/docker-compose.yml \
-    omni-quantum-systems/system-55-audit-logger/docker-compose.yml \
-    omni-quantum-systems/system-58-translation-management/docker-compose.yml \
+    services/system-128-email-service-listmonk/docker-compose.yml \
+    services/system-129-support-center-chatwoot/docker-compose.yml \
+    services/web-analytics/docker-compose.yml \
+    services/system-131-feature-flags-unleash/docker-compose.yml \
+    services/system-132-error-tracking-glitchtip/docker-compose.yml \
+    services/system-134-search-engine-meilisearch/docker-compose.yml \
+    services/system-133-audit-logger/docker-compose.yml \
+    services/system-139-translation-management-tolgee/docker-compose.yml \
     services/agentic-sre-self-healing/docker-compose.yml
 
   down_group "Group 9 - Product Suite A" \
