@@ -9,11 +9,11 @@ services:
       POSTGRES_PASSWORD: ${AUTHENTIK_POSTGRESQL_PASSWORD}
       POSTGRES_DB: ${AUTHENTIK_POSTGRESQL_DB:-authentik}
     volumes:
-    - authentik-db-data:/var/lib/postgresql/data
+      - authentik-db-data:/var/lib/postgresql/data
     healthcheck:
       test:
-      - CMD-SHELL
-      - pg_isready -U ${AUTHENTIK_POSTGRESQL_USER:-authentik} -d ${AUTHENTIK_POSTGRESQL_DB:-authentik}
+        - CMD-SHELL
+        - pg_isready -U ${AUTHENTIK_POSTGRESQL_USER:-authentik} -d ${AUTHENTIK_POSTGRESQL_DB:-authentik}
       interval: 10s
       timeout: 5s
       retries: 5
@@ -29,11 +29,11 @@ services:
       omni.quantum.critical: 'true'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   omni-authentik-redis:
     image: redis:7-alpine
     container_name: omni-authentik-redis
@@ -43,14 +43,14 @@ services:
 
       '
     volumes:
-    - authentik-redis-data:/data
+      - authentik-redis-data:/data
     healthcheck:
       test:
-      - CMD
-      - redis-cli
-      - -a
-      - ${AUTHENTIK_REDIS_PASSWORD}
-      - ping
+        - CMD
+        - redis-cli
+        - -a
+        - ${AUTHENTIK_REDIS_PASSWORD}
+        - ping
       interval: 10s
       timeout: 5s
       retries: 5
@@ -65,11 +65,11 @@ services:
       omni.quantum.critical: 'true'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   omni-authentik:
     image: ghcr.io/goauthentik/server:2024.2
     container_name: omni-authentik
@@ -98,17 +98,17 @@ services:
       AUTHENTIK_BOOTSTRAP_TOKEN: ${AUTHENTIK_BOOTSTRAP_TOKEN}
       AUTHENTIK_BOOTSTRAP_EMAIL: ${AUTHENTIK_BOOTSTRAP_EMAIL:-admin@omni-quantum.internal}
     volumes:
-    - authentik-media:/media
-    - authentik-templates:/templates
+      - authentik-media:/media
+      - authentik-templates:/templates
     ports:
-    - 9000:9000
-    - 9443:9443
+      - 9000:9000
+      - 9443:9443
     healthcheck:
       test:
-      - CMD
-      - curl
-      - -sf
-      - http://localhost:9000/-/health/live/
+        - CMD
+        - curl
+        - -sf
+        - http://localhost:9000/-/health/live/
       interval: 15s
       timeout: 5s
       retries: 5
@@ -136,11 +136,11 @@ services:
         condition: service_healthy
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   omni-authentik-worker:
     image: ghcr.io/goauthentik/server:2024.2
     container_name: omni-authentik-worker
@@ -160,9 +160,9 @@ services:
       AUTHENTIK_LOG_LEVEL: info
       AUTHENTIK_ERROR_REPORTING__ENABLED: 'false'
     volumes:
-    - authentik-media:/media
-    - authentik-templates:/templates
-    - /var/run/docker.sock:/var/run/docker.sock:ro
+      - authentik-media:/media
+      - authentik-templates:/templates
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     deploy:
       resources:
         limits:
@@ -181,19 +181,19 @@ services:
         condition: service_healthy
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     healthcheck:
       test:
-      - CMD-SHELL
-      - exit 0
+        - CMD-SHELL
+        - exit 0
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
 volumes:
   authentik-db-data:
     driver: local

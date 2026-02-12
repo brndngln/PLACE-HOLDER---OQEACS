@@ -28,17 +28,17 @@ services:
       KONG_PROXY_ACCESS_LOG: /dev/stdout
       KONG_PROXY_ERROR_LOG: /dev/stderr
     ports:
-    - 8001:8000
-    - 8444:8444
+      - 8001:8000
+      - 8444:8444
     depends_on:
       kong-postgres:
         condition: service_healthy
     healthcheck:
       test:
-      - CMD
-      - curl
-      - -fsS
-      - http://localhost:8100/status
+        - CMD
+        - curl
+        - -fsS
+        - http://localhost:8100/status
       interval: 20s
       timeout: 10s
       retries: 6
@@ -54,21 +54,21 @@ services:
       omni.quantum.tier: business
       omni.quantum.critical: 'false'
     volumes:
-    - kong-prefix:/kong_prefix/
-    - kong-tmp:/tmp
-    - ./developer-portal:/developer-portal:ro
+      - kong-prefix:/kong_prefix/
+      - kong-tmp:/tmp
+      - ./developer-portal:/developer-portal:ro
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     deploy:
       resources:
         limits:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   kong-postgres:
     image: postgres:16-alpine
     container_name: omni-kong-postgres
@@ -78,8 +78,8 @@ services:
       POSTGRES_PASSWORD: ${KONG_PG_PASSWORD}
     healthcheck:
       test:
-      - CMD-SHELL
-      - pg_isready -U kong -d kong
+        - CMD-SHELL
+        - pg_isready -U kong -d kong
       interval: 15s
       timeout: 5s
       retries: 6
@@ -94,19 +94,19 @@ services:
       omni.quantum.tier: business
       omni.quantum.critical: 'false'
     volumes:
-    - kong-postgres-data:/var/lib/postgresql/data
+      - kong-postgres-data:/var/lib/postgresql/data
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     deploy:
       resources:
         limits:
           memory: 2G
           cpus: '2.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
 volumes:
   kong-prefix: null
   kong-tmp: null

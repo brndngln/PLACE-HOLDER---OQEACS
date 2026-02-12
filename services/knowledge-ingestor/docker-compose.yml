@@ -7,7 +7,7 @@ services:
     container_name: omni-knowledge-ingestor
     hostname: omni-knowledge-ingestor
     ports:
-    - 9420:9420
+      - 9420:9420
     environment:
       QDRANT_URL: http://omni-qdrant:6333
       LITELLM_URL: http://omni-litellm:4000
@@ -22,11 +22,11 @@ services:
       WORKSPACE_DIR: /workspace
       TEMP_DIR: /tmp/ingestor
     volumes:
-    - ingestor_workspace:/workspace
-    - ingestor_temp:/tmp/ingestor
+      - ingestor_workspace:/workspace
+      - ingestor_temp:/tmp/ingestor
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     deploy:
       resources:
         limits:
@@ -37,10 +37,10 @@ services:
           cpus: '0.25'
     healthcheck:
       test:
-      - CMD
-      - curl
-      - -f
-      - http://localhost:9420/health
+        - CMD
+        - curl
+        - -f
+        - http://localhost:9420/health
       interval: 30s
       timeout: 10s
       retries: 3
@@ -56,9 +56,9 @@ services:
         max-size: 10m
         max-file: '3'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
 volumes:
   ingestor_workspace:
     driver: local

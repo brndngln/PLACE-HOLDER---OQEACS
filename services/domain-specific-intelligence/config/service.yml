@@ -2,5 +2,5 @@ service:
   id: 59
   name: Domain Specific Intelligence
   codename: domain-specific-intelligence
-  port: 9659
+  port: 8378
   tier: gap-remediation

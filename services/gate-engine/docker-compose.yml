@@ -5,9 +5,9 @@ services:
     container_name: omni-gate-engine-v2
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     ports:
-    - 8361:8351
+      - 8351:8351
     environment:
       COVERAGE_THRESHOLD: ${COVERAGE_THRESHOLD:-80}
       COMPLEXITY_THRESHOLD: ${COMPLEXITY_THRESHOLD:-15}
@@ -16,10 +16,10 @@ services:
       DEPENDENCY_ISSUES_THRESHOLD: ${DEPENDENCY_ISSUES_THRESHOLD:-0}
     healthcheck:
       test:
-      - CMD
-      - curl
-      - -f
-      - http://localhost:8351/health
+        - CMD
+        - curl
+        - -f
+        - http://localhost:8351/health
       interval: 30s
       timeout: 5s
       retries: 3
@@ -36,9 +36,9 @@ services:
       omni.quantum.critical: 'false'
     restart: unless-stopped
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
 networks:
   omni-quantum-network:
     external: true

@@ -18,7 +18,7 @@ services:
       - --log-level
       - info
     ports:
-      - "8335:8335"
+      - "8326:8335"
     environment:
       SERVICE_NAME: ${SERVICE_NAME_ANALYSIS:-mcp-analysis}
       SERVICE_PORT: ${SERVICE_PORT_ANALYSIS:-8335}
@@ -83,7 +83,7 @@ services:
       - --log-level
       - info
     ports:
-      - "8336:8336"
+      - "8327:8336"
     environment:
       SERVICE_NAME: ${SERVICE_NAME_TEST:-mcp-test}
       SERVICE_PORT: ${SERVICE_PORT_TEST:-8336}
@@ -148,7 +148,7 @@ services:
       - --log-level
       - info
     ports:
-      - "8337:8337"
+      - "8328:8337"
     environment:
       SERVICE_NAME: ${SERVICE_NAME_DEPLOY:-mcp-deploy}
       SERVICE_PORT: ${SERVICE_PORT_DEPLOY:-8337}
@@ -214,7 +214,7 @@ services:
       - --log-level
       - info
     ports:
-      - "8338:8338"
+      - "8329:8338"
     environment:
       SERVICE_NAME: ${SERVICE_NAME_KNOWLEDGE:-mcp-knowledge}
       SERVICE_PORT: ${SERVICE_PORT_KNOWLEDGE:-8338}

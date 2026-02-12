@@ -27,7 +27,7 @@ services:
       OPA_URL: http://omni-opa:8181
       OPA_SYNC_ENABLED: ${OPA_SYNC_ENABLED:-true}
     ports:
-      - "9652:9652"
+      - "8337:9652"
     volumes:
       - policy_engine_data:/app/data
       - policy_engine_policies:/app/policies
@@ -68,8 +68,7 @@ services:
     volumes:
       - policy_engine_policies:/policies
       - ./policies:/bootstrap-policies:ro
-    ports:
-      - "8181:8181"
+    ports: []
     networks:
       - omni-quantum-network
     healthcheck:

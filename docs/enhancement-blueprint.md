@@ -817,11 +817,11 @@ Long-term capability building:
 |---------|------|---------|-----------|
 | omni-context-compiler | 8325 | Context engineering — assembles optimal LLM context | Yes |
 | omni-tabby | 8320 | Self-hosted code completion intelligence | Yes |
-| omni-freshness | 8330 | Continuous knowledge freshness monitoring | Yes |
-| omni-analysis-mcp | 8335 | MCP server for static analysis tools | Yes |
-| omni-test-mcp | 8336 | MCP server for test execution | Yes |
-| omni-deploy-mcp | 8337 | MCP server for deployment operations | Yes |
-| omni-knowledge-mcp | 8338 | MCP server for knowledge base queries | Yes |
+| omni-freshness | 8361 | Continuous knowledge freshness monitoring | Yes |
+| omni-analysis-mcp | 8326 | MCP server for static analysis tools | Yes |
+| omni-test-mcp | 8327 | MCP server for test execution | Yes |
+| omni-deploy-mcp | 8328 | MCP server for deployment operations | Yes |
+| omni-knowledge-mcp | 8329 | MCP server for knowledge base queries | Yes |
 | omni-pyroscope | 4040 | Continuous profiling | Yes |
 
 ## Updated Total Architecture

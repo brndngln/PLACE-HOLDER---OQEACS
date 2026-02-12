@@ -14,4 +14,4 @@ Run:
 docker compose -f services/data-validation-framework/docker-compose.yml up -d --build
 
 Default port:
-9668
+8382

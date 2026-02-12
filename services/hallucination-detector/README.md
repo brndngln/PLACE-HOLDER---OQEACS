@@ -4,7 +4,7 @@ System 3/14 of the Omni Quantum Elite Generation Intelligence Layer.
 
 ## Service
 - Name: `omni-hallucination-detector`
-- Port: `9622`
+- Port: `8375`
 - Critical: `true`
 
 ## Run

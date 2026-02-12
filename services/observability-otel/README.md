@@ -14,6 +14,6 @@ Infra:
 
 ## Collector
 Collector config is in `config/otel-collector.yaml` and exposes:
-- OTLP gRPC `4317`
-- OTLP HTTP `4318`
-- Health endpoint `13133` (mapped to host `9656`)
+- OTLP gRPC `9004`
+- OTLP HTTP `9005`
+- Health endpoint `13133` (mapped to host `9010`)

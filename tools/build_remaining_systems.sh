@@ -58,7 +58,7 @@ manifest=$(cat <<'MANIFEST'
 162|accessibility-testing|9797|governance|false
 164|reproducible-builds|9798|governance|false
 166|protocol-linting|9799|governance|false
-167|design-forge|9670|expansion|false
+167|design-forge|9602|expansion|false
 168|ai-image-generator|9680|expansion|false
 169|video-forge|9690|expansion|false
 MANIFEST

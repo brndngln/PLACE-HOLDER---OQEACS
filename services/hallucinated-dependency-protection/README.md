@@ -14,4 +14,4 @@ Run:
 docker compose -f services/hallucinated-dependency-protection/docker-compose.yml up -d --build
 
 Default port:
-9672
+8384

@@ -5,8 +5,8 @@ services:
     container_name: omni-neo4j
     hostname: omni-neo4j
     ports:
-    - 7474:7474
-    - 7687:7687
+      - 7474:7474
+      - 7687:7687
     environment:
       NEO4J_AUTH: neo4j/${NEO4J_PASSWORD}
       NEO4J_PLUGINS: '["apoc"]'
@@ -16,13 +16,13 @@ services:
       NEO4J_dbms_security_procedures_unrestricted: apoc.*
       NEO4J_dbms_security_procedures_allowlist: apoc.*
     volumes:
-    - neo4j_data:/data
-    - neo4j_logs:/logs
-    - neo4j_import:/var/lib/neo4j/import
-    - ./seed:/seed:ro
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+      - neo4j_import:/var/lib/neo4j/import
+      - ./seed:/seed:ro
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     deploy:
       resources:
         limits:
@@ -33,8 +33,8 @@ services:
           cpus: '0.5'
     healthcheck:
       test:
-      - CMD-SHELL
-      - cypher-shell -u neo4j -p ${NEO4J_PASSWORD} 'RETURN 1' || exit 1
+        - CMD-SHELL
+        - cypher-shell -u neo4j -p ${NEO4J_PASSWORD} 'RETURN 1' || exit 1
       interval: 30s
       timeout: 10s
       retries: 5
@@ -50,9 +50,9 @@ services:
         max-size: 10m
         max-file: '3'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   omni-neo4j-api:
     build:
       context: .
@@ -60,14 +60,14 @@ services:
     container_name: omni-neo4j-api
     hostname: omni-neo4j-api
     ports:
-    - 7475:7475
+      - 7475:7475
     environment:
       NEO4J_URI: bolt://omni-neo4j:7687
       NEO4J_USER: neo4j
       NEO4J_PASSWORD: ${NEO4J_PASSWORD}
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     depends_on:
       omni-neo4j:
         condition: service_healthy
@@ -81,10 +81,10 @@ services:
           cpus: '0.1'
     healthcheck:
       test:
-      - CMD
-      - curl
-      - -f
-      - http://localhost:7475/health
+        - CMD
+        - curl
+        - -f
+        - http://localhost:7475/health
       interval: 30s
       timeout: 10s
       retries: 3
@@ -100,9 +100,9 @@ services:
         max-size: 10m
         max-file: '3'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
 volumes:
   neo4j_data:
     driver: local

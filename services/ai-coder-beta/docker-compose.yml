@@ -7,38 +7,38 @@ services:
     container_name: omni-swe-agent-core
     restart: unless-stopped
     ports:
-    - 8002:8000
+      - 8002:8000
     environment:
-    - SERVICE_NAME=swe-agent-core
-    - SERVICE_PORT=8000
-    - SYSTEM_ID=17
-    - LOG_FORMAT=json
-    - LITELLM_BASE_URL=http://omni-litellm:4000/v1
-    - LITELLM_MODEL=kimi-dev-72b
-    - LITELLM_API_KEY=${LITELLM_API_KEY:-from_vault}
-    - TOKEN_INFINITY_URL=http://omni-token-infinity:9600
-    - CODE_SCORER_URL=http://omni-code-scorer:8080
-    - GATE_ENGINE_URL=http://omni-gate-engine:8080
-    - SOURCEGRAPH_URL=http://omni-sourcegraph:7080
-    - GITEA_URL=http://omni-gitea:3000
-    - GITEA_API_TOKEN=${GITEA_API_TOKEN:-}
-    - LANGFUSE_URL=http://omni-langfuse:3000
-    - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
-    - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-}
-    - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-http://omni-mattermost-webhook:8066}
-    - QDRANT_URL=http://omni-qdrant:6333
-    - VAULT_ADDR=http://omni-vault:8200
-    - VAULT_TOKEN=${VAULT_TOKEN:-}
-    - VAULT_ROLE_ID=${VAULT_ROLE_ID:-}
-    - VAULT_SECRET_ID=${VAULT_SECRET_ID:-}
-    - DOCKER_HOST=unix:///var/run/docker.sock
-    - SANDBOX_TIMEOUT=900
-    - SANDBOX_MEMORY_MB=4096
-    - SANDBOX_NETWORK=omni-quantum-network
-    - CONFIG_PATH=/app/config/swe-agent-config.yaml
+      - SERVICE_NAME=swe-agent-core
+      - SERVICE_PORT=8000
+      - SYSTEM_ID=17
+      - LOG_FORMAT=json
+      - LITELLM_BASE_URL=http://omni-litellm:4000/v1
+      - LITELLM_MODEL=kimi-dev-72b
+      - LITELLM_API_KEY=${LITELLM_API_KEY:-from_vault}
+      - TOKEN_INFINITY_URL=http://omni-token-infinity:9600
+      - CODE_SCORER_URL=http://omni-code-scorer:8080
+      - GATE_ENGINE_URL=http://omni-gate-engine:8080
+      - SOURCEGRAPH_URL=http://omni-sourcegraph:7080
+      - GITEA_URL=http://omni-gitea:3000
+      - GITEA_API_TOKEN=${GITEA_API_TOKEN:-}
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
+      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-}
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-http://omni-mattermost-webhook:8066}
+      - QDRANT_URL=http://omni-qdrant:6333
+      - VAULT_ADDR=http://omni-vault:8200
+      - VAULT_TOKEN=${VAULT_TOKEN:-}
+      - VAULT_ROLE_ID=${VAULT_ROLE_ID:-}
+      - VAULT_SECRET_ID=${VAULT_SECRET_ID:-}
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - SANDBOX_TIMEOUT=900
+      - SANDBOX_MEMORY_MB=4096
+      - SANDBOX_NETWORK=omni-quantum-network
+      - CONFIG_PATH=/app/config/swe-agent-config.yaml
     volumes:
-    - /var/run/docker.sock:/var/run/docker.sock
-    - ./config/swe-agent-config.yaml:/app/config/swe-agent-config.yaml:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./config/swe-agent-config.yaml:/app/config/swe-agent-config.yaml:ro
     deploy:
       resources:
         limits:
@@ -49,25 +49,25 @@ services:
           cpus: '0.5'
     healthcheck:
       test:
-      - CMD
-      - curl
-      - -f
-      - http://localhost:8000/health
+        - CMD
+        - curl
+        - -f
+        - http://localhost:8000/health
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 30s
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       omni.quantum.component: swe-agent-core
       omni.quantum.tier: development
       omni.quantum.critical: 'false'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   omni-swe-agent-task-handler:
     build:
       context: .
@@ -75,34 +75,34 @@ services:
     container_name: omni-swe-agent-task-handler
     restart: unless-stopped
     ports:
-    - 8004:8001
+      - 8004:8001
     environment:
-    - SERVICE_NAME=swe-agent-task-handler
-    - SERVICE_PORT=8001
-    - SYSTEM_ID=17
-    - LOG_FORMAT=json
-    - LITELLM_BASE_URL=http://omni-litellm:4000/v1
-    - LITELLM_MODEL=kimi-dev-72b
-    - LITELLM_API_KEY=${LITELLM_API_KEY:-from_vault}
-    - TOKEN_INFINITY_URL=http://omni-token-infinity:9600
-    - CODE_SCORER_URL=http://omni-code-scorer:8080
-    - GATE_ENGINE_URL=http://omni-gate-engine:8080
-    - SOURCEGRAPH_URL=http://omni-sourcegraph:7080
-    - GITEA_URL=http://omni-gitea:3000
-    - GITEA_API_TOKEN=${GITEA_API_TOKEN:-}
-    - LANGFUSE_URL=http://omni-langfuse:3000
-    - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
-    - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-}
-    - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-http://omni-mattermost-webhook:8066}
-    - QDRANT_URL=http://omni-qdrant:6333
-    - VAULT_ADDR=http://omni-vault:8200
-    - VAULT_TOKEN=${VAULT_TOKEN:-}
-    - MAX_CONTEXT_TOKENS=32768
-    - SANDBOX_TIMEOUT=900
-    - SANDBOX_MEMORY_MB=4096
-    - MIN_QUALITY_SCORE=7.0
+      - SERVICE_NAME=swe-agent-task-handler
+      - SERVICE_PORT=8001
+      - SYSTEM_ID=17
+      - LOG_FORMAT=json
+      - LITELLM_BASE_URL=http://omni-litellm:4000/v1
+      - LITELLM_MODEL=kimi-dev-72b
+      - LITELLM_API_KEY=${LITELLM_API_KEY:-from_vault}
+      - TOKEN_INFINITY_URL=http://omni-token-infinity:9600
+      - CODE_SCORER_URL=http://omni-code-scorer:8080
+      - GATE_ENGINE_URL=http://omni-gate-engine:8080
+      - SOURCEGRAPH_URL=http://omni-sourcegraph:7080
+      - GITEA_URL=http://omni-gitea:3000
+      - GITEA_API_TOKEN=${GITEA_API_TOKEN:-}
+      - LANGFUSE_URL=http://omni-langfuse:3000
+      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
+      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-}
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-http://omni-mattermost-webhook:8066}
+      - QDRANT_URL=http://omni-qdrant:6333
+      - VAULT_ADDR=http://omni-vault:8200
+      - VAULT_TOKEN=${VAULT_TOKEN:-}
+      - MAX_CONTEXT_TOKENS=32768
+      - SANDBOX_TIMEOUT=900
+      - SANDBOX_MEMORY_MB=4096
+      - MIN_QUALITY_SCORE=7.0
     volumes:
-    - /var/run/docker.sock:/var/run/docker.sock
+      - /var/run/docker.sock:/var/run/docker.sock
     deploy:
       resources:
         limits:
@@ -116,25 +116,25 @@ services:
         condition: service_healthy
     healthcheck:
       test:
-      - CMD
-      - curl
-      - -f
-      - http://localhost:8001/health
+        - CMD
+        - curl
+        - -f
+        - http://localhost:8001/health
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 20s
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       omni.quantum.component: swe-agent-task-handler
       omni.quantum.tier: development
       omni.quantum.critical: 'false'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   omni-swe-agent-issue-intake:
     build:
       context: .
@@ -142,18 +142,18 @@ services:
     container_name: omni-swe-agent-issue-intake
     restart: unless-stopped
     ports:
-    - 8006:8002
+      - 8006:8002
     environment:
-    - SERVICE_NAME=swe-agent-issue-intake
-    - SERVICE_PORT=8002
-    - SYSTEM_ID=17
-    - LOG_FORMAT=json
-    - TASK_HANDLER_URL=http://omni-swe-agent-task-handler:8001
-    - GITEA_URL=http://omni-gitea:3000
-    - GITEA_API_TOKEN=${GITEA_API_TOKEN:-}
-    - GITEA_WEBHOOK_SECRET=${GITEA_WEBHOOK_SECRET:-}
-    - VAULT_ADDR=http://omni-vault:8200
-    - VAULT_TOKEN=${VAULT_TOKEN:-}
+      - SERVICE_NAME=swe-agent-issue-intake
+      - SERVICE_PORT=8002
+      - SYSTEM_ID=17
+      - LOG_FORMAT=json
+      - TASK_HANDLER_URL=http://omni-swe-agent-task-handler:8001
+      - GITEA_URL=http://omni-gitea:3000
+      - GITEA_API_TOKEN=${GITEA_API_TOKEN:-}
+      - GITEA_WEBHOOK_SECRET=${GITEA_WEBHOOK_SECRET:-}
+      - VAULT_ADDR=http://omni-vault:8200
+      - VAULT_TOKEN=${VAULT_TOKEN:-}
     deploy:
       resources:
         limits:
@@ -167,41 +167,41 @@ services:
         condition: service_healthy
     healthcheck:
       test:
-      - CMD
-      - curl
-      - -f
-      - http://localhost:8002/health
+        - CMD
+        - curl
+        - -f
+        - http://localhost:8002/health
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 15s
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       omni.quantum.component: swe-agent-issue-intake
       omni.quantum.tier: development
       omni.quantum.critical: 'false'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   omni-litellm:
     image: ghcr.io/berriai/litellm:v1.60.8
     container_name: omni-litellm
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     profiles:
-    - external
+      - external
     labels:
       omni.quantum.component: litellm
       omni.quantum.tier: foundation
       omni.quantum.critical: 'true'
     healthcheck:
       test:
-      - CMD-SHELL
-      - exit 0
+        - CMD-SHELL
+        - exit 0
       interval: 30s
       timeout: 10s
       retries: 3
@@ -213,25 +213,25 @@ services:
           cpus: '2.0'
     restart: unless-stopped
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   omni-gitea:
     image: gitea/gitea:1.22.6
     container_name: omni-gitea
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     profiles:
-    - external
+      - external
     labels:
       omni.quantum.component: gitea
       omni.quantum.tier: foundation
       omni.quantum.critical: 'true'
     healthcheck:
       test:
-      - CMD-SHELL
-      - exit 0
+        - CMD-SHELL
+        - exit 0
       interval: 30s
       timeout: 10s
       retries: 3
@@ -243,25 +243,25 @@ services:
           cpus: '2.0'
     restart: unless-stopped
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   omni-qdrant:
     image: qdrant/qdrant:v1.13.4
     container_name: omni-qdrant
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     profiles:
-    - external
+      - external
     labels:
       omni.quantum.component: qdrant
       omni.quantum.tier: foundation
       omni.quantum.critical: 'true'
     healthcheck:
       test:
-      - CMD-SHELL
-      - exit 0
+        - CMD-SHELL
+        - exit 0
       interval: 30s
       timeout: 10s
       retries: 3
@@ -273,25 +273,25 @@ services:
           cpus: '2.0'
     restart: unless-stopped
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   omni-langfuse:
     image: langfuse/langfuse:2.95.0
     container_name: omni-langfuse
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     profiles:
-    - external
+      - external
     labels:
       omni.quantum.component: langfuse
       omni.quantum.tier: development
       omni.quantum.critical: 'false'
     healthcheck:
       test:
-      - CMD-SHELL
-      - exit 0
+        - CMD-SHELL
+        - exit 0
       interval: 30s
       timeout: 10s
       retries: 3
@@ -303,25 +303,25 @@ services:
           cpus: '1.0'
     restart: unless-stopped
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   omni-code-scorer:
     image: omni-code-scorer:1.0.0
     container_name: omni-code-scorer
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     profiles:
-    - external
+      - external
     labels:
       omni.quantum.component: code-scorer
       omni.quantum.tier: development
       omni.quantum.critical: 'false'
     healthcheck:
       test:
-      - CMD-SHELL
-      - exit 0
+        - CMD-SHELL
+        - exit 0
       interval: 30s
       timeout: 10s
       retries: 3
@@ -333,25 +333,25 @@ services:
           cpus: '1.0'
     restart: unless-stopped
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   omni-gate-engine:
     image: omni-gate-engine:1.0.0
     container_name: omni-gate-engine
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     profiles:
-    - external
+      - external
     labels:
       omni.quantum.component: gate-engine
       omni.quantum.tier: development
       omni.quantum.critical: 'false'
     healthcheck:
       test:
-      - CMD-SHELL
-      - exit 0
+        - CMD-SHELL
+        - exit 0
       interval: 30s
       timeout: 10s
       retries: 3
@@ -363,25 +363,25 @@ services:
           cpus: '1.0'
     restart: unless-stopped
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   omni-token-infinity:
     image: omni-token-infinity:1.0.0
     container_name: omni-token-infinity
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     profiles:
-    - external
+      - external
     labels:
       omni.quantum.component: token-infinity
       omni.quantum.tier: development
       omni.quantum.critical: 'false'
     healthcheck:
       test:
-      - CMD-SHELL
-      - exit 0
+        - CMD-SHELL
+        - exit 0
       interval: 30s
       timeout: 10s
       retries: 3
@@ -393,25 +393,25 @@ services:
           cpus: '1.0'
     restart: unless-stopped
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   omni-sourcegraph:
     image: sourcegraph/server:5.5.3
     container_name: omni-sourcegraph
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     profiles:
-    - external
+      - external
     labels:
       omni.quantum.component: sourcegraph
       omni.quantum.tier: development
       omni.quantum.critical: 'false'
     healthcheck:
       test:
-      - CMD-SHELL
-      - exit 0
+        - CMD-SHELL
+        - exit 0
       interval: 30s
       timeout: 10s
       retries: 3
@@ -423,9 +423,9 @@ services:
           cpus: '1.0'
     restart: unless-stopped
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
 networks:
   omni-quantum-network:
     external: true

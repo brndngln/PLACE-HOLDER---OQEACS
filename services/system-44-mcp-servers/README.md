@@ -7,26 +7,26 @@ analysis, test generation, deployment management, and knowledge-base lookups.
 ## Architecture
 
 ```
-Port 8335  +-----------------+   LiteLLM   +-------------+
+Port 8326  +-----------------+   LiteLLM   +-------------+
  --------->| MCP Analysis    |------------>| omni-litellm|
            +-----------------+   Qdrant    +-------------+
                                  ------->  | omni-qdrant |
-Port 8336  +-----------------+             +-------------+
+Port 8327  +-----------------+             +-------------+
  --------->| MCP Test        |------------>|
            +-----------------+             |
                                            |
-Port 8337  +-----------------+   Coolify   +-------------+
+Port 8328  +-----------------+   Coolify   +-------------+
  --------->| MCP Deploy      |------------>| omni-coolify|
            +-----------------+             +-------------+
                                            |
-Port 8338  +-----------------+   Qdrant    |
+Port 8329  +-----------------+   Qdrant    |
  --------->| MCP Knowledge   |------------>|
            +-----------------+             +-------------+
 ```
 
 ## Servers
 
-### MCP Analysis Server (port 8335)
+### MCP Analysis Server (port 8326)
 
 Container: `omni-mcp-analysis`
 
@@ -37,7 +37,7 @@ Container: `omni-mcp-analysis`
 | `measure_complexity` | AST-based cyclomatic complexity calculation (Python) |
 | `check_security` | OWASP Top 10 security audit via LLM analysis |
 
-### MCP Test Server (port 8336)
+### MCP Test Server (port 8327)
 
 Container: `omni-mcp-test`
 
@@ -48,7 +48,7 @@ Container: `omni-mcp-test`
 | `analyze_coverage` | Parse JSON, LCOV, or Cobertura coverage reports |
 | `generate_fixtures` | Create test fixtures and mock data from source code |
 
-### MCP Deploy Server (port 8337)
+### MCP Deploy Server (port 8328)
 
 Container: `omni-mcp-deploy`
 
@@ -59,7 +59,7 @@ Container: `omni-mcp-deploy`
 | `rollback_deploy` | Initiate rollback to previous deployment version |
 | `get_deploy_logs` | Retrieve deployment logs with level filtering |
 
-### MCP Knowledge Server (port 8338)
+### MCP Knowledge Server (port 8329)
 
 Container: `omni-mcp-knowledge`
 
@@ -130,16 +130,16 @@ cp .env.example .env
 docker compose up -d
 
 # Verify health
-curl http://localhost:8335/health
-curl http://localhost:8336/health
-curl http://localhost:8337/health
-curl http://localhost:8338/health
+curl http://localhost:8326/health
+curl http://localhost:8327/health
+curl http://localhost:8328/health
+curl http://localhost:8329/health
 
 # List tools from the Analysis server
-curl http://localhost:8335/api/v1/tools
+curl http://localhost:8326/api/v1/tools
 
 # Call a tool
-curl -X POST http://localhost:8335/api/v1/tools/call \
+curl -X POST http://localhost:8326/api/v1/tools/call \
   -H "Content-Type: application/json" \
   -d '{"tool_name": "measure_complexity", "arguments": {"code": "def f(x):\n  if x > 0:\n    return x\n  return -x"}}'
 ```
@@ -173,10 +173,10 @@ services/system-44-mcp-servers/
       notifications.py     Mattermost webhook helper
     mcp_servers/
       __init__.py
-      analysis.py          MCP Analysis Server  (port 8335)
-      test_server.py       MCP Test Server      (port 8336)
-      deploy.py            MCP Deploy Server    (port 8337)
-      knowledge.py         MCP Knowledge Server (port 8338)
+      analysis.py          MCP Analysis Server  (port 8326)
+      test_server.py       MCP Test Server      (port 8327)
+      deploy.py            MCP Deploy Server    (port 8328)
+      knowledge.py         MCP Knowledge Server (port 8329)
   tests/
     __init__.py
     conftest.py            Shared fixtures (async clients)

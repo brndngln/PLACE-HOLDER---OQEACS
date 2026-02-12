@@ -39,10 +39,10 @@ Task → [Proposal Phase] → [Critique Phase] → [Rebuttal Phase]
 ```bash
 cp .env.example .env
 docker compose up -d
-curl http://localhost:9650/health
+curl http://localhost:8358/health
 
 # Start a debate
-curl -X POST http://localhost:9650/api/v1/debate \
+curl -X POST http://localhost:8358/api/v1/debate \
   -H "Content-Type: application/json" \
   -d '{
     "task_description": "Implement a rate limiter using token bucket algorithm",

@@ -8,7 +8,7 @@ services:
     container_name: omni-api-intelligence
     restart: unless-stopped
     ports:
-      - "9652:9652"
+      - "8338:9652"
     env_file:
       - ../../.env
     networks:

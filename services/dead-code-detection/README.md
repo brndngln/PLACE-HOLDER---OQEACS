@@ -14,4 +14,4 @@ Run:
 docker compose -f services/dead-code-detection/docker-compose.yml up -d --build
 
 Default port:
-9657
+8376

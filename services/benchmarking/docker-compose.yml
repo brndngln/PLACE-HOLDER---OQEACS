@@ -9,16 +9,16 @@ services:
     image: ghcr.io/bencherdev/bencher:v0.4.22
     container_name: omni-bencher
     ports:
-    - 9393:3000
+      - 9393:3000
     environment:
       BENCHER_API_TOKEN: ${BENCHER_API_TOKEN}
       BENCHER_HOST: http://omni-bencher:3000
     healthcheck:
       test:
-      - CMD
-      - curl
-      - -fsS
-      - http://localhost:3000/health
+        - CMD
+        - curl
+        - -fsS
+        - http://localhost:3000/health
       interval: 20s
       timeout: 10s
       retries: 6
@@ -34,34 +34,34 @@ services:
       omni.quantum.critical: 'false'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     deploy:
       resources:
         limits:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   benchmark-runner:
     build: ./benchmark-runner
     container_name: omni-benchmark-runner
     ports:
-    - 9294:3001
+      - 9294:3001
     environment:
       BENCHER_URL: http://omni-bencher:3000
       BENCHER_API_TOKEN: ${BENCHER_API_TOKEN}
       MM_WEBHOOK: http://omni-mattermost-webhook:8066/hooks/builds
       PROM_PUSHGATEWAY: http://omni-prometheus:9090
     volumes:
-    - ./benchmark-definitions:/benchmark-definitions:ro
+      - ./benchmark-definitions:/benchmark-definitions:ro
     healthcheck:
       test:
-      - CMD
-      - curl
-      - -fsS
-      - http://localhost:3001/health
+        - CMD
+        - curl
+        - -fsS
+        - http://localhost:3001/health
       interval: 20s
       timeout: 10s
       retries: 6
@@ -77,16 +77,16 @@ services:
       omni.quantum.critical: 'false'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     deploy:
       resources:
         limits:
           memory: 256M
           cpus: '0.5'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
 networks:
   omni-quantum-network:
     external: true

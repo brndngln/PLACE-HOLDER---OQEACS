@@ -5,7 +5,7 @@ services:
     container_name: omni-sccache
     restart: unless-stopped
     ports:
-    - 4226:4226
+      - 4226:4226
     environment:
       DATABASE_URL: ${BUILD_CACHE_DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://omni-redis:6379}
@@ -19,7 +19,7 @@ services:
       omni.quantum.critical: 'false'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     logging:
       driver: json-file
       options:
@@ -27,8 +27,8 @@ services:
         max-file: '5'
     healthcheck:
       test:
-      - CMD-SHELL
-      - curl -f http://localhost:4226/health || wget -qO- http://localhost:4226/health >/dev/null || nc -z localhost 4226
+        - CMD-SHELL
+        - curl -f http://localhost:4226/health || wget -qO- http://localhost:4226/health >/dev/null || nc -z localhost 4226
       interval: 30s
       timeout: 10s
       retries: 5
@@ -39,9 +39,9 @@ services:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
 networks:
   omni-quantum-network:
     external: true

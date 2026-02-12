@@ -23,16 +23,16 @@ services:
       WOODPECKER_LOG_LEVEL: info
       WOODPECKER_PROMETHEUS_AUTH_TOKEN: ${PROMETHEUS_TOKEN}
     volumes:
-    - woodpecker-data:/var/lib/woodpecker
+      - woodpecker-data:/var/lib/woodpecker
     ports:
-    - 8000:8000
+      - 8000:8000
     healthcheck:
       test:
-      - CMD
-      - wget
-      - --spider
-      - -q
-      - http://localhost:8000/healthz
+        - CMD
+        - wget
+        - --spider
+        - -q
+        - http://localhost:8000/healthz
       interval: 15s
       timeout: 10s
       retries: 5
@@ -46,7 +46,7 @@ services:
         tag: '{{.Name}}'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       prometheus.scrape: 'true'
       prometheus.port: '8000'
@@ -59,9 +59,9 @@ services:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   woodpecker-agent-1:
     image: woodpeckerci/woodpecker-agent:v2.8.3
     container_name: omni-woodpecker-agent-1
@@ -73,12 +73,12 @@ services:
       WOODPECKER_BACKEND: docker
       DOCKER_HOST: unix:///var/run/docker.sock
     volumes:
-    - /var/run/docker.sock:/var/run/docker.sock
-    - woodpecker-agent-1-data:/workspace
+      - /var/run/docker.sock:/var/run/docker.sock
+      - woodpecker-agent-1-data:/workspace
     healthcheck:
       test:
-      - CMD-SHELL
-      - test -S /var/run/docker.sock
+        - CMD-SHELL
+        - test -S /var/run/docker.sock
       interval: 15s
       timeout: 10s
       retries: 5
@@ -92,7 +92,7 @@ services:
         tag: '{{.Name}}'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       omni.quantum.component: woodpecker-agent-1
       omni.quantum.tier: business
@@ -103,9 +103,9 @@ services:
           memory: 256M
           cpus: '0.5'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   woodpecker-agent-2:
     image: woodpeckerci/woodpecker-agent:v2.8.3
     container_name: omni-woodpecker-agent-2
@@ -117,8 +117,8 @@ services:
       WOODPECKER_BACKEND: docker
       DOCKER_HOST: unix:///var/run/docker.sock
     volumes:
-    - /var/run/docker.sock:/var/run/docker.sock
-    - woodpecker-agent-2-data:/workspace
+      - /var/run/docker.sock:/var/run/docker.sock
+      - woodpecker-agent-2-data:/workspace
     restart: unless-stopped
     logging:
       driver: json-file
@@ -128,15 +128,15 @@ services:
         tag: '{{.Name}}'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       omni.quantum.component: woodpecker-agent-2
       omni.quantum.tier: business
       omni.quantum.critical: 'false'
     healthcheck:
       test:
-      - CMD-SHELL
-      - exit 0
+        - CMD-SHELL
+        - exit 0
       interval: 30s
       timeout: 10s
       retries: 3
@@ -147,9 +147,9 @@ services:
           memory: 256M
           cpus: '0.5'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   pipeline-notifier:
     build:
       context: ./config/pipeline-notifier
@@ -164,13 +164,13 @@ services:
       COOLIFY_TOKEN: ${COOLIFY_API_TOKEN}
       REGISTRY_URL: ${DOCKER_REGISTRY_URL:-omni-registry:5000}
     ports:
-    - 8193:8193
+      - 8193:8193
     healthcheck:
       test:
-      - CMD
-      - python
-      - -c
-      - import urllib.request; urllib.request.urlopen('http://localhost:8193/health')
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:8193/health')
       interval: 15s
       timeout: 10s
       retries: 5
@@ -184,7 +184,7 @@ services:
         tag: '{{.Name}}'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       prometheus.scrape: 'true'
       prometheus.port: '8193'
@@ -197,9 +197,9 @@ services:
           memory: 256M
           cpus: '0.5'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
 volumes:
   woodpecker-data:
     driver: local

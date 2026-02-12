@@ -2,5 +2,5 @@ service:
   id: 58
   name: Agentic SRE Self-Healing
   codename: agentic-sre-self-healing
-  port: 9658
+  port: 8377
   tier: gap-remediation

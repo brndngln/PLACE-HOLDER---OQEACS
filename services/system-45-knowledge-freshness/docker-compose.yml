@@ -8,7 +8,7 @@ services:
     container_name: omni-freshness
     hostname: omni-freshness
     ports:
-      - "8330:8330"
+      - "8361:8330"
     environment:
       SERVICE_NAME: knowledge-freshness
       SERVICE_PORT: "8330"
@@ -46,7 +46,7 @@ services:
       omni.quantum.component: "knowledge-freshness"
       omni.quantum.service: "knowledge-freshness"
       omni.quantum.tier: "foundation"
-      omni.quantum.port: "8330"
+      omni.quantum.port: "8361"
     logging:
       driver: json-file
       options:

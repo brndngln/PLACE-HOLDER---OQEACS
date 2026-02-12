@@ -11,24 +11,24 @@ services:
     image: quay.io/thanos/thanos:v0.35.1
     container_name: omni-thanos-sidecar
     command:
-    - sidecar
-    - --tsdb.path=/prometheus
-    - --prometheus.url=http://omni-prometheus:9090
-    - --objstore.config-file=/etc/thanos/bucket.yml
-    - --grpc-address=0.0.0.0:10901
-    - --http-address=0.0.0.0:10902
+      - sidecar
+      - --tsdb.path=/prometheus
+      - --prometheus.url=http://omni-prometheus:9090
+      - --objstore.config-file=/etc/thanos/bucket.yml
+      - --grpc-address=0.0.0.0:10901
+      - --http-address=0.0.0.0:10902
     volumes:
-    - prometheus-data:/prometheus:ro
-    - ./config/thanos-bucket.yml:/etc/thanos/bucket.yml:ro
+      - prometheus-data:/prometheus:ro
+      - ./config/thanos-bucket.yml:/etc/thanos/bucket.yml:ro
     environment:
       TZ: UTC
     healthcheck:
       test:
-      - CMD
-      - wget
-      - --spider
-      - -q
-      - http://localhost:10902/-/healthy
+        - CMD
+        - wget
+        - --spider
+        - -q
+        - http://localhost:10902/-/healthy
       interval: 15s
       timeout: 10s
       retries: 5
@@ -42,7 +42,7 @@ services:
         tag: '{{.Name}}'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       prometheus.scrape: 'true'
       prometheus.port: '10902'
@@ -55,32 +55,32 @@ services:
           memory: 1G
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   thanos-store:
     image: quay.io/thanos/thanos:v0.35.1
     container_name: omni-thanos-store
     command:
-    - store
-    - --data-dir=/thanos/store
-    - --objstore.config-file=/etc/thanos/bucket.yml
-    - --grpc-address=0.0.0.0:10901
-    - --http-address=0.0.0.0:10902
-    - --index-cache-size=500MB
-    - --chunk-pool-size=2GB
+      - store
+      - --data-dir=/thanos/store
+      - --objstore.config-file=/etc/thanos/bucket.yml
+      - --grpc-address=0.0.0.0:10901
+      - --http-address=0.0.0.0:10902
+      - --index-cache-size=500MB
+      - --chunk-pool-size=2GB
     volumes:
-    - thanos-store-data:/thanos/store
-    - ./config/thanos-bucket.yml:/etc/thanos/bucket.yml:ro
+      - thanos-store-data:/thanos/store
+      - ./config/thanos-bucket.yml:/etc/thanos/bucket.yml:ro
     environment:
       TZ: UTC
     healthcheck:
       test:
-      - CMD
-      - wget
-      - --spider
-      - -q
-      - http://localhost:10902/-/healthy
+        - CMD
+        - wget
+        - --spider
+        - -q
+        - http://localhost:10902/-/healthy
       interval: 15s
       timeout: 10s
       retries: 5
@@ -94,7 +94,7 @@ services:
         tag: '{{.Name}}'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       prometheus.scrape: 'true'
       prometheus.port: '10902'
@@ -107,31 +107,31 @@ services:
           memory: 1G
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   thanos-query:
     image: quay.io/thanos/thanos:v0.35.1
     container_name: omni-thanos-query
     command:
-    - query
-    - --http-address=0.0.0.0:9091
-    - --grpc-address=0.0.0.0:10901
-    - --store=omni-thanos-sidecar:10901
-    - --store=omni-thanos-store:10901
-    - --query.auto-downsampling
-    - --query.partial-response
+      - query
+      - --http-address=0.0.0.0:9091
+      - --grpc-address=0.0.0.0:10901
+      - --store=omni-thanos-sidecar:10901
+      - --store=omni-thanos-store:10901
+      - --query.auto-downsampling
+      - --query.partial-response
     ports:
-    - 9091:9091
+      - 9091:9091
     environment:
       TZ: UTC
     healthcheck:
       test:
-      - CMD
-      - wget
-      - --spider
-      - -q
-      - http://localhost:9091/-/healthy
+        - CMD
+        - wget
+        - --spider
+        - -q
+        - http://localhost:9091/-/healthy
       interval: 15s
       timeout: 10s
       retries: 5
@@ -145,7 +145,7 @@ services:
         tag: '{{.Name}}'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       prometheus.scrape: 'true'
       prometheus.port: '9091'
@@ -158,34 +158,34 @@ services:
           memory: 1G
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   thanos-compactor:
     image: quay.io/thanos/thanos:v0.35.1
     container_name: omni-thanos-compactor
     command:
-    - compact
-    - --data-dir=/thanos/compact
-    - --objstore.config-file=/etc/thanos/bucket.yml
-    - --http-address=0.0.0.0:10902
-    - --retention.resolution-raw=30d
-    - --retention.resolution-5m=180d
-    - --retention.resolution-1h=365d
-    - --compact.concurrency=2
-    - --wait
+      - compact
+      - --data-dir=/thanos/compact
+      - --objstore.config-file=/etc/thanos/bucket.yml
+      - --http-address=0.0.0.0:10902
+      - --retention.resolution-raw=30d
+      - --retention.resolution-5m=180d
+      - --retention.resolution-1h=365d
+      - --compact.concurrency=2
+      - --wait
     volumes:
-    - thanos-compact-data:/thanos/compact
-    - ./config/thanos-bucket.yml:/etc/thanos/bucket.yml:ro
+      - thanos-compact-data:/thanos/compact
+      - ./config/thanos-bucket.yml:/etc/thanos/bucket.yml:ro
     environment:
       TZ: UTC
     healthcheck:
       test:
-      - CMD
-      - wget
-      - --spider
-      - -q
-      - http://localhost:10902/-/healthy
+        - CMD
+        - wget
+        - --spider
+        - -q
+        - http://localhost:10902/-/healthy
       interval: 30s
       timeout: 10s
       retries: 5
@@ -199,7 +199,7 @@ services:
         tag: '{{.Name}}'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       prometheus.scrape: 'true'
       prometheus.port: '10902'
@@ -212,9 +212,9 @@ services:
           memory: 1G
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   karma:
     image: ghcr.io/prymitive/karma:v0.120
     container_name: omni-karma
@@ -225,14 +225,14 @@ services:
       LISTEN_ADDRESS: 0.0.0.0
       LISTEN_PORT: '8180'
     ports:
-    - 8180:8180
+      - 9312:8180
     healthcheck:
       test:
-      - CMD
-      - wget
-      - --spider
-      - -q
-      - http://localhost:8180/
+        - CMD
+        - wget
+        - --spider
+        - -q
+        - http://localhost:8180/
       interval: 15s
       timeout: 10s
       retries: 5
@@ -246,7 +246,7 @@ services:
         tag: '{{.Name}}'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       omni.quantum.component: karma
       omni.quantum.tier: business
@@ -257,9 +257,9 @@ services:
           memory: 1G
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   anomaly-detector:
     build:
       context: ./config/anomaly-detector
@@ -275,15 +275,15 @@ services:
       ANOMALY_SENSITIVITY: '2.5'
       REDIS_URL: redis://omni-redis:6379/12
     volumes:
-    - anomaly-detector-data:/app/data
+      - anomaly-detector-data:/app/data
     ports:
-    - 8181:8181
+      - 9300:8181
     healthcheck:
       test:
-      - CMD
-      - python
-      - -c
-      - import urllib.request; urllib.request.urlopen('http://localhost:8181/health')
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:8181/health')
       interval: 15s
       timeout: 10s
       retries: 5
@@ -297,7 +297,7 @@ services:
         tag: '{{.Name}}'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       prometheus.scrape: 'true'
       prometheus.port: '8181'
@@ -310,9 +310,9 @@ services:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   sla-tracker:
     build:
       context: ./config/sla-tracker
@@ -326,15 +326,15 @@ services:
       MATTERMOST_WEBHOOK: ${MATTERMOST_ALERTS_WEBHOOK}
       OMI_WEBHOOK: ${OMI_WEBHOOK_URL}
     volumes:
-    - ./config/sla-tracker/sla-definitions.yml:/app/sla-definitions.yml:ro
+      - ./config/sla-tracker/sla-definitions.yml:/app/sla-definitions.yml:ro
     ports:
-    - 8182:8182
+      - 8182:8182
     healthcheck:
       test:
-      - CMD
-      - python
-      - -c
-      - import urllib.request; urllib.request.urlopen('http://localhost:8182/health')
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:8182/health')
       interval: 15s
       timeout: 10s
       retries: 5
@@ -348,7 +348,7 @@ services:
         tag: '{{.Name}}'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       prometheus.scrape: 'true'
       prometheus.port: '8182'
@@ -361,9 +361,9 @@ services:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   capacity-planner:
     build:
       context: ./config/capacity-planner
@@ -376,13 +376,13 @@ services:
       MATTERMOST_WEBHOOK: ${MATTERMOST_ALERTS_WEBHOOK}
       FORECAST_HORIZON_DAYS: '30'
     ports:
-    - 8183:8183
+      - 8183:8183
     healthcheck:
       test:
-      - CMD
-      - python
-      - -c
-      - import urllib.request; urllib.request.urlopen('http://localhost:8183/health')
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:8183/health')
       interval: 15s
       timeout: 10s
       retries: 5
@@ -396,7 +396,7 @@ services:
         tag: '{{.Name}}'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       prometheus.scrape: 'true'
       prometheus.port: '8183'
@@ -409,9 +409,9 @@ services:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
 volumes:
   prometheus-data:
     external: true

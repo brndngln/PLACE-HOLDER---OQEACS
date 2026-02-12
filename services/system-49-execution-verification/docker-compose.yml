@@ -5,7 +5,7 @@ services:
     container_name: omni-exec-verify
     restart: unless-stopped
     ports:
-      - "9653:9653"
+      - "8339:9653"
     environment:
       SERVICE_NAME: ${SERVICE_NAME:-execution-verification}
       SERVICE_PORT: ${SERVICE_PORT:-9653}

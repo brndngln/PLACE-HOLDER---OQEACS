@@ -10,13 +10,13 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
-    - omni-postgres-data:/var/lib/postgresql/data
-    - ./scripts/init-databases.sh:/docker-entrypoint-initdb.d/01-init-databases.sh:ro
-    - ./schema/financial-schema.sql:/docker-entrypoint-initdb.d/02-financial-schema.sql:ro
+      - omni-postgres-data:/var/lib/postgresql/data
+      - ./scripts/init-databases.sh:/docker-entrypoint-initdb.d/01-init-databases.sh:ro
+      - ./schema/financial-schema.sql:/docker-entrypoint-initdb.d/02-financial-schema.sql:ro
     healthcheck:
       test:
-      - CMD-SHELL
-      - pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"
+        - CMD-SHELL
+        - pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"
       interval: 30s
       timeout: 10s
       retries: 5
@@ -28,9 +28,9 @@ services:
           cpus: '2.0'
     restart: unless-stopped
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
     labels:
       omni.quantum.component: postgres
       omni.quantum.tier: foundation
@@ -42,7 +42,7 @@ services:
         max-file: '5'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
 volumes:
   omni-postgres-data: null
 networks:

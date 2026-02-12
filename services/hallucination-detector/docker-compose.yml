@@ -46,7 +46,7 @@ services:
       GITEA_URL: "http://omni-gitea:3000"
       GITEA_TOKEN: "${GITEA_TOKEN}"
     ports:
-      - "9622:9622"
+      - "8375:9622"
     volumes:
       - hallucination_detector_data:/app/data
     networks:
@@ -77,7 +77,7 @@ services:
       - "omni.quantum.system=3"
       - "omni.quantum.phase=1"
       - "omni.quantum.critical=true"
-      - "omni.quantum.port=9622"
+      - "omni.quantum.port=8375"
       - "prometheus.scrape=true"
       - "prometheus.port=9622"
       - "prometheus.path=/metrics"

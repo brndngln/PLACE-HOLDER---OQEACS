@@ -12,7 +12,7 @@ services:
     image: pactfoundation/pact-broker:2.114.0
     container_name: omni-pact-broker
     ports:
-    - 9292:9292
+      - 9292:9292
     environment:
       PACT_BROKER_DATABASE_URL: postgres://pact:${PACT_BROKER_DB_PASSWORD}@omni-pact-postgres:5432/pact
       PACT_BROKER_BASIC_AUTH_USERNAME: ${PACT_BROKER_BASIC_AUTH_USERNAME}
@@ -24,10 +24,10 @@ services:
         condition: service_healthy
     healthcheck:
       test:
-      - CMD
-      - curl
-      - -fsS
-      - http://localhost:9292/diagnostic/status/heartbeat
+        - CMD
+        - curl
+        - -fsS
+        - http://localhost:9292/diagnostic/status/heartbeat
       interval: 20s
       timeout: 10s
       retries: 5
@@ -44,16 +44,16 @@ services:
       omni.quantum.critical: 'false'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     deploy:
       resources:
         limits:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   pact-postgres:
     image: postgres:16-alpine
     container_name: omni-pact-postgres
@@ -63,8 +63,8 @@ services:
       POSTGRES_PASSWORD: ${PACT_BROKER_DB_PASSWORD}
     healthcheck:
       test:
-      - CMD-SHELL
-      - pg_isready -U pact -d pact
+        - CMD-SHELL
+        - pg_isready -U pact -d pact
       interval: 15s
       timeout: 5s
       retries: 5
@@ -79,24 +79,24 @@ services:
       omni.quantum.tier: business
       omni.quantum.critical: 'false'
     volumes:
-    - pact-postgres-data:/var/lib/postgresql/data
+      - pact-postgres-data:/var/lib/postgresql/data
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     deploy:
       resources:
         limits:
           memory: 2G
           cpus: '2.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   contract-generator:
     build: ./contract-generator
     container_name: omni-contract-generator
     ports:
-    - 9394:9293
+      - 9394:9293
     environment:
       PACT_BROKER_URL: http://omni-pact-broker:9292
       PACT_BROKER_USERNAME: ${PACT_BROKER_BASIC_AUTH_USERNAME}
@@ -105,10 +105,10 @@ services:
       AUDIT_LOGGER_URL: http://omni-audit-logger:9550
     healthcheck:
       test:
-      - CMD
-      - curl
-      - -fsS
-      - http://localhost:9293/health
+        - CMD
+        - curl
+        - -fsS
+        - http://localhost:9293/health
       interval: 20s
       timeout: 10s
       retries: 5
@@ -124,16 +124,16 @@ services:
       omni.quantum.critical: 'false'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     deploy:
       resources:
         limits:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
 volumes:
   pact-postgres-data: null
 networks:

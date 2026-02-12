@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     container_name: omni-style-learner
     ports:
-      - "9654:9654"
+      - "8335:9654"
     env_file:
       - ../../.env
     environment:

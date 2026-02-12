@@ -4,24 +4,24 @@ services:
     container_name: omni-loki
     restart: unless-stopped
     ports:
-    - 3100:3100
+      - 3100:3100
     volumes:
-    - loki-data:/loki
-    - ./config/loki-config.yml:/etc/loki/config.yml:ro
+      - loki-data:/loki
+      - ./config/loki-config.yml:/etc/loki/config.yml:ro
     command: -config.file=/etc/loki/config.yml
     healthcheck:
       test:
-      - CMD
-      - wget
-      - --spider
-      - -q
-      - http://localhost:3100/ready
+        - CMD
+        - wget
+        - --spider
+        - -q
+        - http://localhost:3100/ready
       interval: 15s
       timeout: 5s
       retries: 5
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       omni.quantum.component: loki
       omni.quantum.tier: business
@@ -32,33 +32,33 @@ services:
           memory: 1G
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   omni-promtail:
     image: grafana/promtail:3.1.0
     container_name: omni-promtail
     restart: unless-stopped
     volumes:
-    - /var/log:/var/log:ro
-    - /var/lib/docker/containers:/var/lib/docker/containers:ro
-    - /var/run/docker.sock:/var/run/docker.sock:ro
-    - ./config/promtail-config.yml:/etc/promtail/config.yml:ro
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./config/promtail-config.yml:/etc/promtail/config.yml:ro
     command: -config.file=/etc/promtail/config.yml
     depends_on:
       omni-loki:
         condition: service_healthy
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       omni.quantum.component: promtail
       omni.quantum.tier: development
       omni.quantum.critical: 'false'
     healthcheck:
       test:
-      - CMD-SHELL
-      - exit 0
+        - CMD-SHELL
+        - exit 0
       interval: 30s
       timeout: 10s
       retries: 3
@@ -69,9 +69,9 @@ services:
           memory: 1G
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
 volumes:
   loki-data:
     name: omni-loki-data

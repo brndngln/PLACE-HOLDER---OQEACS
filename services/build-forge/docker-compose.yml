@@ -19,9 +19,9 @@ services:
       WOODPECKER_LOG_LEVEL: info
       WOODPECKER_LOG_FORMAT: json
     ports:
-    - 8015:8000
+      - 8015:8000
     volumes:
-    - woodpecker-server-data:/var/lib/woodpecker
+      - woodpecker-server-data:/var/lib/woodpecker
     deploy:
       resources:
         limits:
@@ -31,8 +31,8 @@ services:
           memory: 256M
     healthcheck:
       test:
-      - CMD-SHELL
-      - wget -qO- http://localhost:8000/healthz || exit 1
+        - CMD-SHELL
+        - wget -qO- http://localhost:8000/healthz || exit 1
       interval: 15s
       timeout: 5s
       retries: 5
@@ -46,11 +46,11 @@ services:
       omni.quantum.critical: 'true'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   woodpecker-agent-1:
     image: woodpeckerci/woodpecker-agent:v2.7.1
     container_name: omni-woodpecker-agent-1
@@ -65,8 +65,8 @@ services:
       WOODPECKER_BACKEND_DOCKER_NETWORK: omni-quantum-network
       DOCKER_HOST: unix:///var/run/docker.sock
     volumes:
-    - /var/run/docker.sock:/var/run/docker.sock
-    - woodpecker-agent-1-data:/var/lib/woodpecker
+      - /var/run/docker.sock:/var/run/docker.sock
+      - woodpecker-agent-1-data:/var/lib/woodpecker
     deploy:
       resources:
         limits:
@@ -76,8 +76,8 @@ services:
           memory: 512M
     healthcheck:
       test:
-      - CMD-SHELL
-      - wget -qO- http://localhost:3000/healthz || exit 1
+        - CMD-SHELL
+        - wget -qO- http://localhost:3000/healthz || exit 1
       interval: 15s
       timeout: 5s
       retries: 5
@@ -91,11 +91,11 @@ services:
       omni.quantum.critical: 'false'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   woodpecker-agent-2:
     image: woodpeckerci/woodpecker-agent:v2.7.1
     container_name: omni-woodpecker-agent-2
@@ -113,8 +113,8 @@ services:
       DOCKER_TLS_VERIFY: '1'
       DOCKER_CERT_PATH: /certs/client
     volumes:
-    - woodpecker-agent-2-data:/var/lib/woodpecker
-    - dind-certs-client:/certs/client:ro
+      - woodpecker-agent-2-data:/var/lib/woodpecker
+      - dind-certs-client:/certs/client:ro
     deploy:
       resources:
         limits:
@@ -124,8 +124,8 @@ services:
           memory: 512M
     healthcheck:
       test:
-      - CMD-SHELL
-      - wget -qO- http://localhost:3000/healthz || exit 1
+        - CMD-SHELL
+        - wget -qO- http://localhost:3000/healthz || exit 1
       interval: 15s
       timeout: 5s
       retries: 5
@@ -141,9 +141,9 @@ services:
       omni.quantum.critical: 'false'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
   dind:
     image: docker:26-dind
     container_name: omni-woodpecker-dind
@@ -152,9 +152,9 @@ services:
     environment:
       DOCKER_TLS_CERTDIR: /certs
     volumes:
-    - dind-storage:/var/lib/docker
-    - dind-certs-ca:/certs/ca
-    - dind-certs-client:/certs/client
+      - dind-storage:/var/lib/docker
+      - dind-certs-ca:/certs/ca
+      - dind-certs-client:/certs/client
     deploy:
       resources:
         limits:
@@ -164,9 +164,9 @@ services:
           memory: 256M
     healthcheck:
       test:
-      - CMD
-      - docker
-      - info
+        - CMD
+        - docker
+        - info
       interval: 15s
       timeout: 10s
       retries: 5
@@ -177,9 +177,9 @@ services:
       omni.quantum.critical: 'false'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
   notifier:
     image: python:3.12-slim
     container_name: omni-build-forge-notifier
@@ -195,9 +195,9 @@ services:
       WOODPECKER_URL: http://omni-woodpecker-server:8000
       LANGFUSE_URL: http://omni-langfuse:3000
     ports:
-    - 8005:8001
+      - 8005:8001
     volumes:
-    - ./notifier:/app:ro
+      - ./notifier:/app:ro
     deploy:
       resources:
         limits:
@@ -207,8 +207,8 @@ services:
           memory: 128M
     healthcheck:
       test:
-      - CMD-SHELL
-      - python -c "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')" || exit 1
+        - CMD-SHELL
+        - python -c "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')" || exit 1
       interval: 15s
       timeout: 5s
       retries: 3
@@ -222,11 +222,11 @@ services:
       omni.quantum.critical: 'false'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   omni-postgres:
     image: postgres:16-alpine
     container_name: omni-postgres
@@ -236,7 +236,7 @@ services:
       POSTGRES_USER: woodpecker
       POSTGRES_PASSWORD: ${WOODPECKER_DB_PASSWORD:-password}
     volumes:
-    - postgres-data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
     deploy:
       resources:
         limits:
@@ -244,8 +244,8 @@ services:
           cpus: '2.0'
     healthcheck:
       test:
-      - CMD-SHELL
-      - pg_isready -U woodpecker -d woodpecker
+        - CMD-SHELL
+        - pg_isready -U woodpecker -d woodpecker
       interval: 10s
       timeout: 5s
       retries: 5
@@ -256,11 +256,11 @@ services:
       omni.quantum.critical: 'true'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
 volumes:
   woodpecker-server-data:
     driver: local

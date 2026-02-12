@@ -12,7 +12,7 @@ services:
     image: formbricks/formbricks:3.7.0
     container_name: omni-formbricks
     ports:
-    - 3011:3000
+      - 3011:3000
     environment:
       WEBAPP_URL: http://omni-formbricks:3000
       DATABASE_URL: postgresql://formbricks:${FORMBRICKS_DB_PASSWORD}@omni-formbricks-postgres:5432/formbricks
@@ -27,10 +27,10 @@ services:
         condition: service_healthy
     healthcheck:
       test:
-      - CMD
-      - curl
-      - -fsS
-      - http://localhost:3000/api/health
+        - CMD
+        - curl
+        - -fsS
+        - http://localhost:3000/api/health
       interval: 20s
       timeout: 10s
       retries: 8
@@ -47,16 +47,16 @@ services:
       omni.quantum.critical: 'false'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     deploy:
       resources:
         limits:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   formbricks-postgres:
     image: postgres:16-alpine
     container_name: omni-formbricks-postgres
@@ -66,8 +66,8 @@ services:
       POSTGRES_PASSWORD: ${FORMBRICKS_DB_PASSWORD}
     healthcheck:
       test:
-      - CMD-SHELL
-      - pg_isready -U formbricks -d formbricks
+        - CMD-SHELL
+        - pg_isready -U formbricks -d formbricks
       interval: 15s
       timeout: 5s
       retries: 6
@@ -82,19 +82,19 @@ services:
       omni.quantum.tier: business
       omni.quantum.critical: 'false'
     volumes:
-    - formbricks-postgres-data:/var/lib/postgresql/data
+      - formbricks-postgres-data:/var/lib/postgresql/data
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     deploy:
       resources:
         limits:
           memory: 2G
           cpus: '2.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
 volumes:
   formbricks-postgres-data: null
 networks:

@@ -12,23 +12,23 @@ services:
       CUSTOM_HOSTNAME: omni-crowdsec
       LEVEL_INFO: 'true'
     volumes:
-    - ./config/acquis.yaml:/etc/crowdsec/acquis.yaml:ro
-    - ./config/scenarios:/etc/crowdsec/scenarios:ro
-    - ./config/notifications:/etc/crowdsec/notifications:ro
-    - ./config/whitelist.yaml:/etc/crowdsec/parsers/s02-enrich/omni-whitelist.yaml:ro
-    - crowdsec-data:/var/lib/crowdsec/data
-    - crowdsec-config:/etc/crowdsec
-    - traefik-logs:/var/log/traefik:ro
-    - /var/log:/var/log/host:ro
-    - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./config/acquis.yaml:/etc/crowdsec/acquis.yaml:ro
+      - ./config/scenarios:/etc/crowdsec/scenarios:ro
+      - ./config/notifications:/etc/crowdsec/notifications:ro
+      - ./config/whitelist.yaml:/etc/crowdsec/parsers/s02-enrich/omni-whitelist.yaml:ro
+      - crowdsec-data:/var/lib/crowdsec/data
+      - crowdsec-config:/etc/crowdsec
+      - traefik-logs:/var/log/traefik:ro
+      - /var/log:/var/log/host:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
-    - 8180:8080
-    - 6060:6060
+      - 8180:8080
+      - 6060:6060
     healthcheck:
       test:
-      - CMD
-      - cscli
-      - version
+        - CMD
+        - cscli
+        - version
       interval: 30s
       timeout: 10s
       retries: 3
@@ -46,11 +46,11 @@ services:
       omni.quantum.critical: 'false'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   omni-crowdsec-bouncer:
     image: fbonalair/traefik-crowdsec-bouncer:v0.6.4
     container_name: omni-crowdsec-bouncer
@@ -62,14 +62,14 @@ services:
       GIN_MODE: release
       CROWDSEC_BOUNCER_BAN_TEMPLATE_PATH: /etc/crowdsec-bouncer/ban.html
     ports:
-    - 8078:8080
+      - 8078:8080
     healthcheck:
       test:
-      - CMD
-      - wget
-      - --spider
-      - -q
-      - http://localhost:8080/api/v1/ping
+        - CMD
+        - wget
+        - --spider
+        - -q
+        - http://localhost:8080/api/v1/ping
       interval: 15s
       timeout: 5s
       retries: 3
@@ -90,9 +90,9 @@ services:
         condition: service_healthy
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
 volumes:
   crowdsec-data:
     driver: local

@@ -12,7 +12,7 @@ services:
     container_name: omni-backup-orchestrator
     restart: unless-stopped
     ports:
-    - 8400:8000
+      - 8400:8000
     environment:
       RESTIC_PASSWORD: ${RESTIC_PASSWORD:-omni-quantum-restic-key}
       MINIO_ENDPOINT: ${MINIO_ENDPOINT:-http://omni-minio:9000}
@@ -45,14 +45,14 @@ services:
       ORCHESTRATOR_URL: ${ORCHESTRATOR_URL:-http://omni-master-orchestrator:8000}
       UPTIME_KUMA_URL: ${UPTIME_KUMA_URL:-http://omni-uptime-kuma:3001}
     volumes:
-    - /var/run/docker.sock:/var/run/docker.sock:ro
-    - backup-temp:/tmp/backups
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - backup-temp:/tmp/backups
     healthcheck:
       test:
-      - CMD
-      - curl
-      - -sf
-      - http://localhost:8000/health
+        - CMD
+        - curl
+        - -sf
+        - http://localhost:8000/health
       interval: 30s
       timeout: 10s
       retries: 3
@@ -76,11 +76,11 @@ services:
         tag: '{{.Name}}'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   restore-verifier:
     build:
       context: ./restore-verifier
@@ -88,7 +88,7 @@ services:
     container_name: omni-restore-verifier
     restart: unless-stopped
     ports:
-    - 8401:8001
+      - 8401:8001
     environment:
       RESTIC_PASSWORD: ${RESTIC_PASSWORD:-omni-quantum-restic-key}
       MINIO_ENDPOINT: ${MINIO_ENDPOINT:-http://omni-minio:9000}
@@ -102,14 +102,14 @@ services:
       VERIFY_NETWORK: ${VERIFY_NETWORK:-omni-verify-isolated}
       BACKUP_BASE_DIR: /tmp/verify-restore
     volumes:
-    - /var/run/docker.sock:/var/run/docker.sock:ro
-    - verify-temp:/tmp/verify-restore
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - verify-temp:/tmp/verify-restore
     healthcheck:
       test:
-      - CMD
-      - curl
-      - -sf
-      - http://localhost:8001/health
+        - CMD
+        - curl
+        - -sf
+        - http://localhost:8001/health
       interval: 30s
       timeout: 10s
       retries: 3
@@ -133,11 +133,11 @@ services:
         tag: '{{.Name}}'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
 volumes:
   backup-temp:
     driver: local

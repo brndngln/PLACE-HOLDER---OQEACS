@@ -867,8 +867,8 @@ omni-jaeger:
     - omni-quantum-network
   ports:
     - "16686:16686"  # UI
-    - "4317:4317"    # OTLP gRPC
-    - "4318:4318"    # OTLP HTTP
+    - "9004:4317"    # OTLP gRPC
+    - "9005:4318"    # OTLP HTTP
   environment:
     - COLLECTOR_OTLP_ENABLED=true
     - SPAN_STORAGE_TYPE=badger

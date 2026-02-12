@@ -9,13 +9,13 @@ services:
     image: verdaccio/verdaccio:5
     container_name: omni-verdaccio
     ports:
-    - 4873:4873
+      - 4873:4873
     healthcheck:
       test:
-      - CMD
-      - curl
-      - -fsS
-      - http://localhost:4873/-/ping
+        - CMD
+        - curl
+        - -fsS
+        - http://localhost:4873/-/ping
       interval: 20s
       timeout: 10s
       retries: 6
@@ -31,21 +31,21 @@ services:
       omni.quantum.tier: business
       omni.quantum.critical: 'false'
     volumes:
-    - verdaccio_data:/verdaccio/storage
-    - verdaccio_conf:/verdaccio/conf
-    - ./config/config.yaml:/verdaccio/conf/config.yaml:ro
+      - verdaccio_data:/verdaccio/storage
+      - verdaccio_conf:/verdaccio/conf
+      - ./config/config.yaml:/verdaccio/conf/config.yaml:ro
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     deploy:
       resources:
         limits:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
 volumes:
   verdaccio_data: null
   verdaccio_conf: null

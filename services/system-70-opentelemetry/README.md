@@ -3,7 +3,7 @@
 Production-grade FastAPI microservice for Omni Quantum Elite.
 
 - Container: `omni-otel-collector`
-- Port: `9670`
+- Port: `9011`
 - Network: `omni-quantum-network`
 
 ## Endpoints

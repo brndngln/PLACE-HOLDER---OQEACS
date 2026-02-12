@@ -4,27 +4,27 @@ services:
     container_name: omni-minio
     restart: unless-stopped
     ports:
-    - 9002:9000
-    - 9003:9001
+      - 9002:9000
+      - 9003:9001
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-omni-admin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-omni-minio-secret}
       MINIO_BROWSER_REDIRECT_URL: https://minio-console.${DOMAIN:-omni-quantum-quantum.local}
     volumes:
-    - minio-data:/data
+      - minio-data:/data
     command: server /data --console-address ":9001"
     healthcheck:
       test:
-      - CMD
-      - mc
-      - ready
-      - local
+        - CMD
+        - mc
+        - ready
+        - local
       interval: 15s
       timeout: 5s
       retries: 5
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       omni.quantum.component: minio
       omni.quantum.tier: foundation
@@ -35,9 +35,9 @@ services:
           memory: 2G
           cpus: '2.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
 volumes:
   minio-data:
     name: omni-minio-data

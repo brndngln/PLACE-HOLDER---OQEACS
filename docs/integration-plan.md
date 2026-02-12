@@ -42,11 +42,11 @@ These have zero dependencies. Everything else depends on them.
 | 16 | Gate Engine v2 | 8351 | — |
 | 17 | Intent Verifier | 8352 | — |
 | 18 | Context Compiler | 8325 | — |
-| 19 | Tool Selector | 8326 | — |
-| 20 | MCP Package Registry | 8327 | — |
-| 21 | MCP Docs Server | 8328 | — |
-| 22 | MCP Schema Validator | 8329 | — |
-| 23 | MCP Pipeline Orchestrator | 8330 | — |
+| 19 | Tool Selector | 8341 | — |
+| 20 | MCP Package Registry | 8342 | — |
+| 21 | MCP Docs Server | 8343 | — |
+| 22 | MCP Schema Validator | 8344 | — |
+| 23 | MCP Pipeline Orchestrator | 8345 | — |
 | 24 | Anti-Pattern Detector | 8331 | — |
 | 25 | Spec Generator | 8332 | — |
 | 26 | Prompt Decay Tracker | 8333 | — |
@@ -137,11 +137,11 @@ CODE_SCORER_URL=http://omni-code-scorer:8350
 GATE_ENGINE_URL=http://omni-gate-engine:8351
 INTENT_VERIFIER_URL=http://omni-intent-verifier:8352
 CONTEXT_COMPILER_URL=http://omni-context-compiler:8325
-TOOL_SELECTOR_URL=http://omni-tool-selector:8326
-MCP_REGISTRY_URL=http://omni-mcp-registry:8327
-MCP_DOCS_URL=http://omni-mcp-docs:8328
-MCP_SCHEMA_URL=http://omni-mcp-schema:8329
-MCP_PIPELINE_URL=http://omni-mcp-pipeline:8330
+TOOL_SELECTOR_URL=http://omni-tool-selector:8341
+MCP_REGISTRY_URL=http://omni-mcp-registry:8342
+MCP_DOCS_URL=http://omni-mcp-docs:8343
+MCP_SCHEMA_URL=http://omni-mcp-schema:8344
+MCP_PIPELINE_URL=http://omni-mcp-pipeline:8345
 ANTI_PATTERNS_URL=http://omni-anti-patterns:8331
 SPEC_GENERATOR_URL=http://omni-spec-generator:8332
 PROMPT_DECAY_URL=http://omni-prompt-decay:8333

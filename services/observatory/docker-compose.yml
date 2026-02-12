@@ -4,30 +4,30 @@ services:
     container_name: omni-prometheus
     restart: unless-stopped
     ports:
-    - 9090:9090
+      - 9090:9090
     volumes:
-    - prometheus-data:/prometheus
-    - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-    - ./config/alert-rules.yml:/etc/prometheus/alert-rules.yml:ro
+      - prometheus-data:/prometheus
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./config/alert-rules.yml:/etc/prometheus/alert-rules.yml:ro
     command:
-    - --config.file=/etc/prometheus/prometheus.yml
-    - --storage.tsdb.path=/prometheus
-    - --storage.tsdb.retention.time=30d
-    - --web.enable-lifecycle
-    - --web.enable-remote-write-receiver
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=30d
+      - --web.enable-lifecycle
+      - --web.enable-remote-write-receiver
     healthcheck:
       test:
-      - CMD
-      - wget
-      - --spider
-      - -q
-      - http://localhost:9090/-/healthy
+        - CMD
+        - wget
+        - --spider
+        - -q
+        - http://localhost:9090/-/healthy
       interval: 15s
       timeout: 5s
       retries: 3
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       omni.quantum.component: prometheus
       omni.quantum.tier: business
@@ -38,36 +38,36 @@ services:
           memory: 1G
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   omni-grafana:
     image: grafana/grafana:11.2.0
     container_name: omni-grafana
     restart: unless-stopped
     ports:
-    - 3050:3000
+      - 3050:3000
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-omni-grafana-admin}
       GF_SERVER_ROOT_URL: https://grafana.${DOMAIN:-omni-quantum-quantum.local}
       GF_AUTH_GENERIC_OAUTH_ENABLED: 'true'
     volumes:
-    - grafana-data:/var/lib/grafana
+      - grafana-data:/var/lib/grafana
     depends_on:
       omni-prometheus:
         condition: service_healthy
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       omni.quantum.component: grafana
       omni.quantum.tier: development
       omni.quantum.critical: 'true'
     healthcheck:
       test:
-      - CMD-SHELL
-      - curl -f http://localhost:3000/health || wget -qO- http://localhost:3000/health >/dev/null || nc -z localhost 3000
+        - CMD-SHELL
+        - curl -f http://localhost:3000/health || wget -qO- http://localhost:3000/health >/dev/null || nc -z localhost 3000
       interval: 30s
       timeout: 10s
       retries: 3
@@ -78,9 +78,9 @@ services:
           memory: 1G
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
 volumes:
   prometheus-data:
     name: omni-prometheus-data

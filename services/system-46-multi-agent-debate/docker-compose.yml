@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     container_name: omni-debate-engine
     ports:
-      - "9650:9650"
+      - "8358:9650"
     environment:
       - SERVICE_NAME=omni-debate-engine
       - SERVICE_PORT=9650

@@ -2,7 +2,7 @@ import httpx
 
 
 class Client:
-    def __init__(self, base_url: str = "http://localhost:9658"):
+    def __init__(self, base_url: str = "http://localhost:8377"):
         self.base_url = base_url.rstrip("/")
 
     async def health(self) -> dict:

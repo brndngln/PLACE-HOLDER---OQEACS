@@ -24,7 +24,7 @@ services:
       ATTESTATION_HMAC_KEY: ${ATTESTATION_HMAC_KEY:-change-me-in-env}
       DEFAULT_BUILDER_ID: ${DEFAULT_BUILDER_ID:-omni-build-fabric/v1}
     ports:
-      - "9653:9653"
+      - "8340:9653"
     volumes:
       - attestation_hub_data:/app/data
     networks:

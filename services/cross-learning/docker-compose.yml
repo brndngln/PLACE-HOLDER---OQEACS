@@ -4,24 +4,24 @@ services:
     image: omni-cross-learning:1.0.0
     container_name: omni-cross-learning
     environment:
-    - QDRANT_HOST=${QDRANT_HOST:-omni-qdrant}
-    - QDRANT_PORT=${QDRANT_PORT:-6333}
-    - PROVEN_COLLECTION=${PROVEN_COLLECTION:-proven_patterns}
-    - ANTI_COLLECTION=${ANTI_COLLECTION:-anti_patterns}
-    - HIGH_SCORE_THRESHOLD=${HIGH_SCORE_THRESHOLD:-9.0}
-    - LOW_SCORE_THRESHOLD=${LOW_SCORE_THRESHOLD:-6.0}
+      - QDRANT_HOST=${QDRANT_HOST:-omni-qdrant}
+      - QDRANT_PORT=${QDRANT_PORT:-6333}
+      - PROVEN_COLLECTION=${PROVEN_COLLECTION:-proven_patterns}
+      - ANTI_COLLECTION=${ANTI_COLLECTION:-anti_patterns}
+      - HIGH_SCORE_THRESHOLD=${HIGH_SCORE_THRESHOLD:-9.0}
+      - LOW_SCORE_THRESHOLD=${LOW_SCORE_THRESHOLD:-6.0}
     ports:
-    - 8334:8334
+      - 8334:8334
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     healthcheck:
       test:
-      - CMD
-      - wget
-      - --spider
-      - -q
-      - http://localhost:8334/health
+        - CMD
+        - wget
+        - --spider
+        - -q
+        - http://localhost:8334/health
       interval: 30s
       timeout: 10s
       retries: 5
@@ -42,9 +42,9 @@ services:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
 networks:
   omni-quantum-network:
     external: true

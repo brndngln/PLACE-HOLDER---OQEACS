@@ -2,5 +2,5 @@ service:
   id: 72
   name: Hallucinated Dependency Protection
   codename: hallucinated-dependency-protection
-  port: 9672
+  port: 8384
   tier: gap-remediation

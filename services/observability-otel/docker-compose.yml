@@ -24,7 +24,7 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://omni-otel-collector:4318
       OTEL_COLLECTOR_URL: http://omni-otel-collector:13133
     ports:
-      - "9651:9651"
+      - "9008:9651"
     volumes:
       - observability_otel_data:/app/data
     networks:
@@ -64,9 +64,9 @@ services:
     volumes:
       - ./config/otel-collector.yaml:/etc/otelcol-contrib/config.yaml:ro
     ports:
-      - "4317:4317"
-      - "4318:4318"
-      - "9656:13133"
+      - "9004:4317"
+      - "9005:4318"
+      - "9010:13133"
     networks:
       - omni-quantum-network
     healthcheck:

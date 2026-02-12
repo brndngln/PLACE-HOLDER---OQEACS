@@ -8,7 +8,7 @@ import httpx
 
 @dataclass
 class HallucinationDetectorClient:
-    base_url: str = "http://localhost:9622"
+    base_url: str = "http://localhost:8375"
     timeout_seconds: float = 30.0
 
     async def _request(self, method: str, path: str, json_data: dict[str, Any] | None = None) -> Any:

@@ -14,4 +14,4 @@ Run:
 docker compose -f services/agentic-sre-self-healing/docker-compose.yml up -d --build
 
 Default port:
-9658
+8377

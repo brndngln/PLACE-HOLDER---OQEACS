@@ -14,4 +14,4 @@ Run:
 docker compose -f services/architecture-diagram-generation/docker-compose.yml up -d --build
 
 Default port:
-9662
+8379

@@ -33,18 +33,18 @@ services:
       VAULT_TOKEN: ${VAULT_TOKEN}
       QDRANT_URL: http://omni-qdrant:6333
     volumes:
-    - /var/run/docker.sock:/var/run/docker.sock:ro
-    - backup-staging:/backup/staging
-    - backup-restic-cache:/root/.cache/restic
-    - ./config/backup-schedules.yml:/app/schedules.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - backup-staging:/backup/staging
+      - backup-restic-cache:/root/.cache/restic
+      - ./config/backup-schedules.yml:/app/schedules.yml:ro
     ports:
-    - 8187:8187
+      - 8187:8187
     healthcheck:
       test:
-      - CMD
-      - python
-      - -c
-      - import urllib.request; urllib.request.urlopen('http://localhost:8187/health')
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:8187/health')
       interval: 15s
       timeout: 10s
       retries: 5
@@ -58,7 +58,7 @@ services:
         tag: '{{.Name}}'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       prometheus.scrape: 'true'
       prometheus.port: '8187'
@@ -71,9 +71,9 @@ services:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   backup-verifier:
     build:
       context: ./config/backup-verifier
@@ -88,16 +88,16 @@ services:
       MATTERMOST_WEBHOOK: ${MATTERMOST_ALERTS_WEBHOOK}
       VERIFY_INTERVAL_HOURS: '24'
     volumes:
-    - backup-verify-staging:/verify/staging
-    - backup-restic-cache:/root/.cache/restic:ro
+      - backup-verify-staging:/verify/staging
+      - backup-restic-cache:/root/.cache/restic:ro
     ports:
-    - 8188:8188
+      - 8188:8188
     healthcheck:
       test:
-      - CMD
-      - python
-      - -c
-      - import urllib.request; urllib.request.urlopen('http://localhost:8188/health')
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:8188/health')
       interval: 15s
       timeout: 10s
       retries: 5
@@ -111,7 +111,7 @@ services:
         tag: '{{.Name}}'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       prometheus.scrape: 'true'
       prometheus.port: '8188'
@@ -124,9 +124,9 @@ services:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
 volumes:
   backup-staging:
     driver: local

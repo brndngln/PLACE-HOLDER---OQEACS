@@ -7,9 +7,9 @@ services:
       dockerfile: Dockerfile
     container_name: omni-otel-collector
     ports:
-      - "4317:4317"
-      - "4318:4318"
-      - "9670:9670"
+      - "9006:4317"
+      - "9007:4318"
+      - "9011:9670"
     env_file:
       - ../../.env
     environment:

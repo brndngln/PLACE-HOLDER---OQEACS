@@ -9,7 +9,7 @@ services:
     image: ghcr.io/mlflow/mlflow:v2.17.2
     container_name: omni-mlflow
     ports:
-    - 5000:5000
+      - 5000:5000
     environment:
       MLFLOW_BACKEND_STORE_URI: postgresql://mlflow:${MLFLOW_DB_PASSWORD}@omni-mlflow-postgres:5432/mlflow
       MLFLOW_DEFAULT_ARTIFACT_ROOT: s3://omni-mlflow/artifacts
@@ -23,10 +23,10 @@ services:
         condition: service_healthy
     healthcheck:
       test:
-      - CMD
-      - curl
-      - -fsS
-      - http://localhost:5000/health
+        - CMD
+        - curl
+        - -fsS
+        - http://localhost:5000/health
       interval: 20s
       timeout: 10s
       retries: 5
@@ -42,16 +42,16 @@ services:
       omni.quantum.critical: 'false'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     deploy:
       resources:
         limits:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   mlflow-postgres:
     image: postgres:16-alpine
     container_name: omni-mlflow-postgres
@@ -61,8 +61,8 @@ services:
       POSTGRES_PASSWORD: ${MLFLOW_DB_PASSWORD}
     healthcheck:
       test:
-      - CMD-SHELL
-      - pg_isready -U mlflow -d mlflow
+        - CMD-SHELL
+        - pg_isready -U mlflow -d mlflow
       interval: 15s
       timeout: 5s
       retries: 5
@@ -77,34 +77,34 @@ services:
       omni.quantum.tier: business
       omni.quantum.critical: 'false'
     volumes:
-    - mlflow-postgres-data:/var/lib/postgresql/data
+      - mlflow-postgres-data:/var/lib/postgresql/data
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     deploy:
       resources:
         limits:
           memory: 2G
           cpus: '2.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   experiment-tracker:
     build: ./experiment-tracker
     container_name: omni-experiment-tracker
     ports:
-    - 5001:5001
+      - 5001:5001
     environment:
       MLFLOW_TRACKING_URI: http://omni-mlflow:5000
       MM_WEBHOOK: http://omni-mattermost-webhook:8066/hooks/quality
       AUDIT_LOGGER_URL: http://omni-audit-logger:9550
     healthcheck:
       test:
-      - CMD
-      - curl
-      - -fsS
-      - http://localhost:5001/health
+        - CMD
+        - curl
+        - -fsS
+        - http://localhost:5001/health
       interval: 20s
       timeout: 10s
       retries: 5
@@ -120,16 +120,16 @@ services:
       omni.quantum.critical: 'false'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     deploy:
       resources:
         limits:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
 volumes:
   mlflow-postgres-data: null
 networks:

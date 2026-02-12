@@ -3,7 +3,7 @@
 Production-grade FastAPI microservice for Omni Quantum Elite.
 
 - Container: `omni-perf-eng`
-- Port: `9656`
+- Port: `8357`
 - Network: `omni-quantum-network`
 
 ## Endpoints

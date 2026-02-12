@@ -4,24 +4,24 @@ services:
     container_name: omni-portainer
     restart: unless-stopped
     ports:
-    - 9444:9443
-    - 9004:9000
+      - 9444:9443
+      - 9026:9000
     volumes:
-    - /var/run/docker.sock:/var/run/docker.sock
-    - portainer-data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer-data:/data
     healthcheck:
       test:
-      - CMD
-      - wget
-      - --spider
-      - -q
-      - http://localhost:9000/api/system/status
+        - CMD
+        - wget
+        - --spider
+        - -q
+        - http://localhost:9000/api/system/status
       interval: 30s
       timeout: 5s
       retries: 3
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       omni.quantum.component: portainer
       omni.quantum.tier: business
@@ -32,9 +32,9 @@ services:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
 volumes:
   portainer-data:
     name: omni-portainer-data

@@ -4,14 +4,14 @@ services:
     build: .
     container_name: omni-mcp-orchestrator
     command:
-    - uvicorn
-    - orchestrator-mcp.main:app
-    - --host
-    - 0.0.0.0
-    - --port
-    - '8335'
+      - uvicorn
+      - orchestrator-mcp.main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - '8335'
     ports:
-    - 8335:8335
+      - 8346:8335
     environment:
       VAULT_URL: http://omni-vault:8200
       ORCHESTRATOR_URL: http://omni-orchestrator:9500
@@ -23,17 +23,17 @@ services:
       MATTERMOST_WEBHOOK_URL: http://omni-mattermost-webhook:8066/hooks/builds
     healthcheck:
       test:
-      - CMD
-      - curl
-      - -f
-      - http://localhost:8335/health
+        - CMD
+        - curl
+        - -f
+        - http://localhost:8335/health
       interval: 20s
       timeout: 10s
       retries: 5
     restart: unless-stopped
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       omni.quantum.component: mcp-orchestrator
       omni.quantum.tier: development
@@ -44,21 +44,21 @@ services:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   mcp-knowledge:
     build: .
     container_name: omni-mcp-knowledge
     command:
-    - uvicorn
-    - knowledge-mcp.main:app
-    - --host
-    - 0.0.0.0
-    - --port
-    - '8336'
+      - uvicorn
+      - knowledge-mcp.main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - '8336'
     ports:
-    - 8336:8336
+      - 8347:8336
     environment:
       VAULT_URL: http://omni-vault:8200
       QDRANT_URL: http://omni-qdrant:6333
@@ -70,17 +70,17 @@ services:
       AUDIT_LOGGER_URL: http://omni-audit-logger:9550
     healthcheck:
       test:
-      - CMD
-      - curl
-      - -f
-      - http://localhost:8336/health
+        - CMD
+        - curl
+        - -f
+        - http://localhost:8336/health
       interval: 20s
       timeout: 10s
       retries: 5
     restart: unless-stopped
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       omni.quantum.component: mcp-knowledge
       omni.quantum.tier: development
@@ -91,21 +91,21 @@ services:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   mcp-automation:
     build: .
     container_name: omni-mcp-automation
     command:
-    - uvicorn
-    - automation-mcp.main:app
-    - --host
-    - 0.0.0.0
-    - --port
-    - '8337'
+      - uvicorn
+      - automation-mcp.main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - '8337'
     ports:
-    - 8337:8337
+      - 8348:8337
     environment:
       VAULT_URL: http://omni-vault:8200
       N8N_URL: http://omni-n8n:5678
@@ -114,17 +114,17 @@ services:
       AUDIT_LOGGER_URL: http://omni-audit-logger:9550
     healthcheck:
       test:
-      - CMD
-      - curl
-      - -f
-      - http://localhost:8337/health
+        - CMD
+        - curl
+        - -f
+        - http://localhost:8337/health
       interval: 20s
       timeout: 10s
       retries: 5
     restart: unless-stopped
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       omni.quantum.component: mcp-automation
       omni.quantum.tier: development
@@ -135,21 +135,21 @@ services:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   mcp-financial:
     build: .
     container_name: omni-mcp-financial
     command:
-    - uvicorn
-    - financial-mcp.main:app
-    - --host
-    - 0.0.0.0
-    - --port
-    - '8338'
+      - uvicorn
+      - financial-mcp.main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - '8338'
     ports:
-    - 8338:8338
+      - 8349:8338
     environment:
       VAULT_URL: http://omni-vault:8200
       CRM_SYNC_URL: http://omni-crm-sync:3001
@@ -158,17 +158,17 @@ services:
       AUDIT_LOGGER_URL: http://omni-audit-logger:9550
     healthcheck:
       test:
-      - CMD
-      - curl
-      - -f
-      - http://localhost:8338/health
+        - CMD
+        - curl
+        - -f
+        - http://localhost:8338/health
       interval: 20s
       timeout: 10s
       retries: 5
     restart: unless-stopped
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       omni.quantum.component: mcp-financial
       omni.quantum.tier: development
@@ -179,9 +179,9 @@ services:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
 networks:
   omni-quantum-network:
     external: true

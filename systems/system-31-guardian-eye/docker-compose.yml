@@ -12,13 +12,13 @@ services:
       TZ: UTC
       UPTIME_KUMA_PORT: '3001'
     volumes:
-    - uptime-kuma-data:/app/data
+      - uptime-kuma-data:/app/data
     ports:
-    - 3001:3001
+      - 3001:3001
     healthcheck:
       test:
-      - CMD-SHELL
-      - 'node -e "const http = require(''http''); const req = http.request({hostname: ''localhost'', port: 3001, path: ''/api/health'',
+        - CMD-SHELL
+        - 'node -e "const http = require(''http''); const req = http.request({hostname: ''localhost'', port: 3001, path: ''/api/health'',
         method: ''GET''}, (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }); req.on(''error'', () => process.exit(1));
         req.end();"'
       interval: 15s
@@ -34,7 +34,7 @@ services:
         tag: '{{.Name}}'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       omni.quantum.component: uptime-kuma
       omni.quantum.tier: business
@@ -45,9 +45,9 @@ services:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   uptime-webhook-relay:
     build:
       context: ./config/webhook-relay
@@ -59,13 +59,13 @@ services:
       OMI_WEBHOOK: ${OMI_WEBHOOK_URL}
       LISTEN_PORT: '8186'
     ports:
-    - 8186:8186
+      - 8186:8186
     healthcheck:
       test:
-      - CMD
-      - python
-      - -c
-      - import urllib.request; urllib.request.urlopen('http://localhost:8186/health')
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:8186/health')
       interval: 15s
       timeout: 10s
       retries: 5
@@ -79,7 +79,7 @@ services:
         tag: '{{.Name}}'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       prometheus.scrape: 'true'
       prometheus.port: '8186'
@@ -92,9 +92,9 @@ services:
           memory: 256M
           cpus: '0.5'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
 volumes:
   uptime-kuma-data:
     driver: local

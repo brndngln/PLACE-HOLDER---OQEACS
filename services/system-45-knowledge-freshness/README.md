@@ -1,6 +1,6 @@
 # System 45 - Knowledge Freshness Service
 
-**Container:** `omni-freshness` | **Port:** `8330` | **Tier:** CRITICAL
+**Container:** `omni-freshness` | **Port:** `8361` | **Tier:** CRITICAL
 
 Monitors the software ecosystem for breaking changes, deprecations, security advisories, and best practices. Scores relevance with AI via LiteLLM, stores high-value updates in Qdrant for retrieval-augmented generation, and alerts the team through Mattermost.
 
@@ -23,7 +23,7 @@ Monitors the software ecosystem for breaking changes, deprecations, security adv
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `SERVICE_NAME` | `knowledge-freshness` | Service identifier |
-| `SERVICE_PORT` | `8330` | HTTP port |
+| `SERVICE_PORT` | `8361` | HTTP port |
 | `DATABASE_URL` | `postgresql+asyncpg://omni:omni@omni-postgres:5432/omni_freshness` | PostgreSQL connection string |
 | `REDIS_URL` | `redis://omni-redis:6379/10` | Redis connection string |
 | `QDRANT_URL` | `http://omni-qdrant:6333` | Qdrant vector store URL |
@@ -88,10 +88,10 @@ cp .env.example .env
 docker compose up --build -d
 
 # Check health
-curl http://localhost:8330/health
+curl http://localhost:8361/health
 
 # Trigger a manual scan
-curl -X POST http://localhost:8330/api/v1/updates/scan
+curl -X POST http://localhost:8361/api/v1/updates/scan
 ```
 
 ## Running Tests

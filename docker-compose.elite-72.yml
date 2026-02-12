@@ -18,8 +18,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9851:9851'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9851/health']
       interval: 30s
@@ -65,8 +64,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9852:9852'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9852/health']
       interval: 30s
@@ -112,8 +110,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9853:9853'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9853/health']
       interval: 30s
@@ -159,8 +156,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9854:9854'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9854/health']
       interval: 30s
@@ -206,8 +202,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9855:9855'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9855/health']
       interval: 30s
@@ -253,8 +248,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9856:9856'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9856/health']
       interval: 30s
@@ -300,8 +294,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9857:9857'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9857/health']
       interval: 30s
@@ -347,8 +340,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9801:9801'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9801/health']
       interval: 30s
@@ -394,8 +386,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9802:9802'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9802/health']
       interval: 30s
@@ -441,8 +432,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9803:9803'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9803/health']
       interval: 30s
@@ -488,8 +478,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9804:9804'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9804/health']
       interval: 30s
@@ -535,8 +524,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9805:9805'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9805/health']
       interval: 30s
@@ -582,8 +570,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9806:9806'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9806/health']
       interval: 30s
@@ -629,8 +616,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9807:9807'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9807/health']
       interval: 30s
@@ -676,8 +662,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9808:9808'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9808/health']
       interval: 30s
@@ -723,8 +708,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9821:9821'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9821/health']
       interval: 30s
@@ -770,8 +754,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9822:9822'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9822/health']
       interval: 30s
@@ -817,8 +800,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9823:9823'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9823/health']
       interval: 30s
@@ -864,8 +846,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9824:9824'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9824/health']
       interval: 30s
@@ -911,8 +892,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9825:9825'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9825/health']
       interval: 30s
@@ -958,8 +938,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9826:9826'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9826/health']
       interval: 30s
@@ -1005,8 +984,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9827:9827'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9827/health']
       interval: 30s
@@ -1052,8 +1030,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9828:9828'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9828/health']
       interval: 30s
@@ -1099,8 +1076,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9841:9841'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9841/health']
       interval: 30s
@@ -1146,8 +1122,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9842:9842'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9842/health']
       interval: 30s
@@ -1193,8 +1168,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9843:9843'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9843/health']
       interval: 30s
@@ -1240,8 +1214,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9844:9844'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9844/health']
       interval: 30s
@@ -1287,8 +1260,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9845:9845'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9845/health']
       interval: 30s
@@ -1334,8 +1306,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9846:9846'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9846/health']
       interval: 30s
@@ -1381,8 +1352,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9847:9847'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9847/health']
       interval: 30s
@@ -1428,8 +1398,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9867:9867'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9867/health']
       interval: 30s
@@ -1475,8 +1444,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9868:9868'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9868/health']
       interval: 30s
@@ -1522,8 +1490,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9869:9869'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9869/health']
       interval: 30s
@@ -1569,8 +1536,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9862:9862'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9862/health']
       interval: 30s
@@ -1616,8 +1582,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9861:9861'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9861/health']
       interval: 30s
@@ -1663,8 +1628,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9864:9864'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9864/health']
       interval: 30s
@@ -1710,8 +1674,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9865:9865'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9865/health']
       interval: 30s
@@ -1757,8 +1720,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9866:9866'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9866/health']
       interval: 30s
@@ -1804,8 +1766,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9870:9870'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9870/health']
       interval: 30s
@@ -1851,8 +1812,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9863:9863'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9863/health']
       interval: 30s
@@ -1898,8 +1858,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9881:9881'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9881/health']
       interval: 30s
@@ -1945,8 +1904,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9882:9882'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9882/health']
       interval: 30s
@@ -1992,8 +1950,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9883:9883'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9883/health']
       interval: 30s
@@ -2039,8 +1996,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9884:9884'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9884/health']
       interval: 30s
@@ -2086,8 +2042,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9885:9885'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9885/health']
       interval: 30s
@@ -2133,8 +2088,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9886:9886'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9886/health']
       interval: 30s
@@ -2180,8 +2134,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9887:9887'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9887/health']
       interval: 30s
@@ -2227,8 +2180,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9888:9888'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9888/health']
       interval: 30s
@@ -2274,8 +2226,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9891:9891'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9891/health']
       interval: 30s
@@ -2321,8 +2272,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9892:9892'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9892/health']
       interval: 30s
@@ -2368,8 +2318,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9893:9893'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9893/health']
       interval: 30s
@@ -2415,8 +2364,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9894:9894'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9894/health']
       interval: 30s
@@ -2462,8 +2410,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9895:9895'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9895/health']
       interval: 30s
@@ -2509,8 +2456,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9896:9896'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9896/health']
       interval: 30s
@@ -2556,8 +2502,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9897:9897'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9897/health']
       interval: 30s
@@ -2603,8 +2548,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9901:9901'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9901/health']
       interval: 30s
@@ -2650,8 +2594,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9902:9902'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9902/health']
       interval: 30s
@@ -2697,8 +2640,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9903:9903'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9903/health']
       interval: 30s
@@ -2744,8 +2686,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9904:9904'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9904/health']
       interval: 30s
@@ -2791,8 +2732,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9905:9905'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9905/health']
       interval: 30s
@@ -2838,8 +2778,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9906:9906'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9906/health']
       interval: 30s
@@ -2885,8 +2824,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9907:9907'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9907/health']
       interval: 30s
@@ -2932,8 +2870,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9908:9908'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9908/health']
       interval: 30s
@@ -2979,8 +2916,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9909:9909'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9909/health']
       interval: 30s
@@ -3026,8 +2962,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9910:9910'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9910/health']
       interval: 30s
@@ -3073,8 +3008,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9911:9911'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9911/health']
       interval: 30s
@@ -3120,8 +3054,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9912:9912'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9912/health']
       interval: 30s
@@ -3167,8 +3100,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9913:9913'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9913/health']
       interval: 30s
@@ -3214,8 +3146,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9914:9914'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9914/health']
       interval: 30s
@@ -3261,8 +3192,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9915:9915'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9915/health']
       interval: 30s
@@ -3308,8 +3238,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9916:9916'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9916/health']
       interval: 30s
@@ -3355,8 +3284,7 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
       - OMI_BRIDGE_URL=http://omni-omi-bridge:9700
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - '9917:9917'
+    ports: []
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9917/health']
       interval: 30s

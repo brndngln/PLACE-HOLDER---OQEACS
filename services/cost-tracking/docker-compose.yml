@@ -5,7 +5,7 @@ services:
     container_name: omni-cost-tracking
     restart: unless-stopped
     ports:
-    - 9622:9622
+      - 9622:9622
     environment:
       DATABASE_URL: ${COST_TRACKING_DATABASE_URL}
       LANGFUSE_URL: ${LANGFUSE_URL:-http://omni-langfuse:3000}
@@ -17,7 +17,7 @@ services:
       omni.quantum.critical: 'false'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     logging:
       driver: json-file
       options:
@@ -25,8 +25,8 @@ services:
         max-file: '5'
     healthcheck:
       test:
-      - CMD-SHELL
-      - curl -f http://localhost:9622/health || wget -qO- http://localhost:9622/health >/dev/null || nc -z localhost 9622
+        - CMD-SHELL
+        - curl -f http://localhost:9622/health || wget -qO- http://localhost:9622/health >/dev/null || nc -z localhost 9622
       interval: 30s
       timeout: 10s
       retries: 5
@@ -37,9 +37,9 @@ services:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
 networks:
   omni-quantum-network:
     external: true

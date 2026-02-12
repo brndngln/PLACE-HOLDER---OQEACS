@@ -16,7 +16,7 @@ services:
       SYSTEM_PORT: "9670"
       LOG_LEVEL: \INFO
     ports:
-      - "9670:9670"
+      - "9602:9670"
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:9670/health')\" || exit 1"]
       interval: 30s

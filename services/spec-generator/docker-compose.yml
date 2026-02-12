@@ -4,24 +4,24 @@ services:
     image: omni-spec-generator:1.0.0
     container_name: omni-spec-generator
     environment:
-    - QDRANT_HOST=${QDRANT_HOST:-omni-qdrant}
-    - QDRANT_PORT=${QDRANT_PORT:-6333}
-    - SPEC_COLLECTION=${SPEC_COLLECTION:-specs}
-    - MODEL_ENDPOINT=${MODEL_ENDPOINT:-http://omni-litellm:4000/v1/chat/completions}
-    - CODE_SCORER_URL=${CODE_SCORER_URL:-http://code-scorer:8350/api/v1/score}
-    - SPEC_SCORE_THRESHOLD=${SPEC_SCORE_THRESHOLD:-8.0}
+      - QDRANT_HOST=${QDRANT_HOST:-omni-qdrant}
+      - QDRANT_PORT=${QDRANT_PORT:-6333}
+      - SPEC_COLLECTION=${SPEC_COLLECTION:-specs}
+      - MODEL_ENDPOINT=${MODEL_ENDPOINT:-http://omni-litellm:4000/v1/chat/completions}
+      - CODE_SCORER_URL=${CODE_SCORER_URL:-http://code-scorer:8350/api/v1/score}
+      - SPEC_SCORE_THRESHOLD=${SPEC_SCORE_THRESHOLD:-8.0}
     ports:
-    - 8332:8332
+      - 8332:8332
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     healthcheck:
       test:
-      - CMD
-      - wget
-      - --spider
-      - -q
-      - http://localhost:8332/health
+        - CMD
+        - wget
+        - --spider
+        - -q
+        - http://localhost:8332/health
       interval: 30s
       timeout: 10s
       retries: 5
@@ -42,9 +42,9 @@ services:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
 networks:
   omni-quantum-network:
     external: true

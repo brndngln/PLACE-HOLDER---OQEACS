@@ -21,13 +21,13 @@ services:
       OMI_WEBHOOK: ${OMI_WEBHOOK_URL}
       ROTATION_CHECK_INTERVAL: '3600'
     ports:
-    - 8189:8189
+      - 8189:8189
     healthcheck:
       test:
-      - CMD
-      - python
-      - -c
-      - import urllib.request; urllib.request.urlopen('http://localhost:8189/health')
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:8189/health')
       interval: 15s
       timeout: 10s
       retries: 5
@@ -41,7 +41,7 @@ services:
         tag: '{{.Name}}'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       prometheus.scrape: 'true'
       prometheus.port: '8189'
@@ -54,9 +54,9 @@ services:
           memory: 256M
           cpus: '0.5'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   pki-manager:
     build:
       context: ./config/pki-manager
@@ -70,13 +70,13 @@ services:
       CERT_TTL: 720h
       MATTERMOST_WEBHOOK: ${MATTERMOST_SECURITY_WEBHOOK}
     ports:
-    - 8190:8190
+      - 8190:8190
     healthcheck:
       test:
-      - CMD
-      - python
-      - -c
-      - import urllib.request; urllib.request.urlopen('http://localhost:8190/health')
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:8190/health')
       interval: 15s
       timeout: 10s
       retries: 5
@@ -90,7 +90,7 @@ services:
         tag: '{{.Name}}'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       prometheus.scrape: 'true'
       prometheus.port: '8190'
@@ -103,9 +103,9 @@ services:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   vault-audit-dashboard:
     build:
       context: ./config/audit-dashboard
@@ -117,13 +117,13 @@ services:
       VAULT_TOKEN: ${VAULT_ROOT_TOKEN}
       LOKI_URL: http://omni-loki:3100
     ports:
-    - 8191:8191
+      - 8191:8191
     healthcheck:
       test:
-      - CMD
-      - python
-      - -c
-      - import urllib.request; urllib.request.urlopen('http://localhost:8191/health')
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:8191/health')
       interval: 15s
       timeout: 10s
       retries: 5
@@ -137,7 +137,7 @@ services:
         tag: '{{.Name}}'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       prometheus.scrape: 'true'
       prometheus.port: '8191'
@@ -150,7 +150,7 @@ services:
           memory: 2G
           cpus: '2.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
 networks:
   omni-quantum-network:
     external: true

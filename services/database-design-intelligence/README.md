@@ -14,4 +14,4 @@ Run:
 docker compose -f services/database-design-intelligence/docker-compose.yml up -d --build
 
 Default port:
-9654
+8336

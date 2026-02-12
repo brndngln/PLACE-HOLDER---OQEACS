@@ -4,7 +4,7 @@ services:
     container_name: omni-nango
     restart: unless-stopped
     ports:
-    - 3003:3003
+      - 3003:3003
     environment:
       NANGO_DB_HOST: omni-postgres
       NANGO_DB_PORT: '5432'
@@ -15,16 +15,16 @@ services:
       SERVER_PORT: '3003'
     healthcheck:
       test:
-      - CMD
-      - curl
-      - -fs
-      - http://localhost:3003/health
+        - CMD
+        - curl
+        - -fs
+        - http://localhost:3003/health
       interval: 30s
       timeout: 5s
       retries: 5
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       omni.quantum.component: nango
       omni.quantum.tier: business
@@ -35,9 +35,9 @@ services:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
 networks:
   omni-quantum-network:
     external: true

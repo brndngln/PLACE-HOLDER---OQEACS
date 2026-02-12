@@ -17,7 +17,7 @@ services:
       plausible-clickhouse:
         condition: service_healthy
     ports:
-    - 8100:8000
+      - 8100:8000
     environment:
       BASE_URL: https://plausible.omni-quantum-quantum.local
       SECRET_KEY_BASE: '{{ vault://secret/data/plausible#secret_key_base }}'
@@ -28,10 +28,10 @@ services:
       MAILER_EMAIL: notifications@omni-quantum-quantum.local
     healthcheck:
       test:
-      - CMD
-      - wget
-      - -qO-
-      - http://localhost:8000/api/health
+        - CMD
+        - wget
+        - -qO-
+        - http://localhost:8000/api/health
       interval: 20s
       timeout: 10s
       retries: 5
@@ -46,28 +46,28 @@ services:
       omni.quantum.tier: business
       omni.quantum.critical: 'false'
     volumes:
-    - plausible-data:/var/lib/plausible
+      - plausible-data:/var/lib/plausible
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     deploy:
       resources:
         limits:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   plausible-clickhouse:
     image: clickhouse/clickhouse-server:24
     container_name: omni-plausible-clickhouse
     healthcheck:
       test:
-      - CMD
-      - clickhouse-client
-      - --query
-      - SELECT 1
+        - CMD
+        - clickhouse-client
+        - --query
+        - SELECT 1
       interval: 20s
       timeout: 10s
       retries: 5
@@ -82,19 +82,19 @@ services:
       omni.quantum.tier: business
       omni.quantum.critical: 'false'
     volumes:
-    - plausible-clickhouse-data:/var/lib/clickhouse
+      - plausible-clickhouse-data:/var/lib/clickhouse
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     deploy:
       resources:
         limits:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   plausible-postgres:
     image: postgres:16-alpine
     container_name: omni-plausible-postgres
@@ -104,8 +104,8 @@ services:
       POSTGRES_PASSWORD: '{{ vault://secret/data/plausible#db_password }}'
     healthcheck:
       test:
-      - CMD-SHELL
-      - pg_isready -U {{ vault://secret/data/plausible#db_user }} -d plausible
+        - CMD-SHELL
+        - pg_isready -U {{ vault://secret/data/plausible#db_user }} -d plausible
       interval: 15s
       timeout: 5s
       retries: 5
@@ -120,19 +120,19 @@ services:
       omni.quantum.tier: business
       omni.quantum.critical: 'false'
     volumes:
-    - plausible-postgres-data:/var/lib/postgresql/data
+      - plausible-postgres-data:/var/lib/postgresql/data
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     deploy:
       resources:
         limits:
           memory: 2G
           cpus: '2.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
 volumes:
   plausible-data: null
   plausible-clickhouse-data: null

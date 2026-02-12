@@ -2,5 +2,5 @@ service:
   id: 68
   name: Data Validation Framework
   codename: data-validation-framework
-  port: 9668
+  port: 8382
   tier: gap-remediation

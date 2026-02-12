@@ -9,16 +9,16 @@ services:
     image: nginx:1.27-alpine
     container_name: omni-loki-gateway
     volumes:
-    - ./config/loki-gateway.conf:/etc/nginx/nginx.conf:ro
+      - ./config/loki-gateway.conf:/etc/nginx/nginx.conf:ro
     ports:
-    - 3101:3100
+      - 3101:3100
     healthcheck:
       test:
-      - CMD
-      - wget
-      - --spider
-      - -q
-      - http://localhost:3100/ready
+        - CMD
+        - wget
+        - --spider
+        - -q
+        - http://localhost:3100/ready
       interval: 15s
       timeout: 10s
       retries: 5
@@ -32,7 +32,7 @@ services:
         tag: '{{.Name}}'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       omni.quantum.component: loki-gateway
       omni.quantum.tier: business
@@ -43,9 +43,9 @@ services:
           memory: 1G
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   log-pattern-detector:
     build:
       context: ./config/log-pattern-detector
@@ -60,13 +60,13 @@ services:
       BURST_THRESHOLD: '100'
       REDIS_URL: redis://omni-redis:6379/6
     ports:
-    - 8184:8184
+      - 8184:8184
     healthcheck:
       test:
-      - CMD
-      - python
-      - -c
-      - import urllib.request; urllib.request.urlopen('http://localhost:8184/health')
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:8184/health')
       interval: 15s
       timeout: 10s
       retries: 5
@@ -80,7 +80,7 @@ services:
         tag: '{{.Name}}'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       prometheus.scrape: 'true'
       prometheus.port: '8184'
@@ -93,9 +93,9 @@ services:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   log-correlator:
     build:
       context: ./config/log-correlator
@@ -108,13 +108,13 @@ services:
       LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
       LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
     ports:
-    - 8185:8185
+      - 8185:8185
     healthcheck:
       test:
-      - CMD
-      - python
-      - -c
-      - import urllib.request; urllib.request.urlopen('http://localhost:8185/health')
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:8185/health')
       interval: 15s
       timeout: 10s
       retries: 5
@@ -128,7 +128,7 @@ services:
         tag: '{{.Name}}'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       prometheus.scrape: 'true'
       prometheus.port: '8185'
@@ -141,9 +141,9 @@ services:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
 networks:
   omni-quantum-network:
     external: true

@@ -11,13 +11,13 @@ from src.models import PlatformStatus, ServiceStatus_
 
 class PlatformClient:
     SERVICE_REGISTRY: list[tuple[str, int]] = [
-        ("debate", 9650),
-        ("semantic", 9651),
-        ("api-intel", 9652),
-        ("exec-verify", 9653),
-        ("style", 9654),
+        ("debate", 8358),
+        ("semantic", 8330),
+        ("api-intel", 8338),
+        ("exec-verify", 8339),
+        ("style", 8335),
         ("test-intel", 9660),
-        ("otel", 9670),
+        ("otel", 9011),
     ]
 
     async def get_status(self) -> PlatformStatus:

@@ -3,7 +3,7 @@
 Production-grade FastAPI microservice for Omni Quantum Elite.
 
 - Container: `omni-style-learner`
-- Port: `9654`
+- Port: `8335`
 - Network: `omni-quantum-network`
 
 ## Endpoints

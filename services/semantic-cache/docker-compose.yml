@@ -7,7 +7,7 @@ services:
     container_name: omni-semantic-cache
     hostname: omni-semantic-cache
     ports:
-    - 9440:9440
+      - 9440:9440
     environment:
       REDIS_URL: redis://omni-semantic-cache-redis:6379/0
       LITELLM_URL: http://omni-litellm:4000
@@ -19,7 +19,7 @@ services:
       MAX_CACHE_ENTRIES: ${MAX_CACHE_ENTRIES:-50000}
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     depends_on:
       omni-semantic-cache-redis:
         condition: service_healthy
@@ -33,10 +33,10 @@ services:
           cpus: '0.1'
     healthcheck:
       test:
-      - CMD
-      - curl
-      - -f
-      - http://localhost:9440/health
+        - CMD
+        - curl
+        - -f
+        - http://localhost:9440/health
       interval: 30s
       timeout: 10s
       retries: 3
@@ -52,9 +52,9 @@ services:
         max-size: 10m
         max-file: '3'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   omni-semantic-cache-redis:
     image: redis:7-alpine
     container_name: omni-semantic-cache-redis
@@ -64,10 +64,10 @@ services:
 
       '
     volumes:
-    - semantic_cache_redis_data:/data
+      - semantic_cache_redis_data:/data
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     deploy:
       resources:
         limits:
@@ -78,9 +78,9 @@ services:
           cpus: '0.1'
     healthcheck:
       test:
-      - CMD
-      - redis-cli
-      - ping
+        - CMD
+        - redis-cli
+        - ping
       interval: 10s
       timeout: 5s
       retries: 3
@@ -96,9 +96,9 @@ services:
         max-size: 5m
         max-file: '3'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
 volumes:
   semantic_cache_redis_data:
     driver: local

@@ -10,7 +10,7 @@ class CodeClient:
         if len(request.description) > 120:
             async with httpx.AsyncClient(timeout=10.0) as client:
                 try:
-                    r = await client.post("http://localhost:9650/api/v1/debate", json={"task_description": request.description, "language": request.language})
+                    r = await client.post("http://localhost:8358/api/v1/debate", json={"task_description": request.description, "language": request.language})
                     if r.status_code == 200:
                         return str(r.json().get("final_code", ""))
                 except Exception:
@@ -22,7 +22,7 @@ class CodeClient:
             try:
                 with open(request.file_path, "r", encoding="utf-8") as f:
                     code = f.read()
-                r = await client.post("http://localhost:9650/api/v1/review", json={"code": code, "language": "python", "focus_areas": request.focus_areas})
+                r = await client.post("http://localhost:8358/api/v1/review", json={"code": code, "language": "python", "focus_areas": request.focus_areas})
                 if r.status_code == 200:
                     return r.json()
             except Exception:

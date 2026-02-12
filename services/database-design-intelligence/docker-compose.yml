@@ -20,7 +20,7 @@ services:
       LOG_LEVEL: \info
       LOG_FORMAT: json
     ports:
-      - '9654:9654'
+      - '8336:9654'
     networks:
       - omni-quantum-network
     healthcheck:

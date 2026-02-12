@@ -5,19 +5,19 @@ services:
     container_name: omni-omi-bridge
     restart: unless-stopped
     ports:
-    - 9700:9700
-    - 9701:9701
+      - 9700:9700
+      - 9701:9701
     environment:
-    - LITELLM_URL=http://omni-litellm:4000
-    - ORCHESTRATOR_URL=http://omni-orchestrator:9500
-    - OMI_DEVICE_TOKEN=${OMI_DEVICE_TOKEN}
-    - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL}
+      - LITELLM_URL=http://omni-litellm:4000
+      - ORCHESTRATOR_URL=http://omni-orchestrator:9500
+      - OMI_DEVICE_TOKEN=${OMI_DEVICE_TOKEN}
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL}
     healthcheck:
       test:
-      - CMD
-      - curl
-      - -f
-      - http://localhost:9700/health
+        - CMD
+        - curl
+        - -f
+        - http://localhost:9700/health
       interval: 30s
       timeout: 10s
       retries: 3
@@ -28,15 +28,15 @@ services:
           cpus: '0.25'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     labels:
       omni.quantum.component: omi-bridge
       omni.quantum.tier: development
       omni.quantum.critical: 'false'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
 networks:
   omni-quantum-network:
     external: true

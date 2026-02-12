@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     container_name: omni-semantic-code
     ports:
-      - "9651:9651"
+      - "8330:9651"
     environment:
       - SERVICE_NAME=omni-semantic-code
       - SERVICE_PORT=9651

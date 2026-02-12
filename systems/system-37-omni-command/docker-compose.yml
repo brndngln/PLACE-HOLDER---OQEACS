@@ -32,7 +32,7 @@ services:
       omni.quantum.tier: business
       omni.quantum.critical: 'true'
     ports:
-    - 9500:9500
+      - 9500:9500
     environment:
       ORCHESTRATOR_PORT: '9500'
       ORCHESTRATOR_HOST: 0.0.0.0
@@ -87,17 +87,17 @@ services:
       WOODPECKER_URL: http://omni-woodpecker-server:8000
       CODER_URL: http://omni-coder:7080
     volumes:
-    - orchestrator-data:/data
-    - /var/run/docker.sock:/var/run/docker.sock:ro
+      - orchestrator-data:/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     healthcheck:
       test:
-      - CMD
-      - python
-      - -c
-      - import httpx; httpx.get('http://localhost:9500/health').raise_for_status()
+        - CMD
+        - python
+        - -c
+        - import httpx; httpx.get('http://localhost:9500/health').raise_for_status()
       interval: 15s
       timeout: 5s
       retries: 5
@@ -107,9 +107,9 @@ services:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   omni-dashboard:
     build:
       context: ./config/dashboard
@@ -127,20 +127,20 @@ services:
       omni.quantum.tier: business
       omni.quantum.critical: 'false'
     ports:
-    - 9501:9501
+      - 9501:9501
     environment:
       ORCHESTRATOR_URL: http://omni-orchestrator:9500
       DASHBOARD_PORT: '9501'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     depends_on:
       omni-orchestrator:
         condition: service_healthy
     healthcheck:
       test:
-      - CMD-SHELL
-      - curl -f http://localhost:9501/health || wget -qO- http://localhost:9501/health >/dev/null || nc -z localhost 9501
+        - CMD-SHELL
+        - curl -f http://localhost:9501/health || wget -qO- http://localhost:9501/health >/dev/null || nc -z localhost 9501
       interval: 30s
       timeout: 10s
       retries: 3
@@ -151,9 +151,9 @@ services:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   omni-mattermost-bot:
     build:
       context: ./config/mattermost-bot
@@ -177,14 +177,14 @@ services:
       BOT_CHANNEL: omni-control
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     depends_on:
       omni-orchestrator:
         condition: service_healthy
     healthcheck:
       test:
-      - CMD-SHELL
-      - exit 0
+        - CMD-SHELL
+        - exit 0
       interval: 30s
       timeout: 10s
       retries: 3
@@ -195,9 +195,9 @@ services:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   omni-voice-bridge:
     build:
       context: ./config/voice-bridge
@@ -215,7 +215,7 @@ services:
       omni.quantum.tier: business
       omni.quantum.critical: 'false'
     ports:
-    - 9502:9502
+      - 9502:9502
     environment:
       ORCHESTRATOR_URL: http://omni-orchestrator:9500
       LITELLM_URL: http://omni-litellm:4000
@@ -223,14 +223,14 @@ services:
       VOICE_BRIDGE_PORT: '9502'
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     depends_on:
       omni-orchestrator:
         condition: service_healthy
     healthcheck:
       test:
-      - CMD-SHELL
-      - curl -f http://localhost:9502/health || wget -qO- http://localhost:9502/health >/dev/null || nc -z localhost 9502
+        - CMD-SHELL
+        - curl -f http://localhost:9502/health || wget -qO- http://localhost:9502/health >/dev/null || nc -z localhost 9502
       interval: 30s
       timeout: 10s
       retries: 3
@@ -241,9 +241,9 @@ services:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
   omni-event-processor:
     build:
       context: ./config/event-processor
@@ -267,14 +267,14 @@ services:
       OMI_WEBHOOK: ${OMI_WEBHOOK_URL:-}
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     depends_on:
       omni-orchestrator:
         condition: service_healthy
     healthcheck:
       test:
-      - CMD-SHELL
-      - exit 0
+        - CMD-SHELL
+        - exit 0
       interval: 30s
       timeout: 10s
       retries: 3
@@ -285,6 +285,6 @@ services:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL

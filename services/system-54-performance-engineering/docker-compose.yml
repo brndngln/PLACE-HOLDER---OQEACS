@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     container_name: omni-perf-eng
     ports:
-      - "9656:9656"
+      - "8357:9656"
     env_file:
       - ../../.env
     environment:

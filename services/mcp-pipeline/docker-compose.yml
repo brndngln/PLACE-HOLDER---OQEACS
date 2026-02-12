@@ -5,18 +5,18 @@ services:
     image: omni/mcp-pipeline:1.0.0
     container_name: omni-mcp-pipeline
     environment:
-    - PYTHONUNBUFFERED=1
+      - PYTHONUNBUFFERED=1
     networks:
       - omni-quantum-network
-    - omni-quantum-network
+      - omni-quantum-network
     ports:
-    - 8330:8330
+      - 8345:8330
     healthcheck:
       test:
-      - CMD
-      - curl
-      - -fs
-      - http://localhost:8330/ready
+        - CMD
+        - curl
+        - -fs
+        - http://localhost:8330/ready
       interval: 30s
       timeout: 5s
       retries: 3
@@ -37,9 +37,9 @@ services:
           memory: 512M
           cpus: '1.0'
     security_opt:
-    - no-new-privileges:true
+      - no-new-privileges:true
     cap_drop:
-    - ALL
+      - ALL
 networks:
   omni-quantum-network:
     external: true

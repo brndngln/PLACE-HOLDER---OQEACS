@@ -14,4 +14,4 @@ Run:
 docker compose -f services/domain-specific-intelligence/docker-compose.yml up -d --build
 
 Default port:
-9659
+8378
